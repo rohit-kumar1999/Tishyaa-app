@@ -1,0 +1,9 @@
+export { BrandStory } from "./BrandStory";
+export { CategorySection } from "./CategorySection";
+export { FeaturedProducts } from "./FeaturedProducts";
+export { HeroSection } from "./HeroSection";
+export { InstagramFeed } from "./InstagramFeed";
+export { Newsletter } from "./Newsletter";
+export { PromoBanner } from "./PromoBanner";
+export { TestimonialSection } from "./TestimonialSection";
+export { TrustBadges } from "./TrustBadges";
