@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   gradient: {
-    minHeight: 450,
+    height: 450,
   },
   innerContainer: {
     flex: 1,
@@ -253,11 +253,11 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    minHeight: 350,
+    height: 350,
     overflow: "hidden",
   },
   slideContainer: {
-    flex: 1,
+    height: 350,
     flexDirection: screenWidth >= 768 ? "row" : "column-reverse",
     alignItems: "center",
     gap: screenWidth >= 768 ? 48 : 24,
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
   imageSection: {
     flex: screenWidth >= 768 ? 1 : 0,
     width: "100%",
-    height: screenWidth >= 768 ? 350 : 200,
+    height: screenWidth >= 768 ? 250 : 180,
     alignItems: "center",
     justifyContent: "center",
   },

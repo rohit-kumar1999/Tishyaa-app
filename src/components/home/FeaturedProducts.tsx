@@ -113,7 +113,20 @@ export const FeaturedProducts = () => {
           </View>
 
           <View style={styles.priceContainer}>
-            <Text style={styles.price}>₹{product.price.toLocaleString()}</Text>
+            {product.discountPrice ? (
+              <>
+                <Text style={styles.discountPrice}>
+                  ₹{product.discountPrice.toLocaleString()}
+                </Text>
+                <Text style={styles.originalPrice}>
+                  ₹{product.price.toLocaleString()}
+                </Text>
+              </>
+            ) : (
+              <Text style={styles.price}>
+                ₹{product.price.toLocaleString()}
+              </Text>
+            )}
           </View>
         </View>
       </TouchableOpacity>
@@ -201,15 +214,15 @@ export const FeaturedProducts = () => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 64,
+    paddingVertical: 32,
     backgroundColor: "#ffffff",
   },
   contentContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   headerContainer: {
     alignItems: "center",
-    marginBottom: 48,
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: screenWidth > 1024 ? 36 : 30,
@@ -231,13 +244,13 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   productsGrid: {
-    gap: 16,
+    gap: 8,
   },
   productRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 16,
-    marginBottom: 16,
+    gap: 8,
+    marginBottom: 8,
   },
   productCard: {
     flex: 1,
@@ -256,7 +269,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     position: "relative",
     width: "100%",
-    aspectRatio: 1,
+    aspectRatio: 0.8,
   },
   productImage: {
     width: "100%",
@@ -282,17 +295,17 @@ const styles = StyleSheet.create({
   },
   actionButtonsContainer: {
     position: "absolute",
-    top: 12,
-    right: 12,
+    top: 8,
+    right: 8,
     flexDirection: "column",
-    gap: 8,
+    gap: 4,
     opacity: 1, // Always visible on mobile
   },
   wishlistButton: {
-    width: 32,
-    height: 32,
+    width: 28,
+    height: 28,
     backgroundColor: "rgba(255, 255, 255, 0.9)",
-    borderRadius: 16,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000000",
@@ -303,9 +316,9 @@ const styles = StyleSheet.create({
   },
   cartButtonContainer: {
     position: "absolute",
-    bottom: 12,
-    left: 12,
-    right: 12,
+    bottom: 8,
+    left: 8,
+    right: 8,
     opacity: 1, // Always visible on mobile
   },
   addToCartButton: {
@@ -323,36 +336,38 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 6,
+    gap: 3,
   },
   cartButtonText: {
     color: "#ffffff",
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
   },
   productInfo: {
-    padding: 16,
+    padding: 12,
     flex: 1,
     justifyContent: "space-between",
   },
   productName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
     color: "#111827",
-    marginBottom: 8,
-    lineHeight: 20,
+    marginBottom: 6,
+    lineHeight: 18,
   },
   ratingContainer: {
-    marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
   },
   ratingRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    marginBottom: 2,
   },
   ratingText: {
     fontSize: 12,
@@ -373,9 +388,20 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#111827",
   },
+  discountPrice: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#e11d48",
+  },
+  originalPrice: {
+    fontSize: 12,
+    fontWeight: "400",
+    color: "#6b7280",
+    textDecorationLine: "line-through",
+  },
   viewAllContainer: {
     alignItems: "center",
-    marginTop: 32,
+    marginTop: 20,
   },
   viewAllButton: {
     borderWidth: 1,

@@ -21,23 +21,28 @@ export default function BottomNavigation({
   const tabs = [
     { key: "home", route: "/home", icon: "home", label: "Home" },
     {
-      key: "categories",
-      route: "/categories",
+      key: "collection",
+      route: "/products",
+      icon: "diamond-outline",
+      label: "Collection",
+    },
+    {
+      key: "category",
+      route: "/category",
       icon: "grid-outline",
-      label: "Categories",
+      label: "Category",
     },
     {
-      key: "search",
-      route: "/search",
-      icon: "search-outline",
-      label: "Search",
+      key: "new-arrivals",
+      route: "/products?newArrivals=true&sortBy=createdAt&sortOrder=desc",
+      icon: "sparkles-outline",
+      label: "New",
     },
-    { key: "cart", route: "/cart", icon: "bag-outline", label: "Cart" },
     {
-      key: "profile",
-      route: "/profile",
-      icon: "person-outline",
-      label: "Profile",
+      key: "gifting",
+      route: "/gifting",
+      icon: "gift-outline",
+      label: "Gifting",
     },
   ];
 

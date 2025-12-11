@@ -1,6 +1,8 @@
 import React from "react";
 import { Dimensions, ScrollView, StyleSheet, View } from "react-native";
 import BottomNavigation from "../components/common/BottomNavigation";
+import { Footer } from "../components/common/Footer";
+import { TopHeader } from "../components/common/TopHeader";
 import {
   BrandStory,
   CategorySection,
@@ -20,6 +22,7 @@ export default function HomeScreen() {
   return (
     <HomepageDataProvider>
       <View style={styles.container}>
+        <TopHeader />
         <ScrollView
           style={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
@@ -33,6 +36,7 @@ export default function HomeScreen() {
           <InstagramFeed />
           <TrustBadges />
           <Newsletter />
+          <Footer />
         </ScrollView>
 
         <BottomNavigation currentRoute="/home" />

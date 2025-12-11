@@ -90,7 +90,7 @@ export const PromoBanner = () => {
 
   return (
     <LinearGradient
-      colors={["#e11d48", "#ec4899", "#8b5cf6"]}
+      colors={["#f8fafc", "#f1f5f9", "#e2e8f0"]}
       style={styles.container}
     >
       {/* Background Floating Icons */}
@@ -102,11 +102,7 @@ export const PromoBanner = () => {
             { transform: [{ translateY: sparklesTransform }] },
           ]}
         >
-          <Ionicons
-            name="sparkles"
-            size={32}
-            color="rgba(255, 255, 255, 0.2)"
-          />
+          <Ionicons name="sparkles" size={32} color="rgba(226, 29, 72, 0.1)" />
         </Animated.View>
 
         <Animated.View
@@ -116,7 +112,7 @@ export const PromoBanner = () => {
             { transform: [{ translateY: crownTransform }] },
           ]}
         >
-          <Ionicons name="diamond" size={24} color="rgba(255, 255, 255, 0.2)" />
+          <Ionicons name="diamond" size={24} color="rgba(226, 29, 72, 0.1)" />
         </Animated.View>
 
         <Animated.View
@@ -126,7 +122,7 @@ export const PromoBanner = () => {
             { transform: [{ translateY: giftTransform }] },
           ]}
         >
-          <Ionicons name="gift" size={28} color="rgba(255, 255, 255, 0.2)" />
+          <Ionicons name="gift" size={28} color="rgba(226, 29, 72, 0.1)" />
         </Animated.View>
       </View>
 
@@ -152,7 +148,7 @@ export const PromoBanner = () => {
             </TouchableOpacity>
 
             <View style={styles.urgencyContainer}>
-              <Ionicons name="time" size={16} color="#ffffff" />
+              <Ionicons name="time" size={16} color="#6b7280" />
               <Text style={styles.urgencyText}>Offer ends in 2 days</Text>
             </View>
           </View>
@@ -204,12 +200,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: screenWidth > 1024 ? 36 : screenWidth > 640 ? 30 : 24,
     fontWeight: "700",
-    color: "#ffffff",
+    color: "#111827",
     textAlign: "center",
     marginBottom: 16,
   },
   subtitle: {
-    color: "#fecaca",
+    color: "#6b7280",
     fontSize: screenWidth > 1024 ? 18 : screenWidth > 640 ? 16 : 14,
     textAlign: "center",
     lineHeight: screenWidth > 1024 ? 26 : screenWidth > 640 ? 24 : 20,
@@ -221,18 +217,18 @@ const styles = StyleSheet.create({
     flexDirection: screenWidth > 640 ? "row" : "column",
   },
   shopButton: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#e11d48",
     paddingHorizontal: screenWidth > 640 ? 32 : 24,
     paddingVertical: screenWidth > 640 ? 16 : 12,
     borderRadius: 8,
-    shadowColor: "#000000",
+    shadowColor: "#e11d48",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 8,
   },
   shopButtonText: {
-    color: "#e11d48",
+    color: "#ffffff",
     fontWeight: "600",
     fontSize: screenWidth > 640 ? 16 : 14,
   },
@@ -242,7 +238,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   urgencyText: {
-    color: "#ffffff",
+    color: "#6b7280",
     fontSize: 14,
   },
 });
