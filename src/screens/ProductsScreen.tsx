@@ -21,6 +21,8 @@ import {
 } from "react-native";
 import BottomNavigation from "../components/common/BottomNavigation";
 import { TopHeader } from "../components/common/TopHeader";
+import { FiltersComponent } from "../components/FiltersComponent";
+import { Select, SortOption } from "../components/ui";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { Product, useProducts } from "../services/productService";
 
@@ -50,13 +52,14 @@ const initialFilters: FilterState = {
   search: undefined,
 };
 
-const SORT_OPTIONS = [
+const SORT_OPTIONS: SortOption[] = [
   { label: "Newest First", value: "createdAt", order: "desc" },
   { label: "Oldest First", value: "createdAt", order: "asc" },
+  { label: "Name A-Z", value: "name", order: "asc" },
+  { label: "Name Z-A", value: "name", order: "desc" },
   { label: "Price: Low to High", value: "price", order: "asc" },
   { label: "Price: High to Low", value: "price", order: "desc" },
-  { label: "Name: A to Z", value: "name", order: "asc" },
-  { label: "Name: Z to A", value: "name", order: "desc" },
+  { label: "Highest Rated", value: "rating", order: "desc" },
 ];
 
 export default function ProductsScreen() {
@@ -68,7 +71,6 @@ export default function ProductsScreen() {
     initialFilters
   );
   const [showFilters, setShowFilters] = useState(false);
-  const [showSort, setShowSort] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -125,6 +127,8 @@ export default function ProductsScreen() {
         filters.categories.length > 0 ? filters.categories : undefined,
       materials: filters.materials.length > 0 ? filters.materials : undefined,
       occasions: filters.occasions.length > 0 ? filters.occasions : undefined,
+      discounts: filters.discounts.length > 0 ? filters.discounts : undefined,
+      ratings: filters.ratings.length > 0 ? filters.ratings : undefined,
       search: filters.search,
       priceRange:
         filters.priceRange[0] > 0 || filters.priceRange[1] < 100000
@@ -140,12 +144,15 @@ export default function ProductsScreen() {
       JSON.stringify(filters.categories),
       JSON.stringify(filters.materials),
       JSON.stringify(filters.occasions),
+      JSON.stringify(filters.discounts),
+      JSON.stringify(filters.ratings),
       filters.search,
       JSON.stringify(filters.priceRange),
       filters.inStock,
     ]
   );
 
+  console.log("Query Params:", queryParams);
   const {
     data: productsResponse,
     products,
@@ -162,6 +169,30 @@ export default function ProductsScreen() {
   const totalProducts = pagination?.totalItems || products.length;
   const currentPage = pagination?.currentPage || pageNumber;
   const itemsPerPage = pagination?.itemsPerPage || itemsPerPageConstant;
+
+  // Get current sort option label
+  const getCurrentSortLabel = () => {
+    const option = SORT_OPTIONS.find(
+      (opt) => opt.value === filters.sortBy && opt.order === filters.sortOrder
+    );
+    return option?.label || "Newest First";
+  };
+
+  // Handle sort option selection
+  const handleSortSelect = (option: SortOption) => {
+    setFilters((prev) => ({
+      ...prev,
+      sortBy: option.value,
+      sortOrder: option.order,
+    }));
+    setPageNumber(1); // Reset to first page when sorting changes
+  };
+
+  // Handle filter changes
+  const handleFiltersChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
+    setPageNumber(1); // Reset to first page when filters change
+  };
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -337,23 +368,23 @@ export default function ProductsScreen() {
   );
 
   const renderSortDropdown = () => (
-    <TouchableOpacity
-      style={styles.sortButton}
-      onPress={() => setShowSort(true)}
-    >
-      <Text style={styles.sortButtonText}>Newest First</Text>
-      <Ionicons name="chevron-down" size={20} color="#666" />
-    </TouchableOpacity>
+    <Select
+      options={SORT_OPTIONS}
+      value={`${filters.sortBy}-${filters.sortOrder}`}
+      onSelect={handleSortSelect}
+      getCurrentLabel={getCurrentSortLabel}
+      style={styles.sortSelect}
+    />
   );
 
   const renderFiltersButton = () => (
     <TouchableOpacity
       style={styles.filtersButton}
-      onPress={() => setShowFilters(true)}
+      onPress={() => setShowFilters(!showFilters)}
     >
       <Ionicons name="filter" size={20} color="#000" />
       <Text style={styles.filtersButtonText}>Filters</Text>
-      <Text style={styles.showText}>Show</Text>
+      <Text style={styles.showText}>{showFilters ? "Hide" : "Show"}</Text>
     </TouchableOpacity>
   );
 
@@ -467,6 +498,19 @@ export default function ProductsScreen() {
               {renderSortDropdown()}
               {renderFiltersButton()}
             </View>
+            <FiltersComponent
+              visible={showFilters}
+              onHide={() => setShowFilters(false)}
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              categories={categories.map((cat) => ({
+                id: cat.name,
+                name: cat.name,
+                count: cat.count,
+              }))}
+              materials={materials || []}
+              occasions={occasions || []}
+            />
           </View>
         }
         ListEmptyComponent={
@@ -544,22 +588,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 16,
   },
-  sortButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "white",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  sortButtonText: {
-    fontSize: 16,
-    color: "#000",
-  },
+
   filtersButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -848,5 +877,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#666",
     textAlign: "center",
+  },
+  // Sort Select Styles
+  sortSelect: {
+    marginBottom: 12,
   },
 });

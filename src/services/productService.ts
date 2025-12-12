@@ -182,6 +182,8 @@ export const useProducts = (params?: {
   categories?: string[];
   materials?: string[];
   occasions?: string[];
+  discounts?: string[];
+  ratings?: number[];
   search?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -208,6 +210,10 @@ export const useProducts = (params?: {
       ...(params?.categories?.length && { categories: params.categories }),
       ...(params?.materials?.length && { materials: params.materials }),
       ...(params?.occasions?.length && { occasions: params.occasions }),
+      ...(params?.discounts?.length && { discounts: params.discounts }),
+      ...(params?.ratings?.length && {
+        minRating: Math.max(...params.ratings),
+      }),
       ...(params?.search && { search: params.search }),
       ...(params?.minPrice !== undefined && { minPrice: params.minPrice }),
       ...(params?.maxPrice !== undefined && { maxPrice: params.maxPrice }),
@@ -225,6 +231,8 @@ export const useProducts = (params?: {
       JSON.stringify(params?.categories),
       JSON.stringify(params?.materials),
       JSON.stringify(params?.occasions),
+      JSON.stringify(params?.discounts),
+      JSON.stringify(params?.ratings),
       params?.search,
       params?.minPrice,
       params?.maxPrice,
@@ -237,7 +245,13 @@ export const useProducts = (params?: {
     try {
       setIsLoading(true);
       setError(null);
+      console.log("=== API Request ===");
+      console.log("URL:", "/product");
+      console.log("Body:", JSON.stringify(requestBody, null, 2));
       const response: ProductResponse = await api.post("/product", requestBody);
+      console.log("=== API Response Success ===");
+      console.log("Products count:", response?.products?.length || 0);
+      console.log("Total items:", response?.pagination?.totalItems || 0);
       setData(response);
     } catch (err) {
       console.error("Error fetching products:", err);

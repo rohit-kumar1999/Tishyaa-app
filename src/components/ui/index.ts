@@ -16,3 +16,4 @@ export { Separator } from "./separator";
 // Add more UI components as needed
 export * from "./loading";
 export * from "./modal";
+export * from "./select";
