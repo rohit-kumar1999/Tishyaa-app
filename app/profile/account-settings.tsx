@@ -14,11 +14,27 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
+import DeleteAccountModal from "../../src/components/ui/DeleteAccountModal";
+import { useUserService } from "../../src/services/userService";
+
+interface AccountOption {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: string;
+  onPress: () => void;
+  dangerous?: boolean;
+  loading?: boolean;
+}
 
 export default function AccountSettingsScreen() {
   const { user, isLoaded } = useUser();
   const { signOut } = useAuth();
+  const { deleteCurrentUser } = useUserService();
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Log user data for debugging
   useEffect(() => {
@@ -37,9 +53,12 @@ export default function AccountSettingsScreen() {
   const handleBackPress = () => {
     console.log("Back button pressed");
     try {
-      router.back();
+      // Navigate to profile screen instead of using router.back() to avoid GO_BACK error
+      router.push("/profile");
     } catch (error) {
       console.error("Navigation back error:", error);
+      // Fallback navigation
+      router.replace("/profile");
     }
   };
 
@@ -54,6 +73,65 @@ export default function AccountSettingsScreen() {
     }
   };
 
+  const handleDeleteAccount = () => {
+    setShowDeleteModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowDeleteModal(false);
+  };
+
+  const confirmDeleteAccount = async () => {
+    if (deletingAccount) return;
+
+    setDeletingAccount(true);
+    console.log("🗑️ Starting account deletion process...");
+
+    try {
+      const result = await deleteCurrentUser();
+
+      if (result.success) {
+        console.log("✅ Account deleted successfully");
+
+        // Close modal and show success message
+        setShowDeleteModal(false);
+        Toast.show({
+          type: "success",
+          text1: "Account Deleted",
+          text2:
+            "Your account has been successfully deleted. Signing you out...",
+        });
+
+        // Sign out and navigate after a brief delay
+        setTimeout(async () => {
+          await signOut();
+          router.replace("/auth");
+        }, 1500);
+      } else {
+        console.error("❌ Account deletion failed:", result.message);
+        setShowDeleteModal(false);
+        Toast.show({
+          type: "error",
+          text1: "Deletion Failed",
+          text2:
+            result.message ||
+            "Failed to delete account. Please try again or contact support.",
+        });
+      }
+    } catch (error) {
+      console.error("❌ Account deletion error:", error);
+      setShowDeleteModal(false);
+      Toast.show({
+        type: "error",
+        text1: "Deletion Error",
+        text2:
+          "An unexpected error occurred while deleting your account. Please try again or contact support.",
+      });
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
+
   const requestPermissions = async () => {
     const { status: cameraStatus } =
       await ImagePicker.requestCameraPermissionsAsync();
@@ -63,22 +141,81 @@ export default function AccountSettingsScreen() {
     return { cameraStatus, mediaLibraryStatus };
   };
 
+  // Supported image file types
+  const SUPPORTED_IMAGE_TYPES = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/webp",
+  ];
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+  const validateImageFile = async (
+    uri: string
+  ): Promise<{ isValid: boolean; error?: string }> => {
+    try {
+      // Get file info
+      const response = await fetch(uri);
+      const blob = await response.blob();
+
+      // Check file type
+      if (!SUPPORTED_IMAGE_TYPES.includes(blob.type)) {
+        return {
+          isValid: false,
+          error: `Unsupported file type: ${blob.type}. Please use JPG, PNG, or WebP images.`,
+        };
+      }
+
+      // Check file size
+      if (blob.size > MAX_FILE_SIZE) {
+        return {
+          isValid: false,
+          error: `File size too large: ${(blob.size / 1024 / 1024).toFixed(
+            2
+          )}MB. Maximum allowed size is 5MB.`,
+        };
+      }
+
+      return { isValid: true };
+    } catch (error) {
+      return {
+        isValid: false,
+        error: "Unable to validate file. Please try again.",
+      };
+    }
+  };
+
   const uploadImage = async (uri: string) => {
     console.log("uploadImage called with URI:", uri);
     if (!user) {
       console.error("❌ No user found - redirecting to sign in");
       // Direct action: redirect to sign in
-      router.push("/(auth)/sign-in");
+      router.push("/auth");
       return;
     }
 
     setUploadingImage(true);
     try {
-      console.log("Starting image upload...");
+      console.log("Starting image validation...");
+
+      // Validate file type and size before upload
+      const validation = await validateImageFile(uri);
+      if (!validation.isValid) {
+        console.error("❌ File validation failed:", validation.error);
+        console.error("❌ Upload Error:", validation.error);
+        return;
+      }
+
+      console.log("✅ File validation passed, starting upload...");
+
       // Convert URI to blob for Clerk
       const response = await fetch(uri);
       const blob = await response.blob();
-      console.log("Blob created, uploading to Clerk...");
+      console.log(
+        `Blob created (${blob.type}, ${(blob.size / 1024 / 1024).toFixed(
+          2
+        )}MB), uploading to Clerk...`
+      );
 
       // Upload to Clerk using the setProfileImage method
       await user.setProfileImage({ file: blob });
@@ -115,17 +252,41 @@ export default function AccountSettingsScreen() {
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
+        // Additional validation options
+        allowsMultipleSelection: false,
       });
 
       if (!result.canceled && result.assets[0]) {
-        await uploadImage(result.assets[0].uri);
+        const selectedAsset = result.assets[0];
+
+        // Log file information for debugging
+        console.log("📁 Selected file info:", {
+          uri: selectedAsset.uri,
+          type: selectedAsset.type,
+          fileSize: selectedAsset.fileSize,
+          fileName: selectedAsset.fileName,
+        });
+
+        // Additional client-side check for file size (if available)
+        if (selectedAsset.fileSize && selectedAsset.fileSize > MAX_FILE_SIZE) {
+          console.error(
+            `❌ File too large: ${(
+              selectedAsset.fileSize /
+              1024 /
+              1024
+            ).toFixed(2)}MB. Maximum allowed is 5MB.`
+          );
+          return;
+        }
+
+        await uploadImage(selectedAsset.uri);
       }
     } catch (error) {
       console.error("Photo library error:", error);
     }
   };
 
-  const accountOptions = [
+  const accountOptions: AccountOption[] = [
     {
       id: "1",
       title: "Update Password",
@@ -135,45 +296,12 @@ export default function AccountSettingsScreen() {
     },
     {
       id: "2",
-      title: "Two-Factor Authentication",
-      subtitle: "Add extra security to your account",
-      icon: "shield-checkmark-outline",
-      onPress: () => {
-        console.log("2FA option pressed - opening Clerk dashboard info");
-        // Direct action - could navigate to a 2FA settings screen or external link
-        console.log(
-          "Two-factor authentication can be managed through Clerk's dashboard."
-        );
-        // TODO: Add navigation to 2FA settings screen or external Clerk dashboard
-      },
-    },
-    {
-      id: "3",
-      title: "Connected Accounts",
-      subtitle: "Manage social login connections",
-      icon: "link-outline",
-      onPress: () => {
-        console.log(
-          "Connected accounts option pressed - managing social connections"
-        );
-        // Direct action - could navigate to connected accounts screen
-        console.log("Managing social connections through Clerk's system.");
-        // TODO: Add navigation to connected accounts screen
-      },
-    },
-    {
-      id: "4",
-      title: "Privacy Settings",
-      subtitle: "Control your privacy preferences",
-      icon: "eye-outline",
-      onPress: () => {
-        console.log(
-          "Privacy settings option pressed - navigating to privacy settings"
-        );
-        // Direct action - navigate to privacy settings screen when available
-        console.log("Privacy settings feature in development");
-        // TODO: Add navigation to privacy settings screen
-      },
+      title: "Delete Account",
+      subtitle: "Permanently delete your account",
+      icon: "trash-outline",
+      onPress: handleDeleteAccount,
+      dangerous: true,
+      loading: deletingAccount,
     },
   ];
 
@@ -270,8 +398,12 @@ export default function AccountSettingsScreen() {
           {accountOptions.map((option) => (
             <TouchableOpacity
               key={option.id}
-              style={styles.optionItem}
+              style={[
+                styles.optionItem,
+                option.dangerous && styles.dangerousOptionItem,
+              ]}
               onPress={() => {
+                if (option.loading) return; // Prevent action if loading
                 console.log(`🎯 Option pressed: ${option.title}`);
                 console.log(`🔍 Option ID: ${option.id}`);
                 console.log(`🎪 Function being called:`, option.onPress);
@@ -285,25 +417,67 @@ export default function AccountSettingsScreen() {
                 }
               }}
               activeOpacity={0.7}
+              disabled={option.loading}
             >
               <View style={styles.optionLeft}>
-                <View style={styles.optionIconContainer}>
-                  <Ionicons
-                    name={option.icon as any}
-                    size={20}
-                    color="#e11d48"
-                  />
+                <View
+                  style={[
+                    styles.optionIconContainer,
+                    option.dangerous && styles.dangerousIconContainer,
+                  ]}
+                >
+                  {option.loading ? (
+                    <ActivityIndicator
+                      size="small"
+                      color={option.dangerous ? "#ef4444" : "#e11d48"}
+                    />
+                  ) : (
+                    <Ionicons
+                      name={option.icon as any}
+                      size={20}
+                      color={option.dangerous ? "#ef4444" : "#e11d48"}
+                    />
+                  )}
                 </View>
                 <View style={styles.optionText}>
-                  <Text style={styles.optionTitle}>{option.title}</Text>
-                  <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
+                  <Text
+                    style={[
+                      styles.optionTitle,
+                      option.dangerous && styles.dangerousOptionTitle,
+                    ]}
+                  >
+                    {option.title}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.optionSubtitle,
+                      option.dangerous && styles.dangerousOptionSubtitle,
+                    ]}
+                  >
+                    {option.loading ? "Deleting account..." : option.subtitle}
+                  </Text>
                 </View>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+              {!option.loading && (
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={option.dangerous ? "#ef4444" : "#9ca3af"}
+                />
+              )}
             </TouchableOpacity>
           ))}
         </View>
       </ScrollView>
+
+      {/* Delete Account Modal */}
+      <DeleteAccountModal
+        visible={showDeleteModal}
+        onClose={handleCloseModal}
+        onConfirm={confirmDeleteAccount}
+        loading={deletingAccount}
+        userName={user?.firstName || "User"}
+      />
     </SafeAreaView>
   );
 }
@@ -449,6 +623,20 @@ const styles = StyleSheet.create({
   optionSubtitle: {
     fontSize: 14,
     color: "#6b7280",
+  },
+
+  // Dangerous option styles for delete account
+  dangerousOptionItem: {
+    backgroundColor: "#fef2f2",
+  },
+  dangerousIconContainer: {
+    backgroundColor: "#fee2e2",
+  },
+  dangerousOptionTitle: {
+    color: "#ef4444",
+  },
+  dangerousOptionSubtitle: {
+    color: "#dc2626",
   },
 
   loadingContainer: {

@@ -1,14 +1,8 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
-import { launchImageLibraryAsync, MediaTypeOptions } from 'expo-image-picker';
-import { Image } from 'expo-image';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import { launchImageLibraryAsync, MediaTypeOptions } from "expo-image-picker";
+import React, { useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface ImageUploadProps {
   onImageSelected: (uri: string) => void;
@@ -20,7 +14,7 @@ interface ImageUploadProps {
 const ImageUpload: React.FC<ImageUploadProps> = ({
   onImageSelected,
   currentImage,
-  placeholder = 'Select Image',
+  placeholder = "Select Image",
   aspectRatio = 1,
 }) => {
   const [uploading, setUploading] = useState(false);
@@ -42,7 +36,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         setUploading(false);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to select image');
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to select image",
+      });
       setUploading(false);
     }
   };
@@ -78,54 +76,54 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
+    width: "100%",
     aspectRatio: 1,
     borderRadius: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
     borderWidth: 2,
-    borderColor: '#e5e7eb',
-    borderStyle: 'dashed',
+    borderColor: "#e5e7eb",
+    borderStyle: "dashed",
   },
   imageContainer: {
-    width: '100%',
-    height: '100%',
-    position: 'relative',
+    width: "100%",
+    height: "100%",
+    position: "relative",
   },
   image: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   overlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    alignItems: "center",
+    justifyContent: "center",
     opacity: 0,
   },
   overlayText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 12,
     marginTop: 4,
   },
   placeholder: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: 20,
   },
   placeholderText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: "#6b7280",
     marginTop: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   uploadingText: {
     fontSize: 12,
-    color: '#dc2626',
+    color: "#dc2626",
     marginTop: 4,
   },
 });

@@ -10,8 +10,7 @@ import {
   View,
 } from "react-native";
 import Toast from "react-native-toast-message";
-import { PasswordInput, validatePassword } from "./components/PasswordInput";
-import { splitName } from "./utils/nameUtils";
+import { PasswordInput } from "./_components/PasswordInput";
 
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -25,25 +24,10 @@ export default function SignUpScreen() {
 
   const onSignUpPress = async () => {
     if (!isLoaded) return;
-
-    // Validate password
-    const passwordError = validatePassword(password);
-    if (passwordError) {
-      Toast.show({
-        type: "error",
-        text1: "Invalid Password",
-        text2: passwordError,
-      });
-      return;
-    }
-
     setLoading(true);
 
-    const { firstName, lastName } = name
-      ? splitName(name)
-      : { firstName: undefined, lastName: undefined };
-
     try {
+      const [firstName, lastName] = name.trim().split(" ");
       await signUp.create({
         firstName,
         lastName,
@@ -51,19 +35,16 @@ export default function SignUpScreen() {
         emailAddress: email,
         password,
       });
-
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setPendingVerification(true);
-      Toast.show({
-        type: "success",
-        text1: "Verification Code Sent",
-        text2: "Check your email for the verification code.",
-      });
     } catch (err: any) {
+      console.log(err?.errors);
       Toast.show({
         type: "error",
         text1: "Sign-up Error",
-        text2: err?.errors?.[0]?.message || "Please try again.",
+        text2:
+          err?.errors?.map((e: any) => e.longMessage).join(", ") ||
+          "Please try again.",
       });
     } finally {
       setLoading(false);
@@ -72,8 +53,8 @@ export default function SignUpScreen() {
 
   const onVerifyPress = async () => {
     if (!isLoaded) return;
-
     setLoading(true);
+
     try {
       const signUpAttempt = await signUp.attemptEmailAddressVerification({
         code,
@@ -81,24 +62,32 @@ export default function SignUpScreen() {
 
       if (signUpAttempt.status === "complete") {
         await setActive({ session: signUpAttempt.createdSessionId });
-        router.replace("/(tabs)");
+
         Toast.show({
           type: "success",
-          text1: "Welcome!",
-          text2: "Account created successfully.",
+          text1: "Welcome to Tishyaa! 🎉",
+          text2: "Your account has been created successfully.",
         });
+
+        router.replace("/home");
       } else {
         Toast.show({
           type: "error",
-          text1: "Verification Error",
-          text2: "Verification incomplete. Try again.",
+          text1: "Verification Incomplete",
+          text2: signUpAttempt.unverifiedFields?.length
+            ? `Still need to verify: ${signUpAttempt.unverifiedFields.join(
+                ", "
+              )}`
+            : "Please try again or contact support.",
         });
       }
     } catch (err: any) {
       Toast.show({
         type: "error",
         text1: "Verification Error",
-        text2: err?.errors?.[0]?.message || "Please try again.",
+        text2:
+          err?.errors?.map((e: any) => e.longMessage).join(", ") ||
+          "Please try again.",
       });
     } finally {
       setLoading(false);
@@ -116,6 +105,7 @@ export default function SignUpScreen() {
             placeholder="Enter your verification code"
             onChangeText={setCode}
             placeholderTextColor="#9ca3af"
+            keyboardType="numeric"
           />
           <TouchableOpacity
             style={[styles.signUpButton, loading && styles.disabledButton]}
@@ -136,42 +126,40 @@ export default function SignUpScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.formContainer}>
-        <View style={styles.inputGroup}>
-          <TextInput
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-            placeholder="Enter Your Name..."
-            placeholderTextColor="#9ca3af"
-          />
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Enter Your Email..."
-            autoCapitalize="none"
-            keyboardType="email-address"
-            placeholderTextColor="#9ca3af"
-          />
-          <TextInput
-            style={styles.input}
-            value={phone}
-            onChangeText={setPhone}
-            placeholder="Enter Your Phone"
-            keyboardType="phone-pad"
-            placeholderTextColor="#9ca3af"
-          />
-          <PasswordInput
-            password={password}
-            setPassword={setPassword}
-            placeholder="Enter Your Password"
-          />
-          {password.length > 0 && (
-            <Text style={styles.passwordHint}>
-              {validatePassword(password)}
-            </Text>
-          )}
-        </View>
+        <Text style={styles.title}>Create Your Account</Text>
+
+        <TextInput
+          style={styles.input}
+          value={name}
+          onChangeText={setName}
+          placeholder="Enter Your Name..."
+          placeholderTextColor="#9ca3af"
+        />
+
+        <TextInput
+          style={styles.input}
+          value={phone}
+          onChangeText={setPhone}
+          placeholder="Enter Your Phone (Optional)"
+          keyboardType="phone-pad"
+          placeholderTextColor="#9ca3af"
+        />
+
+        <TextInput
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Enter Your Email..."
+          autoCapitalize="none"
+          keyboardType="email-address"
+          placeholderTextColor="#9ca3af"
+        />
+
+        <PasswordInput
+          password={password}
+          setPassword={setPassword}
+          placeholder="Enter Your Password"
+        />
 
         <TouchableOpacity
           style={[styles.signUpButton, loading && styles.disabledButton]}
@@ -206,11 +194,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 16,
   },
-  inputGroup: {
-    flexDirection: "column",
-    gap: 12,
-    width: "100%",
-  },
   input: {
     borderWidth: 1,
     borderColor: "#d1d5db",
@@ -220,12 +203,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#f9fafb",
     color: "#111827",
-  },
-  passwordHint: {
-    fontSize: 14,
-    color: "#dc2626",
-    marginTop: -8,
-    paddingLeft: 4,
+    marginBottom: 12,
   },
   signUpButton: {
     width: "100%",

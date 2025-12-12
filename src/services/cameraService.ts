@@ -2,7 +2,7 @@ import { Camera } from "expo-camera";
 import * as FileSystem from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import * as MediaLibrary from "expo-media-library";
-import { Alert } from "react-native";
+import Toast from "react-native-toast-message";
 
 export interface PhotoOptions {
   allowsEditing?: boolean;
@@ -89,7 +89,11 @@ class CameraService {
       return result;
     } catch (error) {
       console.error("Error taking photo:", error);
-      Alert.alert("Error", "Failed to take photo. Please try again.");
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to take photo. Please try again.",
+      });
       return null;
     }
   }
@@ -127,7 +131,11 @@ class CameraService {
       return result;
     } catch (error) {
       console.error("Error picking image:", error);
-      Alert.alert("Error", "Failed to select image. Please try again.");
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to select image. Please try again.",
+      });
       return null;
     }
   }
@@ -164,7 +172,11 @@ class CameraService {
       return result;
     } catch (error) {
       console.error("Error picking multiple images:", error);
-      Alert.alert("Error", "Failed to select images. Please try again.");
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to select images. Please try again.",
+      });
       return null;
     }
   }

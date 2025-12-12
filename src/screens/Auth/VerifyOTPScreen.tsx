@@ -20,7 +20,11 @@ export default function VerifyOTPScreen() {
 
   const handleVerifyOTP = async () => {
     if (!otp || otp.length !== 6) {
-      Alert.alert("Error", "Please enter a valid 6-digit OTP");
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Please enter a valid 6-digit OTP",
+      });
       return;
     }
 
@@ -39,7 +43,11 @@ export default function VerifyOTPScreen() {
         },
       ]);
     } catch (error) {
-      Alert.alert("Error", "Invalid OTP. Please try again.");
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Invalid OTP. Please try again.",
+      });
     } finally {
       setLoading(false);
     }

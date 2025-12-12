@@ -45,7 +45,11 @@ export default function CheckoutScreen() {
     );
 
     if (missingFields.length > 0) {
-      Alert.alert("Error", "Please fill in all required fields.");
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Please fill in all required fields.",
+      });
       return;
     }
 

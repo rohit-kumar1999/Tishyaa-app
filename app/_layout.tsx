@@ -47,6 +47,7 @@ export default function RootLayout() {
             <Stack.Screen name="more" options={{ headerShown: false }} />
 
             {/* Authentication */}
+            <Stack.Screen name="auth" options={{ headerShown: false }} />
             <Stack.Screen name="auth/login" options={{ headerShown: false }} />
             <Stack.Screen
               name="auth/register"
@@ -94,6 +95,10 @@ export default function RootLayout() {
             />
             <Stack.Screen
               name="profile/account-settings"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="profile/update-password"
               options={{ headerShown: false }}
             />
           </Stack>

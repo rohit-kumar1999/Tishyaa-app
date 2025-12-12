@@ -13,7 +13,7 @@ import {
   View,
 } from "react-native";
 import Toast from "react-native-toast-message";
-import { PasswordInput } from "./components/PasswordInput";
+import { PasswordInput } from "./_components/PasswordInput";
 
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
@@ -42,7 +42,7 @@ export default function SignInScreen() {
 
       if (signInAttempt?.status === "complete") {
         await setActive({ session: signInAttempt.createdSessionId });
-        router.replace("/(tabs)");
+        router.replace("/home");
       } else {
         Toast.show({
           type: "error",
@@ -122,7 +122,7 @@ export default function SignInScreen() {
           text1: "Success",
           text2: "Password reset successfully.",
         });
-        router.replace("/(tabs)");
+        router.replace("/home");
       } else {
         Toast.show({
           type: "error",
@@ -146,14 +146,14 @@ export default function SignInScreen() {
 
     try {
       setLoadingGoogle(true);
-      const redirectUrl = Linking.createURL("/(tabs)", { scheme: "myapp" });
+      const redirectUrl = Linking.createURL("/home", { scheme: "myapp" });
       const { createdSessionId, setActive: setActiveG } = await startOAuthFlow({
         redirectUrl,
       });
 
       if (createdSessionId) {
         await setActiveG?.({ session: createdSessionId });
-        router.replace("/(tabs)");
+        router.replace("/home");
       } else {
         Toast.show({
           type: "error",
@@ -171,6 +171,8 @@ export default function SignInScreen() {
       setLoadingGoogle(false);
     }
   }, [isLoaded, startOAuthFlow]);
+
+  console.log("Rendering SignIn component");
 
   return (
     <View style={styles.container}>

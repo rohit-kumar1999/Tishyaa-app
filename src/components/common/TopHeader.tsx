@@ -33,7 +33,7 @@ export const TopHeader = () => {
   };
 
   const handleSignInPress = () => {
-    router.push("/(auth)/sign-in");
+    router.push("/auth");
   };
 
   return (
@@ -48,16 +48,16 @@ export const TopHeader = () => {
           {/* Actions Section */}
           <View style={styles.actionsSection}>
             {/* Search Button */}
-            <TouchableOpacity 
-              style={styles.actionButton} 
+            <TouchableOpacity
+              style={styles.actionButton}
               onPress={handleSearchPress}
             >
               <Ionicons name="search" size={24} color="#e11d48" />
             </TouchableOpacity>
 
             {/* Wishlist Button */}
-            <TouchableOpacity 
-              style={styles.actionButton} 
+            <TouchableOpacity
+              style={styles.actionButton}
               onPress={handleWishlistPress}
             >
               <Ionicons name="heart-outline" size={24} color="#e11d48" />
@@ -65,8 +65,8 @@ export const TopHeader = () => {
             </TouchableOpacity>
 
             {/* Cart Button */}
-            <TouchableOpacity 
-              style={styles.actionButton} 
+            <TouchableOpacity
+              style={styles.actionButton}
               onPress={handleCartPress}
             >
               <Ionicons name="bag-outline" size={24} color="#e11d48" />
@@ -75,8 +75,8 @@ export const TopHeader = () => {
 
             {/* Profile Section - Conditional Rendering */}
             <SignedIn>
-              <TouchableOpacity 
-                style={styles.actionButton} 
+              <TouchableOpacity
+                style={styles.actionButton}
                 onPress={handleProfilePress}
               >
                 {user?.imageUrl ? (
@@ -86,27 +86,19 @@ export const TopHeader = () => {
                   />
                 ) : (
                   <View style={styles.profileIcon}>
-                    <Ionicons 
-                      name="person" 
-                      size={16} 
-                      color="#ffffff" 
-                    />
+                    <Ionicons name="person" size={16} color="#ffffff" />
                   </View>
                 )}
               </TouchableOpacity>
             </SignedIn>
 
             <SignedOut>
-              <TouchableOpacity 
-                style={styles.actionButton} 
+              <TouchableOpacity
+                style={styles.actionButton}
                 onPress={handleSignInPress}
               >
                 <View style={styles.profileIcon}>
-                  <Ionicons 
-                    name="person-outline" 
-                    size={16} 
-                    color="#e11d48" 
-                  />
+                  <Ionicons name="person-outline" size={16} color="#e11d48" />
                 </View>
               </TouchableOpacity>
             </SignedOut>

@@ -1,5 +1,5 @@
 import { api } from "@/src/setup/api";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export interface Product {
   id: string;
@@ -179,30 +179,64 @@ export const useProducts = (params?: {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   category?: string;
+  categories?: string[];
+  materials?: string[];
+  occasions?: string[];
+  search?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  priceRange?: [number, number];
   inStock?: boolean;
 }) => {
   const [data, setData] = useState<ProductResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Memoize the request body to prevent unnecessary re-renders
+  const requestBody = useMemo(
+    () => ({
+      page: params?.page || 1,
+      limit: params?.limit || 20,
+      sortBy: params?.sortBy || "createdAt",
+      sortOrder: params?.sortOrder || "desc",
+      includeCategories: true,
+      includeTotalCount: true,
+      includeMaterials: true,
+      includeOccasions: true,
+      inStock: params?.inStock !== undefined ? params.inStock : undefined,
+      ...(params?.category && { category: params.category }),
+      ...(params?.categories?.length && { categories: params.categories }),
+      ...(params?.materials?.length && { materials: params.materials }),
+      ...(params?.occasions?.length && { occasions: params.occasions }),
+      ...(params?.search && { search: params.search }),
+      ...(params?.minPrice !== undefined && { minPrice: params.minPrice }),
+      ...(params?.maxPrice !== undefined && { maxPrice: params.maxPrice }),
+      ...(params?.priceRange && {
+        minPrice: params.priceRange[0],
+        maxPrice: params.priceRange[1],
+      }),
+    }),
+    [
+      params?.page,
+      params?.limit,
+      params?.sortBy,
+      params?.sortOrder,
+      params?.category,
+      JSON.stringify(params?.categories),
+      JSON.stringify(params?.materials),
+      JSON.stringify(params?.occasions),
+      params?.search,
+      params?.minPrice,
+      params?.maxPrice,
+      JSON.stringify(params?.priceRange),
+      params?.inStock,
+    ]
+  );
+
   const fetchProducts = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-
-      const requestBody = {
-        page: params?.page || 1,
-        limit: params?.limit || 8,
-        sortBy: params?.sortBy || "rating",
-        sortOrder: params?.sortOrder || "desc",
-        includeCategories: true,
-        includeTotalCount: true,
-        includeMaterials: true,
-        includeOccasions: true,
-        inStock: params?.inStock !== undefined ? params.inStock : true,
-        ...(params?.category && { category: params.category }),
-      };
-
       const response: ProductResponse = await api.post("/product", requestBody);
       setData(response);
     } catch (err) {
@@ -211,7 +245,7 @@ export const useProducts = (params?: {
     } finally {
       setIsLoading(false);
     }
-  }, [params]);
+  }, [requestBody]);
 
   useEffect(() => {
     fetchProducts();

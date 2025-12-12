@@ -5,7 +5,6 @@ import { Link, router } from "expo-router";
 import React from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   SafeAreaView,
   ScrollView,
@@ -14,6 +13,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import BottomNavigation from "../components/common/BottomNavigation";
+import { formatDate } from "../utils";
 
 interface MenuItem {
   id: string;
@@ -26,48 +27,37 @@ interface MenuItem {
 
 export default function ProfileScreen() {
   const { user, isLoaded } = useUser();
-  const { signOut } = useAuth();
+  const { signOut, isSignedIn } = useAuth();
 
   // Check if user is admin
-  const isAdmin = user?.publicMetadata?.role === "admin" || 
-                  user?.publicMetadata?.role === "superadmin";
+  const isAdmin =
+    user?.publicMetadata?.role === "admin" ||
+    user?.publicMetadata?.role === "superadmin";
 
   const handleSignOut = async () => {
+    console.log("🚪 handleSignOut called");
     try {
-      Alert.alert(
-        "Sign Out",
-        "Are you sure you want to sign out?",
-        [
-          {
-            text: "Cancel",
-            style: "cancel",
-          },
-          {
-            text: "Sign Out",
-            style: "destructive",
-            onPress: async () => {
-              await signOut();
-              router.replace("/(auth)/sign-in");
-            },
-          },
-        ]
-      );
+      await signOut();
+      console.log("✅ User signed out successfully");
     } catch (error) {
-      console.error("Error signing out:", error);
-      Alert.alert("Error", "Failed to sign out. Please try again.");
+      console.error("❌ Sign out error:", error);
     }
   };
 
   // Menu items for signed-in users
   const menuItems: MenuItem[] = [
-    ...(isAdmin ? [{
-      id: "admin",
-      title: "Admin Dashboard",
-      subtitle: "Manage your store",
-      icon: "settings-outline" as const,
-      route: "/admin/dashboard",
-      showChevron: true,
-    }] : []),
+    ...(isAdmin
+      ? [
+          {
+            id: "admin",
+            title: "Admin Dashboard",
+            subtitle: "Manage your store",
+            icon: "settings-outline" as const,
+            route: "/admin/dashboard",
+            showChevron: true,
+          },
+        ]
+      : []),
     {
       id: "orders",
       title: "My Orders",
@@ -134,8 +124,8 @@ export default function ProfileScreen() {
               <View style={styles.profileCard}>
                 <View style={styles.profileInfo}>
                   {user?.imageUrl ? (
-                    <Image 
-                      source={{ uri: user.imageUrl }} 
+                    <Image
+                      source={{ uri: user.imageUrl }}
                       style={styles.avatar}
                     />
                   ) : (
@@ -143,26 +133,25 @@ export default function ProfileScreen() {
                       <Ionicons name="person" size={30} color="#e11d48" />
                     </View>
                   )}
-                  
+
                   <View style={styles.userDetails}>
                     <Text style={styles.userName}>
-                      {user?.firstName && user?.lastName 
+                      {user?.firstName && user?.lastName
                         ? `${user.firstName} ${user.lastName}`
-                        : user?.emailAddresses[0]?.emailAddress || "User"
-                      }
+                        : user?.emailAddresses[0]?.emailAddress || "User"}
                     </Text>
                     <Text style={styles.userEmail}>
                       {user?.emailAddresses[0]?.emailAddress}
                     </Text>
                     {user?.createdAt && (
                       <Text style={styles.memberSince}>
-                        Member since {new Date(user.createdAt).getFullYear()}
+                        Member since {formatDate(user.createdAt)}
                       </Text>
                     )}
                   </View>
                 </View>
-                
-                <TouchableOpacity 
+
+                <TouchableOpacity
                   style={styles.editButton}
                   onPress={() => router.push("/profile/account-settings")}
                 >
@@ -185,23 +174,35 @@ export default function ProfileScreen() {
                     </View>
                     <View style={styles.menuItemText}>
                       <Text style={styles.menuItemTitle}>{item.title}</Text>
-                      <Text style={styles.menuItemSubtitle}>{item.subtitle}</Text>
+                      <Text style={styles.menuItemSubtitle}>
+                        {item.subtitle}
+                      </Text>
                     </View>
                   </View>
                   {item.showChevron && (
-                    <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+                    <Ionicons
+                      name="chevron-forward"
+                      size={20}
+                      color="#9ca3af"
+                    />
                   )}
                 </TouchableOpacity>
               ))}
 
               {/* Sign Out Button */}
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.menuItem, styles.signOutItem]}
                 onPress={handleSignOut}
               >
                 <View style={styles.menuItemLeft}>
-                  <View style={[styles.iconContainer, styles.signOutIconContainer]}>
-                    <Ionicons name="log-out-outline" size={24} color="#ef4444" />
+                  <View
+                    style={[styles.iconContainer, styles.signOutIconContainer]}
+                  >
+                    <Ionicons
+                      name="log-out-outline"
+                      size={24}
+                      color="#ef4444"
+                    />
                   </View>
                   <View style={styles.menuItemText}>
                     <Text style={[styles.menuItemTitle, styles.signOutText]}>
@@ -221,24 +222,31 @@ export default function ProfileScreen() {
             <View style={styles.signInSection}>
               <View style={styles.signInCard}>
                 <View style={styles.signInIconContainer}>
-                  <Ionicons name="person-circle-outline" size={80} color="#e11d48" />
+                  <Ionicons
+                    name="person-circle-outline"
+                    size={80}
+                    color="#e11d48"
+                  />
                 </View>
-                
+
                 <Text style={styles.signInTitle}>Welcome to Tishyaa</Text>
                 <Text style={styles.signInSubtitle}>
-                  Sign in to access your orders, wishlist, and personalized recommendations
+                  Sign in to access your orders, wishlist, and personalized
+                  recommendations
                 </Text>
 
                 <View style={styles.signInButtons}>
-                  <Link href="/(auth)/sign-in" asChild>
+                  <Link href="/auth" asChild>
                     <TouchableOpacity style={styles.signInButton}>
                       <Text style={styles.signInButtonText}>Sign In</Text>
                     </TouchableOpacity>
                   </Link>
 
-                  <Link href="/(auth)/sign-up" asChild>
+                  <Link href="/auth" asChild>
                     <TouchableOpacity style={styles.signUpButton}>
-                      <Text style={styles.signUpButtonText}>Create Account</Text>
+                      <Text style={styles.signUpButtonText}>
+                        Create Account
+                      </Text>
                     </TouchableOpacity>
                   </Link>
                 </View>
@@ -246,33 +254,45 @@ export default function ProfileScreen() {
 
               {/* Guest Menu Items */}
               <View style={styles.guestMenuSection}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => router.push("/help")}
                 >
                   <View style={styles.menuItemLeft}>
                     <View style={styles.iconContainer}>
-                      <Ionicons name="help-circle-outline" size={24} color="#e11d48" />
+                      <Ionicons
+                        name="help-circle-outline"
+                        size={24}
+                        color="#e11d48"
+                      />
                     </View>
                     <View style={styles.menuItemText}>
                       <Text style={styles.menuItemTitle}>Help & Support</Text>
-                      <Text style={styles.menuItemSubtitle}>FAQs and contact us</Text>
+                      <Text style={styles.menuItemSubtitle}>
+                        FAQs and contact us
+                      </Text>
                     </View>
                   </View>
                   <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => router.push("/about")}
                 >
                   <View style={styles.menuItemLeft}>
                     <View style={styles.iconContainer}>
-                      <Ionicons name="information-circle-outline" size={24} color="#e11d48" />
+                      <Ionicons
+                        name="information-circle-outline"
+                        size={24}
+                        color="#e11d48"
+                      />
                     </View>
                     <View style={styles.menuItemText}>
                       <Text style={styles.menuItemTitle}>About Tishyaa</Text>
-                      <Text style={styles.menuItemSubtitle}>Learn more about us</Text>
+                      <Text style={styles.menuItemSubtitle}>
+                        Learn more about us
+                      </Text>
                     </View>
                   </View>
                   <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
@@ -281,6 +301,8 @@ export default function ProfileScreen() {
             </View>
           </SignedOut>
         </ScrollView>
+
+        <BottomNavigation currentRoute="/profile" />
       </LinearGradient>
     </SafeAreaView>
   );

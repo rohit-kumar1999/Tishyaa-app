@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
-import { Alert, Linking, Platform } from "react-native";
+import { Linking, Platform } from "react-native";
+import Toast from "react-native-toast-message";
 
 export interface LocationCoordinates {
   latitude: number;
@@ -376,7 +377,11 @@ class LocationService {
       }
     } catch (error) {
       console.error("Error opening directions:", error);
-      Alert.alert("Error", "Unable to open directions. Please try again.");
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Unable to open directions. Please try again.",
+      });
     }
   }
 

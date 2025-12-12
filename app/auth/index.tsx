@@ -1,7 +1,7 @@
 import { SignedOut } from "@clerk/clerk-expo";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Pressable,
   SafeAreaView,
@@ -16,6 +16,17 @@ import SignUp from "./sign-up";
 export default function AuthIndexScreen() {
   const [authType, setAuthType] = useState<"signin" | "signup">("signin");
   const router = useRouter();
+
+  const handleTabChange = (type: "signin" | "signup") => {
+    console.log("Tab changed from", authType, "to:", type);
+    setAuthType(type);
+  };
+
+  console.log("Current authType:", authType);
+
+  useEffect(() => {
+    console.log("Auth type changed to:", authType);
+  }, [authType]);
 
   return (
     <SignedOut>
@@ -36,32 +47,41 @@ export default function AuthIndexScreen() {
               <TouchableOpacity
                 style={[
                   styles.toggleButton,
-                  authType === "signin" && styles.toggleButtonActive,
+                  authType === "signin"
+                    ? styles.toggleButtonActive
+                    : styles.toggleButtonInactive,
                 ]}
-                onPress={() => setAuthType("signin")}
+                onPress={() => handleTabChange("signin")}
                 activeOpacity={0.8}
               >
                 <Text
                   style={[
                     styles.toggleText,
-                    authType === "signin" && styles.toggleTextActive,
+                    authType === "signin"
+                      ? styles.toggleTextActive
+                      : styles.toggleTextInactive,
                   ]}
                 >
                   Login
                 </Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 style={[
                   styles.toggleButton,
-                  authType === "signup" && styles.toggleButtonActive,
+                  authType === "signup"
+                    ? styles.toggleButtonActive
+                    : styles.toggleButtonInactive,
                 ]}
-                onPress={() => setAuthType("signup")}
+                onPress={() => handleTabChange("signup")}
                 activeOpacity={0.8}
               >
                 <Text
                   style={[
                     styles.toggleText,
-                    authType === "signup" && styles.toggleTextActive,
+                    authType === "signup"
+                      ? styles.toggleTextActive
+                      : styles.toggleTextInactive,
                   ]}
                 >
                   Register
@@ -71,7 +91,8 @@ export default function AuthIndexScreen() {
 
             {/* Auth Form */}
             <View style={styles.formContainer}>
-              {authType === "signin" ? <SignIn /> : <SignUp />}
+              {authType === "signin" && <SignIn key="signin" />}
+              {authType === "signup" && <SignUp key="signup" />}
             </View>
 
             {/* Terms for Sign Up */}
@@ -121,31 +142,7 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     fontWeight: "400",
   },
-  toggleContainer: {
-    flexDirection: "row",
-    borderRadius: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
-    padding: 4,
-  },
-  toggleButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  toggleButtonActive: {
-    backgroundColor: "#e11d48",
-  },
-  toggleText: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#6b7280",
-  },
-  toggleTextActive: {
-    color: "#ffffff",
-    fontWeight: "600",
-  },
+
   formContainer: {
     width: "100%",
   },
@@ -163,5 +160,41 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#e11d48",
     textDecorationLine: "underline",
+  },
+
+  toggleContainer: {
+    flexDirection: "row",
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "#ffffffff",
+    width: "100%",
+  },
+
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  toggleButtonActive: {
+    backgroundColor: "#e11d48",
+  },
+
+  toggleButtonInactive: {
+    backgroundColor: "transparent",
+  },
+
+  toggleText: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
+  toggleTextActive: {
+    color: "#ffffff",
+  },
+
+  toggleTextInactive: {
+    color: "#4f4e4eaa",
   },
 });

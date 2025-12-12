@@ -1,7 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
-import { Alert, Platform } from "react-native";
+import { Platform } from "react-native";
+import Toast from "react-native-toast-message";
 
 // Configure notification handler
 Notifications.setNotificationHandler({
@@ -78,7 +79,11 @@ class NotificationService {
    */
   async registerForPushNotifications(): Promise<string | null> {
     if (!Device.isDevice) {
-      Alert.alert("Must use physical device for Push Notifications");
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Must use physical device for Push Notifications",
+      });
       return null;
     }
 
@@ -99,7 +104,11 @@ class NotificationService {
       }
 
       if (finalStatus !== "granted") {
-        Alert.alert("Failed to get push token for push notification!");
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "Failed to get push token for push notification!",
+        });
         return null;
       }
 
