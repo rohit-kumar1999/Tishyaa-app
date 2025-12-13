@@ -1,10 +1,31 @@
-// Basic API setup for React Native
-// This is a simplified version - in production you'd want a full axios setup
+// API setup for React Native with environment detection
+import { Platform } from "react-native";
 
 interface ApiConfig {
   baseURL: string;
   timeout: number;
 }
+
+// Environment detection
+const getBaseURL = (): string => {
+  const isDev = __DEV__;
+
+  if (!isDev) {
+    // Production URL
+    return "https://kaess-be.vercel.app";
+  }
+
+  // Development URL
+  // Android Emulator maps localhost to 10.0.2.2
+  if (Platform.OS === "android") {
+    // Check if running in emulator by trying to detect the environment
+    // In most cases, you'll want to use tunnel mode for Android
+    return "http://localhost:3000";
+  }
+
+  // For iOS Simulator, web, and other platforms, localhost works fine
+  return "http://localhost:3000";
+};
 
 class ApiClient {
   private config: ApiConfig;
@@ -21,19 +42,61 @@ class ApiClient {
       Accept: "application/json",
     };
 
-    const response = await fetch(fullUrl, {
-      ...options,
-      headers: {
-        ...defaultHeaders,
-        ...options.headers,
-      },
-    });
+    try {
+      console.log(`🌐 API Request: ${options.method || "GET"} ${fullUrl}`);
 
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      // Create AbortController for timeout functionality
+      const controller = new AbortController();
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        this.config.timeout
+      );
+
+      const response = await fetch(fullUrl, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          ...defaultHeaders,
+          ...options.headers,
+        },
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "Unknown error");
+        throw new Error(
+          `API Error: ${response.status} ${response.statusText} - ${errorText}`
+        );
+      }
+
+      const data = await response.json();
+      console.log(`✅ API Success: ${options.method || "GET"} ${fullUrl}`);
+      return data;
+    } catch (error) {
+      console.error(
+        `❌ API Failed: ${options.method || "GET"} ${fullUrl}`,
+        error
+      );
+
+      if (error instanceof Error) {
+        if (error.name === "AbortError") {
+          throw new Error(
+            `Request timeout: The request to ${this.config.baseURL} took longer than ${this.config.timeout}ms`
+          );
+        }
+        if (
+          error.message.includes("Network request failed") ||
+          error.message.includes("Failed to fetch")
+        ) {
+          throw new Error(
+            `Network Error: Unable to connect to ${this.config.baseURL}. Make sure your backend is running and accessible.`
+          );
+        }
+      }
+
+      throw error;
     }
-
-    return response.json();
   }
 
   get(url: string, options?: RequestInit) {
@@ -61,11 +124,45 @@ class ApiClient {
   }
 }
 
-// Create API instance
+// Create API instance with environment-aware configuration
 export const api = new ApiClient({
-  baseURL: "http://192.168.29.195:3000", // Local backend API using IP address to avoid CORS issues
-  timeout: 10000,
+  baseURL: getBaseURL(),
+  timeout: 10000, // 10 seconds timeout
 });
+
+// Export the base URL for debugging
+export const API_BASE_URL = getBaseURL();
+
+// Utility function to test API connectivity
+export const testApiConnection = async (): Promise<boolean> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    // Try health endpoint first, fallback to root
+    const baseUrl = getBaseURL();
+    let response;
+
+    try {
+      response = await fetch(`${baseUrl}/health`, {
+        method: "GET",
+        signal: controller.signal,
+      });
+    } catch {
+      // If /health fails, try root endpoint
+      response = await fetch(baseUrl, {
+        method: "GET",
+        signal: controller.signal,
+      });
+    }
+
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch (error) {
+    console.error("API Connection Test Failed:", error);
+    return false;
+  }
+};
 
 export default api;
 
