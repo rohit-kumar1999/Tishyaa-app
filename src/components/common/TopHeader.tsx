@@ -11,10 +11,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useWishlist } from "../../contexts/WishlistContext";
 
 export const TopHeader = () => {
   // Use Clerk authentication
   const { user } = useUser();
+
+  // Get wishlist count from context
+  const { wishlistCount } = useWishlist();
 
   const handleSearchPress = () => {
     router.push("/search");
@@ -61,7 +65,11 @@ export const TopHeader = () => {
               onPress={handleWishlistPress}
             >
               <Ionicons name="heart-outline" size={24} color="#e11d48" />
-              {/* You can add badge here if needed */}
+              {wishlistCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{wishlistCount}</Text>
+                </View>
+              )}
             </TouchableOpacity>
 
             {/* Cart Button */}

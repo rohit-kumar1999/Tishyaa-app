@@ -12,20 +12,46 @@ import {
   View,
 } from "react-native";
 import { useHomepageDataContext } from "../../contexts/HomepageDataContext";
+import { useWishlist } from "../../contexts/WishlistContext";
+import { useCart } from "../../hooks/useCart";
+import { Product } from "../../types";
 
 const screenWidth = Dimensions.get("window").width;
 
 export const FeaturedProducts = () => {
   const { featuredProducts, isLoading, error } = useHomepageDataContext();
+  const { toggleWishlist, isInWishlist, isWishlistProcessing } = useWishlist();
+  const { addItemToCart, isProcessing: isCartProcessing } = useCart();
 
   const handleToggleWishlist = (product: any) => {
-    // Implement wishlist functionality
-    console.log("Toggle wishlist for:", product.name);
+    // Convert product to Product type for toggleWishlist
+    const productData: Product = {
+      id: product.id,
+      name: product.name || "",
+      description: product.description || "",
+      price: product.price || 0,
+      originalPrice: product.originalPrice || product.price,
+      images: product.images || [],
+      category: product.category || "",
+      subcategory: product.subcategory,
+      tags: product.tags || [],
+      inStock: product.inStock ?? product.active ?? true,
+      stockQuantity: product.stockQuantity || 0,
+      weight: product.weight,
+      dimensions: product.dimensions,
+      materials: product.materials || [],
+      care: product.care || [],
+      rating: product.rating || 0,
+      reviewCount: product.reviewCount || 0,
+      featured: product.featured || false,
+      createdAt: product.createdAt || new Date().toISOString(),
+      updatedAt: product.updatedAt || new Date().toISOString(),
+    };
+    toggleWishlist(productData);
   };
 
   const handleAddToCart = (product: any) => {
-    // Implement add to cart functionality
-    console.log("Add to cart:", product.name);
+    addItemToCart(product.id, 1, true);
   };
 
   const handleProductPress = (productId: string) => {
@@ -67,11 +93,23 @@ export const FeaturedProducts = () => {
           {/* Action Buttons */}
           <View style={styles.actionButtonsContainer}>
             <TouchableOpacity
-              style={styles.wishlistButton}
+              style={[
+                styles.wishlistButton,
+                isInWishlist(product.id) && styles.wishlistButtonActive,
+              ]}
               onPress={() => handleToggleWishlist(product)}
+              disabled={isWishlistProcessing[product.id]}
               activeOpacity={0.8}
             >
-              <Ionicons name="heart-outline" size={16} color="#374151" />
+              {isWishlistProcessing[product.id] ? (
+                <ActivityIndicator size="small" color="#dc2626" />
+              ) : (
+                <Ionicons
+                  name={isInWishlist(product.id) ? "heart" : "heart-outline"}
+                  size={16}
+                  color={isInWishlist(product.id) ? "#dc2626" : "#374151"}
+                />
+              )}
             </TouchableOpacity>
           </View>
 
@@ -83,15 +121,21 @@ export const FeaturedProducts = () => {
                 !product.active && styles.disabledButton,
               ]}
               onPress={() => handleAddToCart(product)}
-              disabled={!product.active}
+              disabled={!product.active || isCartProcessing[product.id]}
               activeOpacity={0.8}
             >
               <LinearGradient
                 colors={["#e11d48", "#ec4899"]}
                 style={styles.cartButtonGradient}
               >
-                <Ionicons name="bag-outline" size={14} color="#ffffff" />
-                <Text style={styles.cartButtonText}>Add to Cart</Text>
+                {isCartProcessing[product.id] ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <>
+                    <Ionicons name="bag-outline" size={14} color="#ffffff" />
+                    <Text style={styles.cartButtonText}>Add to Cart</Text>
+                  </>
+                )}
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -313,6 +357,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 4,
+  },
+  wishlistButtonActive: {
+    backgroundColor: "rgba(220, 38, 38, 0.1)",
+    borderWidth: 1,
+    borderColor: "#dc2626",
   },
   cartButtonContainer: {
     position: "absolute",

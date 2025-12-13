@@ -6,6 +6,14 @@ interface ApiConfig {
   timeout: number;
 }
 
+// Global auth state for API client
+let globalGetToken: (() => Promise<string | null>) | null = null;
+
+// Function to set the auth token getter
+export const setAuthTokenGetter = (getToken: () => Promise<string | null>) => {
+  globalGetToken = getToken;
+};
+
 // Environment detection
 const getBaseURL = (): string => {
   const isDev = __DEV__;
@@ -37,10 +45,22 @@ class ApiClient {
   async request(url: string, options: RequestInit = {}): Promise<any> {
     const fullUrl = `${this.config.baseURL}${url}`;
 
-    const defaultHeaders = {
+    const defaultHeaders: Record<string, string> = {
       "Content-Type": "application/json",
       Accept: "application/json",
     };
+
+    // Add Clerk authentication header if available
+    if (globalGetToken) {
+      try {
+        const token = await globalGetToken();
+        if (token) {
+          defaultHeaders["Authorization"] = `Bearer ${token}`;
+        }
+      } catch (error) {
+        console.warn("Failed to get auth token:", error);
+      }
+    }
 
     try {
       console.log(`🌐 API Request: ${options.method || "GET"} ${fullUrl}`);
@@ -166,10 +186,28 @@ export const testApiConnection = async (): Promise<boolean> => {
 
 export default api;
 
-// Query client placeholder - in production, you'd set up React Query properly
-export const queryClient = {
-  invalidateQueries: (options: { queryKey: string[] }) => {
-    // Placeholder - implement proper query invalidation
+// Simple query client implementation with active query tracking
+class SimpleQueryClient {
+  private activeQueries = new Map<string, () => void>();
+
+  registerQuery(key: string, refetchFn: () => void) {
+    this.activeQueries.set(key, refetchFn);
+  }
+
+  unregisterQuery(key: string) {
+    this.activeQueries.delete(key);
+  }
+
+  invalidateQueries(options: { queryKey: string[] }) {
     console.log("Invalidating queries:", options.queryKey);
-  },
-};
+    options.queryKey.forEach((key) => {
+      const refetchFn = this.activeQueries.get(key);
+      if (refetchFn) {
+        console.log(`Refetching query: ${key}`);
+        refetchFn();
+      }
+    });
+  }
+}
+
+export const queryClient = new SimpleQueryClient();

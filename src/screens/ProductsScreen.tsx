@@ -23,6 +23,8 @@ import BottomNavigation from "../components/common/BottomNavigation";
 import { TopHeader } from "../components/common/TopHeader";
 import { FiltersComponent } from "../components/FiltersComponent";
 import { Select, SortOption } from "../components/ui";
+import { useWishlist } from "../contexts/WishlistContext";
+import { useCart } from "../hooks/useCart";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { Product, useProducts } from "../services/productService";
 
@@ -65,7 +67,10 @@ const SORT_OPTIONS: SortOption[] = [
 export default function ProductsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { toggleWishlist, isInWishlist, isWishlistProcessing } = useWishlist();
+  const { addItemToCart, isProcessing: isCartProcessing } = useCart();
 
+  console.log(isWishlistProcessing);
   const [filters, setFilters] = useLocalStorage<FilterState>(
     "productFilters",
     initialFilters
@@ -313,8 +318,38 @@ export default function ProductsScreen() {
             <Text style={styles.productTitle} numberOfLines={2}>
               {item.name}
             </Text>
-            <TouchableOpacity style={styles.heartButton}>
-              <Ionicons name="heart-outline" size={20} color="#DC3545" />
+            <TouchableOpacity
+              activeOpacity={0.7}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              onPress={() => {
+                const productData = {
+                  ...item,
+                  materials: item.tags || [],
+                  care: [],
+                  reviewCount: item.ratingCount || 0,
+                  featured: item.hasPromotion || false,
+                  originalPrice: item.originalPrice
+                    ? parseFloat(item.originalPrice)
+                    : item.price,
+                  images: item.images || [],
+                  description: item.description || item.shortDescription || "",
+                  stockQuantity: item.stockQuantity || 0,
+                  weight: 0,
+                  dimensions: undefined,
+                };
+                toggleWishlist(productData);
+              }}
+              disabled={isWishlistProcessing[item.id]}
+            >
+              {isWishlistProcessing[item.id] ? (
+                <ActivityIndicator size="small" color="#DC3545" />
+              ) : (
+                <Ionicons
+                  name={isInWishlist(item.id) ? "heart" : "heart-outline"}
+                  size={22}
+                  color="#DC3545"
+                />
+              )}
             </TouchableOpacity>
           </View>
 
@@ -341,9 +376,25 @@ export default function ProductsScreen() {
             )}
           </View>
 
-          <TouchableOpacity style={styles.addToCartButton}>
-            <Ionicons name="bag" size={14} color="white" />
-            <Text style={styles.addToCartText}>Add to Cart</Text>
+          <TouchableOpacity
+            style={[
+              styles.addToCartButton,
+              (!item.inStock || isCartProcessing[item.id]) &&
+                styles.disabledButton,
+            ]}
+            onPress={() => addItemToCart(item.id, 1, true)}
+            disabled={!item.inStock || isCartProcessing[item.id]}
+          >
+            {isCartProcessing[item.id] ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <>
+                <Ionicons name="bag" size={14} color="white" />
+                <Text style={styles.addToCartText}>
+                  {item.inStock ? "Add to Cart" : "Out of Stock"}
+                </Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -665,7 +716,23 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   heartButton: {
-    padding: 2,
+    padding: 8,
+    borderRadius: 16,
+    minWidth: 36,
+    minHeight: 36,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  heartButtonActive: {
+    backgroundColor: "rgba(220, 53, 69, 0.1)",
+    borderWidth: 1,
+    borderColor: "#DC3545",
   },
   ratingRow: {
     flexDirection: "row",
@@ -725,6 +792,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     marginLeft: 4,
+  },
+  disabledButton: {
+    opacity: 0.6,
+    backgroundColor: "#9CA3AF",
   },
   loadingContainer: {
     alignItems: "center",

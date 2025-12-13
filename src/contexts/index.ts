@@ -6,3 +6,4 @@ export {
   useFeaturedProducts,
   useHomepageData,
 } from "./HomepageDataContext";
+export { WishlistProvider, useWishlist } from "./WishlistContext";

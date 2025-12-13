@@ -1,4 +1,5 @@
-import { CartProvider } from "@/src/contexts";
+import { AuthInitializer } from "@/src/components/AuthInitializer";
+import { CartProvider, WishlistProvider } from "@/src/contexts";
 import { ClerkProvider } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Stack } from "expo-router";
@@ -19,90 +20,100 @@ if (!publishableKey) {
 export default function RootLayout() {
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+      <AuthInitializer />
       <SafeAreaProvider>
-        <CartProvider>
-          <Stack>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="home" options={{ headerShown: false }} />
-            <Stack.Screen name="products" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="product/[id]"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen name="categories" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="category/[slug]"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen name="cart" options={{ headerShown: false }} />
-            <Stack.Screen name="checkout" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="order-confirmation"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen name="search" options={{ headerShown: false }} />
-            <Stack.Screen name="about" options={{ headerShown: false }} />
-            <Stack.Screen name="contact" options={{ headerShown: false }} />
-            <Stack.Screen name="profile" options={{ headerShown: false }} />
-            <Stack.Screen name="more" options={{ headerShown: false }} />
+        <WishlistProvider>
+          <CartProvider>
+            <Stack>
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen name="home" options={{ headerShown: false }} />
+              <Stack.Screen name="products" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="product/[id]"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="categories"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="category/[slug]"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen name="cart" options={{ headerShown: false }} />
+              <Stack.Screen name="checkout" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="order-confirmation"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen name="search" options={{ headerShown: false }} />
+              <Stack.Screen name="wishlist" options={{ headerShown: false }} />
+              <Stack.Screen name="about" options={{ headerShown: false }} />
+              <Stack.Screen name="contact" options={{ headerShown: false }} />
+              <Stack.Screen name="profile" options={{ headerShown: false }} />
+              <Stack.Screen name="more" options={{ headerShown: false }} />
 
-            {/* Authentication */}
-            <Stack.Screen name="auth" options={{ headerShown: false }} />
-            <Stack.Screen name="auth/login" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="auth/register"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="auth/sign-in"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="auth/sign-up"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="auth/forgot-password"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="auth/verify-otp"
-              options={{ headerShown: false }}
-            />
+              {/* Authentication */}
+              <Stack.Screen name="auth" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="auth/login"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="auth/register"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="auth/sign-in"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="auth/sign-up"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="auth/forgot-password"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="auth/verify-otp"
+                options={{ headerShown: false }}
+              />
 
-            {/* Admin */}
-            <Stack.Screen name="admin" options={{ headerShown: false }} />
+              {/* Admin */}
+              <Stack.Screen name="admin" options={{ headerShown: false }} />
 
-            {/* Help */}
-            <Stack.Screen name="help" options={{ headerShown: false }} />
+              {/* Help */}
+              <Stack.Screen name="help" options={{ headerShown: false }} />
 
-            {/* Profile */}
-            <Stack.Screen
-              name="profile/orders"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="profile/addresses"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="profile/preferences"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="profile/account"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="profile/account-settings"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="profile/update-password"
-              options={{ headerShown: false }}
-            />
-          </Stack>
-        </CartProvider>
+              {/* Profile */}
+              <Stack.Screen
+                name="profile/orders"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="profile/addresses"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="profile/preferences"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="profile/account"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="profile/account-settings"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="profile/update-password"
+                options={{ headerShown: false }}
+              />
+            </Stack>
+          </CartProvider>
+        </WishlistProvider>
         <Toast />
       </SafeAreaProvider>
     </ClerkProvider>

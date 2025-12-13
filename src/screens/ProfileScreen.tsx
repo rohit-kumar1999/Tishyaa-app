@@ -67,6 +67,14 @@ export default function ProfileScreen() {
       showChevron: true,
     },
     {
+      id: "wishlist",
+      title: "My Wishlist",
+      subtitle: "Saved items you love",
+      icon: "heart-outline" as const,
+      route: "/wishlist",
+      showChevron: true,
+    },
+    {
       id: "addresses",
       title: "My Addresses",
       subtitle: "Manage delivery addresses",

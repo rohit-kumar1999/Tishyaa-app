@@ -1,15 +1,16 @@
-import React from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { router } from "expo-router";
+import React from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
   ScrollView,
+  StyleSheet,
+  Text,
   TouchableOpacity,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../types';
+  View,
+} from "react-native";
+import { RootStackParamList } from "../types";
 
 type MoreScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -18,110 +19,110 @@ export default function MoreScreen() {
 
   const quickActions = [
     {
-      id: '1',
-      title: 'Search',
-      icon: 'search-outline',
-      color: '#4CAF50',
-      onPress: () => navigation.navigate('Search'),
+      id: "1",
+      title: "Search",
+      icon: "search-outline",
+      color: "#4CAF50",
+      onPress: () => navigation.navigate("Search"),
     },
     {
-      id: '2',
-      title: 'Offers',
-      icon: 'pricetag-outline',
-      color: '#FF9800',
+      id: "2",
+      title: "Offers",
+      icon: "pricetag-outline",
+      color: "#FF9800",
       onPress: () => {},
     },
     {
-      id: '3',
-      title: 'Wishlist',
-      icon: 'heart-outline',
-      color: '#E91E63',
-      onPress: () => {},
+      id: "3",
+      title: "Wishlist",
+      icon: "heart-outline",
+      color: "#E91E63",
+      onPress: () => router.push("/wishlist"),
     },
     {
-      id: '4',
-      title: 'Orders',
-      icon: 'bag-outline',
-      color: '#2196F3',
+      id: "4",
+      title: "Orders",
+      icon: "bag-outline",
+      color: "#2196F3",
       onPress: () => {},
     },
   ];
 
   const menuSections = [
     {
-      title: 'Account',
+      title: "Account",
       items: [
         {
-          id: 'profile',
-          title: 'My Profile',
-          subtitle: 'Manage your account',
-          icon: 'person-outline',
+          id: "profile",
+          title: "My Profile",
+          subtitle: "Manage your account",
+          icon: "person-outline",
           onPress: () => {},
         },
         {
-          id: 'orders',
-          title: 'My Orders',
-          subtitle: 'Track and manage orders',
-          icon: 'bag-outline',
+          id: "orders",
+          title: "My Orders",
+          subtitle: "Track and manage orders",
+          icon: "bag-outline",
           onPress: () => {},
         },
         {
-          id: 'addresses',
-          title: 'Addresses',
-          subtitle: 'Manage shipping addresses',
-          icon: 'location-outline',
+          id: "addresses",
+          title: "Addresses",
+          subtitle: "Manage shipping addresses",
+          icon: "location-outline",
           onPress: () => {},
         },
       ],
     },
     {
-      title: 'Support',
+      title: "Support",
       items: [
         {
-          id: 'help',
-          title: 'Help & Support',
-          subtitle: 'FAQs and customer support',
-          icon: 'help-circle-outline',
-          onPress: () => navigation.navigate('Help'),
+          id: "help",
+          title: "Help & Support",
+          subtitle: "FAQs and customer support",
+          icon: "help-circle-outline",
+          onPress: () => navigation.navigate("Help"),
         },
         {
-          id: 'contact',
-          title: 'Contact Us',
-          subtitle: 'Get in touch with us',
-          icon: 'call-outline',
-          onPress: () => navigation.navigate('Contact'),
+          id: "contact",
+          title: "Contact Us",
+          subtitle: "Get in touch with us",
+          icon: "call-outline",
+          onPress: () => navigation.navigate("Contact"),
         },
         {
-          id: 'feedback',
-          title: 'Feedback',
-          subtitle: 'Share your experience',
-          icon: 'chatbubble-outline',
+          id: "feedback",
+          title: "Feedback",
+          subtitle: "Share your experience",
+          icon: "chatbubble-outline",
           onPress: () => {},
         },
       ],
     },
     {
-      title: 'About',
+      title: "About",
       items: [
         {
-          id: 'about',
-          title: 'About Tishyaa',
-          subtitle: 'Learn more about us',
-          icon: 'information-circle-outline',
-          onPress: () => navigation.navigate('About'),
+          id: "about",
+          title: "About Tishyaa",
+          subtitle: "Learn more about us",
+          icon: "information-circle-outline",
+          onPress: () => navigation.navigate("About"),
         },
         {
-          id: 'privacy',
-          title: 'Privacy Policy',
-          subtitle: 'How we handle your data',
-          icon: 'shield-outline',
+          id: "privacy",
+          title: "Privacy Policy",
+          subtitle: "How we handle your data",
+          icon: "shield-outline",
           onPress: () => {},
         },
         {
-          id: 'terms',
-          title: 'Terms of Service',
-          subtitle: 'Terms and conditions',
-          icon: 'document-text-outline',
+          id: "terms",
+          title: "Terms of Service",
+          subtitle: "Terms and conditions",
+          icon: "document-text-outline",
           onPress: () => {},
         },
       ],
@@ -145,7 +146,12 @@ export default function MoreScreen() {
               style={styles.quickActionCard}
               onPress={action.onPress}
             >
-              <View style={[styles.quickActionIcon, { backgroundColor: action.color }]}>
+              <View
+                style={[
+                  styles.quickActionIcon,
+                  { backgroundColor: action.color },
+                ]}
+              >
                 <Ionicons name={action.icon as any} size={24} color="#fff" />
               </View>
               <Text style={styles.quickActionTitle}>{action.title}</Text>
@@ -170,14 +176,22 @@ export default function MoreScreen() {
               >
                 <View style={styles.menuItemLeft}>
                   <View style={styles.menuIconContainer}>
-                    <Ionicons name={item.icon as any} size={20} color="#C9A961" />
+                    <Ionicons
+                      name={item.icon as any}
+                      size={20}
+                      color="#C9A961"
+                    />
                   </View>
                   <View style={styles.menuItemText}>
                     <Text style={styles.menuItemTitle}>{item.title}</Text>
                     <Text style={styles.menuItemSubtitle}>{item.subtitle}</Text>
                   </View>
                 </View>
-                <Ionicons name="chevron-forward-outline" size={20} color="#ccc" />
+                <Ionicons
+                  name="chevron-forward-outline"
+                  size={20}
+                  color="#ccc"
+                />
               </TouchableOpacity>
             ))}
           </View>
@@ -196,18 +210,18 @@ export default function MoreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 50,
     paddingBottom: 20,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
   quickActionsContainer: {
     paddingHorizontal: 20,
@@ -215,68 +229,68 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 16,
   },
   quickActionsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   quickActionCard: {
-    alignItems: 'center',
-    width: '23%',
+    alignItems: "center",
+    width: "23%",
   },
   quickActionIcon: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 8,
   },
   quickActionTitle: {
     fontSize: 12,
-    fontWeight: '500',
-    color: '#333',
-    textAlign: 'center',
+    fontWeight: "500",
+    color: "#333",
+    textAlign: "center",
   },
   menuSection: {
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
   menuCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
   menuItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
   menuItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   menuItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
   },
   menuIconContainer: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#f8f9fa',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#f8f9fa",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 16,
   },
   menuItemText: {
@@ -284,26 +298,26 @@ const styles = StyleSheet.create({
   },
   menuItemTitle: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
+    fontWeight: "500",
+    color: "#333",
     marginBottom: 2,
   },
   menuItemSubtitle: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
   },
   appInfoContainer: {
     paddingHorizontal: 20,
     paddingVertical: 30,
-    alignItems: 'center',
+    alignItems: "center",
   },
   appVersion: {
     fontSize: 14,
-    color: '#999',
+    color: "#999",
     marginBottom: 4,
   },
   appCopyright: {
     fontSize: 12,
-    color: '#ccc',
+    color: "#ccc",
   },
 });

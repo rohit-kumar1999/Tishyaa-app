@@ -10,9 +10,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useWishlist } from "../contexts/WishlistContext";
 import { useToast } from "../hooks/use-toast";
 import { useCart } from "../hooks/useCart";
-import { useProductManager } from "../hooks/useProductManager";
 import { Product } from "../services/productService";
 
 const { width } = Dimensions.get("window");
@@ -27,8 +27,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   product,
   viewMode = "grid",
 }) => {
-  const { isInWishlist, toggleWishlist, isWishlistProcessing } =
-    useProductManager();
+  const { isInWishlist, toggleWishlist, isWishlistProcessing } = useWishlist();
   const { addItemToCart, isProcessing: isCartProcessing } = useCart();
 
   const isProductInWishlist = isInWishlist(product.id);
@@ -37,7 +36,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const router = useRouter();
   const { toast } = useToast();
 
-  const isOutOfStock = product.status === "inactive" || product.stock <= 0;
+  const isOutOfStock =
+    !product.active || !product.inStock || product.stockQuantity <= 0;
 
   const addProductToCart = (product: Product) => {
     addItemToCart(product.id, 1, true); // Set navigateToCart to true
@@ -48,8 +48,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   };
 
   const handleWishlistPress = () => {
-    // Mock wishlist functionality
-    console.log("Toggle wishlist for product:", product.id);
+    toggleWishlist(product);
   };
 
   const handleAddToCart = () => {
@@ -57,7 +56,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   };
 
   const getImageUri = () => {
-    return product.image;
+    return product.images && product.images.length > 0 ? product.images[0] : "";
   };
 
   const cardStyle = viewMode === "list" ? styles.listCard : styles.gridCard;
@@ -127,51 +126,26 @@ const ProductCard: React.FC<ProductCardProps> = ({
             {product.description}
           </Text>
         </View>
-
-        <View style={styles.footer}>
+        <View style={styles.priceContainer}>
           <Text style={styles.price}>₹{product.price.toLocaleString()}</Text>
-
-          <View style={styles.actions}>
-            <TouchableOpacity
-              style={styles.wishlistActionButton}
-              onPress={handleWishlistPress}
-              disabled={isWishlistLoading}
-            >
-              {isWishlistLoading ? (
-                <ActivityIndicator size="small" color="#dc2626" />
-              ) : (
-                <>
-                  <Ionicons
-                    name={isProductInWishlist ? "heart" : "heart-outline"}
-                    size={14}
-                    color="#dc2626"
-                  />
-                  <Text style={styles.wishlistActionText}>
-                    {isProductInWishlist ? "Wishlisted" : "Wishlist"}
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.addToCartButton,
-                isOutOfStock && styles.disabledButton,
-              ]}
-              onPress={handleAddToCart}
-              disabled={isCartLoading || isOutOfStock}
-            >
-              {isCartLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <MaterialIcons name="shopping-cart" size={14} color="#fff" />
-                  <Text style={styles.addToCartText}>Add to Cart</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
         </View>
+        <TouchableOpacity
+          style={[
+            styles.addToCartButton,
+            isOutOfStock && styles.disabledButton,
+          ]}
+          onPress={handleAddToCart}
+          disabled={isCartLoading || isOutOfStock}
+        >
+          {isCartLoading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <MaterialIcons name="shopping-cart" size={14} color="#fff" />
+              <Text style={styles.addToCartText}>Add to Cart</Text>
+            </>
+          )}
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -300,6 +274,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
+  priceContainer: {
+    marginBottom: 0,
+  },
   price: {
     fontSize: 18,
     fontWeight: "bold",
@@ -328,10 +305,13 @@ const styles = StyleSheet.create({
   addToCartButton: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 6,
-    backgroundColor: "#dc2626",
+    backgroundColor: "#ff0000ff",
+    marginTop: 6,
   },
   disabledButton: {
     opacity: 0.5,

@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useWishlist } from "../contexts/WishlistContext";
 import { useCart } from "../hooks/useCart";
 import SearchDialog from "./SearchDialog";
 
@@ -24,12 +25,16 @@ const NavBar: React.FC = () => {
   const navigation = useNavigation<NavigationProp<any>>();
   const route = useRoute();
   const { cartItems } = useCart();
+  const { wishlist } = useWishlist();
 
   // Calculate total number of items in the cart
   const cartItemsCount = cartItems.reduce(
     (total, item) => total + item.quantity,
     0
   );
+
+  // Calculate wishlist items count
+  const wishlistItemsCount = wishlist?.length || 0;
 
   const navigationItems = [
     { title: "Collection", screen: "Products" },
@@ -101,6 +106,18 @@ const NavBar: React.FC = () => {
 
             <TouchableOpacity
               style={styles.iconButton}
+              onPress={() => navigation.navigate("wishlist" as never)}
+            >
+              <Feather name="heart" size={20} color="#000" />
+              {wishlistItemsCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{wishlistItemsCount}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.iconButton}
               onPress={() => navigation.navigate("Cart")}
             >
               <Feather name="shopping-bag" size={20} color="#000" />
@@ -145,6 +162,21 @@ const NavBar: React.FC = () => {
                   </Text>
                 </TouchableOpacity>
               ))}
+
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  navigation.navigate("wishlist" as never);
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                <View style={styles.signInItem}>
+                  <Feather name="heart" size={16} color="#666" />
+                  <Text style={styles.menuItemText}>
+                    Wishlist ({wishlistItemsCount})
+                  </Text>
+                </View>
+              </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.menuItem}

@@ -1,3 +1,4 @@
+import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useState } from "react";
 import { Alert } from "react-native";
 import { Product } from "../types";
@@ -8,7 +9,6 @@ import {
   useApiQuery,
 } from "./useApiQuery";
 import { useCart } from "./useCart";
-import { useUserData } from "./useUserData";
 
 // Wishlist API types
 interface WishlistResponse {
@@ -32,7 +32,8 @@ interface WishlistRemoveRequest {
 }
 
 export const useProductManager = () => {
-  const { isSignedIn } = useUserData();
+  const { isSignedIn } = useAuth();
+  const { user } = useUser();
   const [isWishlistProcessing, setIsWishlistProcessing] = useState<
     Record<string, boolean>
   >({});
@@ -40,29 +41,38 @@ export const useProductManager = () => {
     Record<string, boolean>
   >({});
 
-  // Get wishlist data
-  const { data: wishlistResponse, refetch: refetchWishlist } =
-    useApiQuery<WishlistResponse>("/wishlist", {
-      enabled: isSignedIn,
-      errorMessage: "Failed to load wishlist",
-    });
+  const userId = user?.id;
 
-  // Handle different response formats from the API
-  const wishlist = wishlistResponse?.items || [];
-  const wishlistProductIds = wishlist.map((item) => item.productId) || [];
+  // Get wishlist data - backend returns array directly, not wrapped in items
+  // Only construct URL and make request when userId is available
+  const wishlistUrl = userId ? `/wishlist?userId=${userId}` : null;
+
+  const {
+    data: wishlistItems,
+    isLoading: wishlistQueryLoading,
+    error: wishlistQueryError,
+    refetch: refetchWishlist,
+  } = useApiQuery<any[]>(wishlistUrl || "/wishlist", {
+    enabled: isSignedIn && !!userId && !!wishlistUrl,
+    errorMessage: "Failed to load wishlist",
+  });
+
+  // Backend returns array of products with wishlist metadata
+  const wishlist = wishlistItems || [];
+  const wishlistProductIds = wishlist.map((item) => item.id) || [];
 
   // Mutations
-  const wishlistAddMutation = useApiMutation<any, WishlistActionRequest>(
+  const wishlistAddMutation = useApiMutation<any, { productId: string }>(
     "/wishlist",
     {
-      invalidateQueries: ["/wishlist"],
+      invalidateQueries: userId ? [`/wishlist?userId=${userId}`] : [],
       successMessage: "Added to wishlist",
       errorMessage: "Failed to add to wishlist",
     }
   );
 
   const wishlistRemoveMutation = useApiDeleteMutation<any>("/wishlist", {
-    invalidateQueries: ["/wishlist"],
+    invalidateQueries: userId ? [`/wishlist?userId=${userId}`] : [],
     successMessage: "Removed from wishlist",
     errorMessage: "Failed to remove from wishlist",
   });
@@ -74,40 +84,86 @@ export const useProductManager = () => {
     return wishlistProductIds.includes(productId);
   };
 
+  // Wishlist count for easy access
+  const wishlistCount = wishlist.length;
+
   // Handle wishlist toggle
   const toggleWishlist = (product: Product) => {
+    console.log(
+      "🛠️ toggleWishlist called for product:",
+      product.id,
+      product.name
+    );
+    console.log("🔐 User signed in status:", isSignedIn);
+
     if (!isSignedIn) {
+      console.log("❌ User not signed in, showing alert");
       Alert.alert(
         "Sign In Required",
         "Please sign in to add items to your wishlist",
-        [{ text: "OK" }]
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Sign In",
+            onPress: () => {
+              // Navigate to sign in - you can uncomment this if you have router available
+              // router.push('/auth/login');
+              console.log("Navigate to sign in");
+            },
+          },
+        ]
       );
       return;
     }
 
+    console.log("✅ Starting wishlist toggle for product:", product.id);
     setIsWishlistProcessing((prev) => ({ ...prev, [product.id]: true }));
 
     const isCurrentlyInWishlist = isInWishlist(product.id);
+    console.log("📋 Product currently in wishlist:", isCurrentlyInWishlist);
 
     if (isCurrentlyInWishlist) {
-      // Remove from wishlist
-      wishlistRemoveMutation.mutate({ productId: product.id });
-      refetchWishlist();
-      setIsWishlistProcessing((prev) => ({
-        ...prev,
-        [product.id]: false,
-      }));
+      console.log("🗑️ Removing from wishlist:", product.id);
+      // Backend expects DELETE /wishlist?productId=X&userId=Y
+      wishlistRemoveMutation
+        .mutate({ params: { productId: product.id, userId } })
+        .then(() => {
+          console.log("✅ Successfully removed from wishlist");
+          setIsWishlistProcessing((prev) => ({
+            ...prev,
+            [product.id]: false,
+          }));
+          // Force immediate refetch to sync with server
+          refetchWishlist();
+        })
+        .catch((error: any) => {
+          console.error("❌ Failed to remove from wishlist:", error);
+          setIsWishlistProcessing((prev) => ({
+            ...prev,
+            [product.id]: false,
+          }));
+        });
     } else {
-      // Add to wishlist
-      wishlistAddMutation.mutate({
-        productId: product.id,
-        action: "add",
-      });
-      refetchWishlist();
-      setIsWishlistProcessing((prev) => ({
-        ...prev,
-        [product.id]: false,
-      }));
+      console.log("❤️ Adding to wishlist:", product.id);
+      // Backend expects POST /wishlist with { productId } in body
+      wishlistAddMutation
+        .mutate({ productId: product.id })
+        .then(() => {
+          console.log("✅ Successfully added to wishlist");
+          setIsWishlistProcessing((prev) => ({
+            ...prev,
+            [product.id]: false,
+          }));
+          // Force immediate refetch to sync with server
+          refetchWishlist();
+        })
+        .catch((error: any) => {
+          console.error("❌ Failed to add to wishlist:", error);
+          setIsWishlistProcessing((prev) => ({
+            ...prev,
+            [product.id]: false,
+          }));
+        });
     }
   };
 
@@ -214,7 +270,12 @@ export const useProductManager = () => {
     // Wishlist data
     wishlist,
     wishlistProductIds,
+    wishlistCount,
     isInWishlist,
+
+    // Loading and error states
+    isWishlistLoading: wishlistQueryLoading,
+    wishlistError: wishlistQueryError,
 
     // Processing states
     isWishlistProcessing,
