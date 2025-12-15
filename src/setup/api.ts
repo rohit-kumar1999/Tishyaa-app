@@ -1,5 +1,4 @@
 // API setup for React Native with environment detection
-import { Platform } from "react-native";
 
 interface ApiConfig {
   baseURL: string;
@@ -8,10 +7,16 @@ interface ApiConfig {
 
 // Global auth state for API client
 let globalGetToken: (() => Promise<string | null>) | null = null;
+let globalGetUserId: (() => string | null) | null = null;
 
 // Function to set the auth token getter
 export const setAuthTokenGetter = (getToken: () => Promise<string | null>) => {
   globalGetToken = getToken;
+};
+
+// Function to set the user ID getter
+export const setUserIdGetter = (getUserId: () => string | null) => {
+  globalGetUserId = getUserId;
 };
 
 // Environment detection
@@ -23,16 +28,17 @@ const getBaseURL = (): string => {
     return "https://kaess-be.vercel.app";
   }
 
-  // Development URL
-  // Android Emulator maps localhost to 10.0.2.2
-  if (Platform.OS === "android") {
-    // Check if running in emulator by trying to detect the environment
-    // In most cases, you'll want to use tunnel mode for Android
-    return "http://localhost:3000";
-  }
+  // Development URL - Use production API for mobile devices
+  // Since localhost:3000 doesn't work on mobile devices (iOS/Android)
+  // We'll use the production server for all platforms in development
+  return "https://kaess-be.vercel.app";
 
-  // For iOS Simulator, web, and other platforms, localhost works fine
-  return "http://localhost:3000";
+  // Note: If you have a local development server and want to use it for web only,
+  // you can uncomment and modify the following:
+  // if (Platform.OS === "web") {
+  //   return "http://localhost:3000";
+  // }
+  // return "https://kaess-be.vercel.app";
 };
 
 class ApiClient {
@@ -59,6 +65,19 @@ class ApiClient {
         }
       } catch (error) {
         console.warn("Failed to get auth token:", error);
+      }
+    }
+
+    // Add user ID header if available
+    if (globalGetUserId) {
+      try {
+        const userId = globalGetUserId();
+        if (userId) {
+          defaultHeaders["x-user-id"] = userId;
+          defaultHeaders["x-user-role"] = "user"; // Default role, can be made configurable later
+        }
+      } catch (error) {
+        console.warn("Failed to get user ID:", error);
       }
     }
 

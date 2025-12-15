@@ -1,5 +1,7 @@
 import { api } from "@/src/setup/api";
+import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useApiMutation, useApiQuery } from "../hooks/useApiQuery";
 
 export interface Product {
   id: string;
@@ -31,6 +33,20 @@ export interface Product {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface CartItem {
+  id: string;
+  productId: string;
+  product: Product;
+  quantity: number;
+  price: number;
+  total: number;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const CART_ENDPOINT = "/cart";
 
 export interface ProductResponse {
   products: Product[];
@@ -281,4 +297,63 @@ export const useProducts = (params?: {
     error,
     refetch,
   };
+};
+
+// Cart Service Hooks
+export const useGetCart = () => {
+  const { isSignedIn } = useAuth();
+  const { user } = useUser();
+  const userId = user?.id;
+
+  console.log("🔍 useGetCart called:", { userId, isSignedIn });
+
+  return useApiQuery<CartItem[]>(`/cart?userId=${userId}`, {
+    enabled: !!userId && isSignedIn,
+    dependencies: [userId],
+    errorMessage: "Failed to load cart",
+  });
+};
+
+export const useAddToCart = () => {
+  const { user } = useUser();
+  const userId = user?.id;
+
+  return useApiMutation<CartItem, { productId: string; quantity: number }>(
+    CART_ENDPOINT,
+    {
+      invalidateQueries: userId ? [`/cart?userId=${userId}`] : [],
+      successMessage: "Added to your cart",
+      transformRequest: (data) => ({ ...data, userId }),
+    }
+  );
+};
+
+export const useUpdateCartItem = () => {
+  const { user } = useUser();
+  const userId = user?.id;
+
+  return useApiMutation<any, { cartId: string; quantity: number }>("/cart", {
+    invalidateQueries: userId ? [`/cart?userId=${userId}`] : [],
+    successMessage: "Cart updated successfully",
+    transformRequest: (data) => ({
+      cartId: data.cartId,
+      quantity: data.quantity,
+      userId: userId,
+    }),
+  });
+};
+
+export const useRemoveFromCart = () => {
+  const { user } = useUser();
+  const userId = user?.id;
+
+  return useApiMutation<void, { cartId: string }>("/cart", {
+    invalidateQueries: userId ? [`/cart?userId=${userId}`] : [],
+    successMessage: "Removed from your cart",
+    transformRequest: (data: { cartId: string }) => ({
+      cartId: data.cartId,
+      quantity: 0, // Set quantity to 0 to remove item
+      userId: userId,
+    }),
+  });
 };

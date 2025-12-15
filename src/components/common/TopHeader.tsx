@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useApiCart } from "../../contexts/ApiCartContext";
 import { useWishlist } from "../../contexts/WishlistContext";
 
 export const TopHeader = () => {
@@ -19,6 +20,9 @@ export const TopHeader = () => {
 
   // Get wishlist count from context
   const { wishlistCount } = useWishlist();
+
+  // Get cart count from shared cart context
+  const { cartCount } = useApiCart();
 
   const handleSearchPress = () => {
     router.push("/search");
@@ -78,7 +82,11 @@ export const TopHeader = () => {
               onPress={handleCartPress}
             >
               <Ionicons name="bag-outline" size={24} color="#e11d48" />
-              {/* You can add cart count badge here if needed */}
+              {cartCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{cartCount}</Text>
+                </View>
+              )}
             </TouchableOpacity>
 
             {/* Profile Section - Conditional Rendering */}

@@ -95,9 +95,15 @@ export const useApiQuery = <T = unknown>(
 
 // Simple mutation state interface
 interface MutationState<T> {
-  mutate: (data?: any) => Promise<T | null>;
+  mutate: (data?: any, callbacks?: MutationCallbacks<T>) => Promise<T | null>;
   isLoading: boolean;
   error: Error | null;
+}
+
+interface MutationCallbacks<T> {
+  onSuccess?: (data: T) => void;
+  onError?: (error: Error) => void;
+  onSettled?: () => void;
 }
 
 // Hook to wrap API POST requests
@@ -124,7 +130,7 @@ export const useApiMutation = <T = unknown, D = unknown>(
   });
 
   const mutate = useCallback(
-    async (data?: D): Promise<T | null> => {
+    async (data?: D, callbacks?: MutationCallbacks<T>): Promise<T | null> => {
       setState({ isLoading: true, error: null });
 
       try {
@@ -149,10 +155,6 @@ export const useApiMutation = <T = unknown, D = unknown>(
 
         setState({ isLoading: false, error: null });
 
-        if (successMessage) {
-          toast({ description: successMessage });
-        }
-
         // Handle query invalidation
         if (invalidateQueries) {
           if (Array.isArray(invalidateQueries)) {
@@ -164,14 +166,38 @@ export const useApiMutation = <T = unknown, D = unknown>(
           }
         }
 
+        // Call success callback
+        if (callbacks?.onSuccess) {
+          callbacks.onSuccess(response);
+        }
+
+        if (successMessage) {
+          toast({ description: successMessage });
+        }
+
+        // Call settled callback
+        if (callbacks?.onSettled) {
+          callbacks.onSettled();
+        }
+
         return response;
       } catch (error) {
         const err =
           error instanceof Error ? error : new Error("An error occurred");
         setState({ isLoading: false, error: err });
 
+        // Call error callback
+        if (callbacks?.onError) {
+          callbacks.onError(err);
+        }
+
         const message = errorMessage || "An error occurred";
         toast({ description: message, variant: "destructive" });
+
+        // Call settled callback
+        if (callbacks?.onSettled) {
+          callbacks.onSettled();
+        }
 
         return null;
       }
@@ -218,7 +244,7 @@ export const useApiDeleteMutation = <T = unknown>(
   });
 
   const mutate = useCallback(
-    async (data: any): Promise<T | null> => {
+    async (data: any, callbacks?: MutationCallbacks<T>): Promise<T | null> => {
       setState({ isLoading: true, error: null });
 
       try {
@@ -253,10 +279,6 @@ export const useApiDeleteMutation = <T = unknown>(
 
         setState({ isLoading: false, error: null });
 
-        if (successMessage) {
-          toast({ description: successMessage });
-        }
-
         // Handle query invalidation
         if (invalidateQueries) {
           if (Array.isArray(invalidateQueries)) {
@@ -268,14 +290,38 @@ export const useApiDeleteMutation = <T = unknown>(
           }
         }
 
+        // Call success callback
+        if (callbacks?.onSuccess) {
+          callbacks.onSuccess(response);
+        }
+
+        if (successMessage) {
+          toast({ description: successMessage });
+        }
+
+        // Call settled callback
+        if (callbacks?.onSettled) {
+          callbacks.onSettled();
+        }
+
         return response;
       } catch (error) {
         const err =
           error instanceof Error ? error : new Error("An error occurred");
         setState({ isLoading: false, error: err });
 
+        // Call error callback
+        if (callbacks?.onError) {
+          callbacks.onError(err);
+        }
+
         const message = errorMessage || "An error occurred";
         toast({ description: message, variant: "destructive" });
+
+        // Call settled callback
+        if (callbacks?.onSettled) {
+          callbacks.onSettled();
+        }
 
         return null;
       }

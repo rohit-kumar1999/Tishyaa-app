@@ -160,36 +160,28 @@ export default function WishlistScreen() {
     }
   };
 
-  // Loading state
-  if (isWishlistLoading) {
-    return (
-      <View style={styles.container}>
-        <TopHeader />
-        <View style={styles.content}>
+  // Helper function to render content based on state
+  const renderContent = () => {
+    if (isWishlistLoading) {
+      return (
+        <>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>My Wishlist</Text>
           </View>
-
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#e11d48" />
             <Text style={styles.loadingText}>Loading your wishlist...</Text>
           </View>
-        </View>
-        <BottomNavigation currentRoute="/wishlist" />
-      </View>
-    );
-  }
+        </>
+      );
+    }
 
-  // Error state
-  if (wishlistError) {
-    return (
-      <View style={styles.container}>
-        <TopHeader />
-        <View style={styles.content}>
+    if (wishlistError) {
+      return (
+        <>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>My Wishlist</Text>
           </View>
-
           <View style={styles.errorContainer}>
             <Ionicons name="heart-outline" size={64} color="#ef4444" />
             <Text style={styles.errorTitle}>Could not load wishlist</Text>
@@ -200,22 +192,16 @@ export default function WishlistScreen() {
               <Text style={styles.retryButtonText}>Try Again</Text>
             </TouchableOpacity>
           </View>
-        </View>
-        <BottomNavigation currentRoute="/wishlist" />
-      </View>
-    );
-  }
+        </>
+      );
+    }
 
-  // Empty state
-  if (currentItems.length === 0) {
-    return (
-      <View style={styles.container}>
-        <TopHeader />
-        <View style={styles.content}>
+    if (currentItems.length === 0) {
+      return (
+        <>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>My Wishlist</Text>
           </View>
-
           <View style={styles.emptyContainer}>
             <Ionicons name="heart-outline" size={64} color="#9ca3af" />
             <Text style={styles.emptyTitle}>Your Wishlist is Empty</Text>
@@ -235,79 +221,81 @@ export default function WishlistScreen() {
               </LinearGradient>
             </TouchableOpacity>
           </View>
-        </View>
-        <BottomNavigation currentRoute="/wishlist" />
-      </View>
-    );
-  }
+        </>
+      );
+    }
 
-  // Main render with items
+    return (
+      <FlatList
+        data={currentItems}
+        ListHeaderComponent={() => (
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>My Wishlist</Text>
+          </View>
+        )}
+        renderItem={({ item }) => {
+          // Transform wishlist item to Product format for ProductCard
+          const product: Product = {
+            id: item.id,
+            name: item.name || "",
+            description: "",
+            shortDescription: "",
+            productType: "jewelry",
+            category: "jewelry",
+            subcategory: "",
+            originalPrice: item.price?.toString() || "0",
+            price: item.price || 0,
+            discountPrice: null,
+            discount: null,
+            images: Array.isArray(item.images)
+              ? item.images
+              : [item.images].filter(Boolean),
+            rating: 0,
+            ratingCount: 0,
+            active: true,
+            inStock: item.inStock ?? true,
+            stockQuantity: 0,
+            specifications: {},
+            attributes: {},
+            hasPromotion: false,
+            promotionText: null,
+            promotionType: null,
+            promotionData: null,
+            tags: [],
+            keywords: [],
+            metadata: {},
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+
+          return <ProductCard product={product} viewMode="grid" />;
+        }}
+        keyExtractor={(item, index) => `wishlist-${item.id}-${index}`}
+        numColumns={2}
+        contentContainerStyle={styles.listContainer}
+        columnWrapperStyle={styles.row}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        ListFooterComponent={() =>
+          totalPages > 1 ? (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          ) : null
+        }
+      />
+    );
+  };
+
+  // Single return statement with consistent layout
   return (
     <View style={styles.container}>
       <TopHeader />
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>My Wishlist</Text>
-        </View>
-
-        <FlatList
-          data={currentItems}
-          renderItem={({ item }) => {
-            // Transform wishlist item to Product format for ProductCard
-            const product: Product = {
-              id: item.id,
-              name: item.name || "",
-              description: "",
-              shortDescription: "",
-              productType: "jewelry",
-              category: "jewelry",
-              subcategory: "",
-              originalPrice: item.price?.toString() || "0",
-              price: item.price || 0,
-              discountPrice: null,
-              discount: null,
-              images: Array.isArray(item.images)
-                ? item.images
-                : [item.images].filter(Boolean),
-              rating: 0,
-              ratingCount: 0,
-              active: true,
-              inStock: item.inStock ?? true,
-              stockQuantity: 0,
-              specifications: {},
-              attributes: {},
-              hasPromotion: false,
-              promotionText: null,
-              promotionType: null,
-              promotionData: null,
-              tags: [],
-              keywords: [],
-              metadata: {},
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            };
-
-            return <ProductCard product={product} viewMode="grid" />;
-          }}
-          keyExtractor={(item, index) => `wishlist-${item.id}-${index}`}
-          numColumns={2}
-          contentContainerStyle={styles.listContainer}
-          columnWrapperStyle={styles.row}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          ListFooterComponent={() =>
-            totalPages > 1 ? (
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
-            ) : null
-          }
-        />
-      </View>
+      <View style={styles.content}>{renderContent()}</View>
       <BottomNavigation currentRoute="/wishlist" />
     </View>
   );

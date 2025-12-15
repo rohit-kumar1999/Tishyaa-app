@@ -1,3 +1,4 @@
+import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React, { useEffect, useState } from "react";
@@ -11,9 +12,8 @@ import {
   View,
 } from "react-native";
 import { z } from "zod";
-import { useCart } from "../hooks/useCart";
+import { useApiCart } from "../contexts/ApiCartContext";
 import { usePayment } from "../hooks/usePayment";
-import { useUserData } from "../hooks/useUserData";
 import { useGetAddresses } from "../services/addressService";
 import PaymentMethods from "./checkout/PaymentMethods";
 import { Button } from "./ui/button";
@@ -48,10 +48,10 @@ interface CheckoutFormProps {
 }
 
 const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess, onCancel }) => {
-  const { cartItems } = useCart();
+  const { cartItems } = useApiCart();
   const { processPayment, isProcessing } = usePayment();
   const { data: addresses = [] } = useGetAddresses();
-  const { userId } = useUserData();
+  const { userId } = useAuth();
   const [useNewAddress, setUseNewAddress] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<string>("credit_card");
@@ -95,10 +95,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess, onCancel }) => {
   }, [addresses, setValue]);
 
   // Calculate totals
-  const subtotal = cartItems.reduce(
+  const subtotal = cartItems?.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
-  );
+  ) || 0;
   const shipping = subtotal > 1000 ? 0 : 100; // Free shipping over ₹1000
   const tax = subtotal * 0.18; // 18% GST
   const total = subtotal + shipping + tax;
@@ -120,12 +120,12 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess, onCancel }) => {
           zipCode: data.zipCode,
           country: data.country,
         },
-        items: cartItems.map((item) => ({
+        items: cartItems?.map((item) => ({
           id: item.id,
           name: item.product.name,
           quantity: item.quantity,
           price: item.price,
-        })),
+        })) || [],
         paymentMethod: data.paymentMethod as any,
         ...paymentDetails,
       };

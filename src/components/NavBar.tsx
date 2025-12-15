@@ -24,14 +24,11 @@ const NavBar: React.FC = () => {
 
   const navigation = useNavigation<NavigationProp<any>>();
   const route = useRoute();
-  const { cartItems } = useCart();
+  const { cartCount } = useCart();
   const { wishlist } = useWishlist();
 
-  // Calculate total number of items in the cart
-  const cartItemsCount = cartItems.reduce(
-    (total, item) => total + item.quantity,
-    0
-  );
+  // Use cart count from hook for consistency
+  const cartItemsCount = cartCount;
 
   // Calculate wishlist items count
   const wishlistItemsCount = wishlist?.length || 0;

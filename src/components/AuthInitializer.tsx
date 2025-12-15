@@ -1,6 +1,6 @@
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useEffect } from "react";
-import { setAuthTokenGetter } from "../setup/api";
+import { setAuthTokenGetter, setUserIdGetter } from "../setup/api";
 
 /**
  * Component that initializes the global auth token getter for API calls
@@ -8,6 +8,7 @@ import { setAuthTokenGetter } from "../setup/api";
  */
 export const AuthInitializer = () => {
   const { getToken } = useAuth();
+  const { user } = useUser();
 
   useEffect(() => {
     // Set the global auth token getter for the API client
@@ -19,7 +20,12 @@ export const AuthInitializer = () => {
         return null;
       }
     });
-  }, [getToken]);
+
+    // Set the global user ID getter for the API client
+    setUserIdGetter(() => {
+      return user?.id || null;
+    });
+  }, [getToken, user]);
 
   return null; // This component doesn't render anything
 };

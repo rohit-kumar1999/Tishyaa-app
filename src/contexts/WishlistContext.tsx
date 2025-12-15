@@ -98,9 +98,7 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
       } else {
         await wishlistAddMutation.mutate({ productId: product.id });
       }
-
-      // Force refetch after successful operation
-      await refetchWishlist();
+      // No need for manual refetch - mutations already invalidate queries automatically
     } catch (error) {
       console.error("Failed to toggle wishlist:", error);
     } finally {

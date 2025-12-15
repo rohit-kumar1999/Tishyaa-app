@@ -382,7 +382,7 @@ export default function ProductsScreen() {
               (!item.inStock || isCartProcessing[item.id]) &&
                 styles.disabledButton,
             ]}
-            onPress={() => addItemToCart(item.id, 1, true)}
+            onPress={() => addItemToCart(item.id, 1, false)}
             disabled={!item.inStock || isCartProcessing[item.id]}
           >
             {isCartProcessing[item.id] ? (

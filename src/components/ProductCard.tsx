@@ -10,9 +10,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useApiCart } from "../contexts/ApiCartContext";
 import { useWishlist } from "../contexts/WishlistContext";
 import { useToast } from "../hooks/use-toast";
-import { useCart } from "../hooks/useCart";
 import { Product } from "../services/productService";
 
 const { width } = Dimensions.get("window");
@@ -28,7 +28,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   viewMode = "grid",
 }) => {
   const { isInWishlist, toggleWishlist, isWishlistProcessing } = useWishlist();
-  const { addItemToCart, isProcessing: isCartProcessing } = useCart();
+  const { addItemToCart, isProcessing: isCartProcessing } = useApiCart();
 
   const isProductInWishlist = isInWishlist(product.id);
   const isWishlistLoading = isWishlistProcessing[product.id] || false;

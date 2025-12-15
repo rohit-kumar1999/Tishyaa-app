@@ -11,9 +11,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useApiCart } from "../../contexts/ApiCartContext";
 import { useHomepageDataContext } from "../../contexts/HomepageDataContext";
 import { useWishlist } from "../../contexts/WishlistContext";
-import { useCart } from "../../hooks/useCart";
 import { Product } from "../../types";
 
 const screenWidth = Dimensions.get("window").width;
@@ -21,7 +21,7 @@ const screenWidth = Dimensions.get("window").width;
 export const FeaturedProducts = () => {
   const { featuredProducts, isLoading, error } = useHomepageDataContext();
   const { toggleWishlist, isInWishlist, isWishlistProcessing } = useWishlist();
-  const { addItemToCart, isProcessing: isCartProcessing } = useCart();
+  const { addItemToCart, isProcessing: isCartProcessing } = useApiCart();
 
   const handleToggleWishlist = (product: any) => {
     // Convert product to Product type for toggleWishlist
