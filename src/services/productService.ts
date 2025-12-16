@@ -307,11 +307,19 @@ export const useGetCart = () => {
 
   console.log("🔍 useGetCart called:", { userId, isSignedIn });
 
-  return useApiQuery<CartItem[]>(`/cart?userId=${userId}`, {
+  const result = useApiQuery<CartItem[]>(`/cart?userId=${userId}`, {
     enabled: !!userId && isSignedIn,
     dependencies: [userId],
     errorMessage: "Failed to load cart",
   });
+
+  console.log("🛒 useGetCart API Result:", {
+    data: result.data ? JSON.stringify(result.data, null, 2) : "null/undefined",
+    isLoading: result.isLoading,
+    error: result.error,
+  });
+
+  return result;
 };
 
 export const useAddToCart = () => {

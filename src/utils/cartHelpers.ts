@@ -43,6 +43,19 @@ export const showAddToCartSuccess = (productName: string) => {
   ]);
 };
 
+export const debugCartProduct = (product: CartProduct): void => {
+  console.log("🔍 Cart Product Debug:", {
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    inStock: product.inStock,
+    hasValidId: !!product.id,
+    hasValidName: !!product.name,
+    hasValidPrice: typeof product.price === "number" && product.price > 0,
+    images: product.images?.length || 0,
+  });
+};
+
 export const validateCartItem = (item: any): boolean => {
   return (
     item &&

@@ -44,6 +44,16 @@ export const ApiCartProvider: React.FC<{ children: ReactNode }> = ({
   // Single API call for cart data - shared across all components
   const { data: cartItems, isLoading, error, refetch } = useGetCart();
 
+  // Debug cart data
+  console.log("🛒 Cart API Response:", {
+    cartItems: cartItems
+      ? JSON.stringify(cartItems, null, 2)
+      : "null/undefined",
+    itemCount: cartItems?.length || 0,
+    isLoading,
+    error,
+  });
+
   // Only show loading for initial load, not for updates
   const isInitialLoading = isLoading && !cartItems;
 

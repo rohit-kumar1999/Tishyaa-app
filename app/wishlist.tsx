@@ -254,7 +254,7 @@ export default function WishlistScreen() {
             ratingCount: 0,
             active: true,
             inStock: item.inStock ?? true,
-            stockQuantity: 0,
+            stockQuantity: 10,
             specifications: {},
             attributes: {},
             hasPromotion: false,
@@ -267,6 +267,17 @@ export default function WishlistScreen() {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           };
+
+          // Debug log for wishlist product transformation
+          console.log("🛒 Wishlist ProductCard Debug:", {
+            itemId: item.id,
+            productId: product.id,
+            productName: product.name,
+            productPrice: product.price,
+            inStock: product.inStock,
+            stockQuantity: product.stockQuantity,
+            active: product.active,
+          });
 
           return <ProductCard product={product} viewMode="grid" />;
         }}

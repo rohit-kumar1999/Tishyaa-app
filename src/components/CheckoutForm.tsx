@@ -14,7 +14,7 @@ import {
 import { z } from "zod";
 import { useApiCart } from "../contexts/ApiCartContext";
 import { usePayment } from "../hooks/usePayment";
-import { useGetAddresses } from "../services/addressService";
+import { Address, useGetAddresses } from "../services/addressService";
 import PaymentMethods from "./checkout/PaymentMethods";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -81,7 +81,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess, onCancel }) => {
   useEffect(() => {
     if (addresses.length > 0) {
       const defaultAddress =
-        addresses.find((addr) => addr.isDefault) || addresses[0];
+        addresses.find((addr: Address) => addr.isDefault) || addresses[0];
       if (defaultAddress) {
         setValue("selectedAddressId", defaultAddress.id.toString());
         setValue("name", defaultAddress.name);
@@ -95,10 +95,8 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess, onCancel }) => {
   }, [addresses, setValue]);
 
   // Calculate totals
-  const subtotal = cartItems?.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  ) || 0;
+  const subtotal =
+    cartItems?.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0;
   const shipping = subtotal > 1000 ? 0 : 100; // Free shipping over ₹1000
   const tax = subtotal * 0.18; // 18% GST
   const total = subtotal + shipping + tax;
@@ -120,12 +118,13 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess, onCancel }) => {
           zipCode: data.zipCode,
           country: data.country,
         },
-        items: cartItems?.map((item) => ({
-          id: item.id,
-          name: item.product.name,
-          quantity: item.quantity,
-          price: item.price,
-        })) || [],
+        items:
+          cartItems?.map((item) => ({
+            id: item.id,
+            name: item.product.name,
+            quantity: item.quantity,
+            price: item.price,
+          })) || [],
         paymentMethod: data.paymentMethod as any,
         ...paymentDetails,
       };
@@ -152,7 +151,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess, onCancel }) => {
         {addresses.length > 0 && !useNewAddress && (
           <View style={styles.addressSelection}>
             <Text style={styles.sectionSubtitle}>Saved Addresses</Text>
-            {addresses.map((address) => (
+            {addresses.map((address: Address) => (
               <TouchableOpacity
                 key={address.id}
                 style={[

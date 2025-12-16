@@ -40,6 +40,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
     !product.active || !product.inStock || product.stockQuantity <= 0;
 
   const addProductToCart = (product: Product) => {
+    console.log("🛒 ProductCard addProductToCart called:", {
+      productId: product.id,
+      productName: product.name,
+      isOutOfStock,
+      inStock: product.inStock,
+      active: product.active,
+      stockQuantity: product.stockQuantity,
+    });
     addItemToCart(product.id, 1, true); // Set navigateToCart to true
   };
 
@@ -52,6 +60,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
   };
 
   const handleAddToCart = () => {
+    console.log("🛍️ ProductCard handleAddToCart called for:", product.name);
+    if (isOutOfStock) {
+      console.log("❌ Product is out of stock, not adding to cart");
+      toast({
+        description: "This product is currently out of stock",
+        variant: "destructive",
+      });
+      return;
+    }
     addProductToCart(product);
   };
 
