@@ -4,10 +4,10 @@
     "slug": "tishyaa-jewels",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#C9A961"
     },
@@ -19,13 +19,15 @@
         "NSPhotoLibraryUsageDescription": "This app needs access to photo library to select product images",
         "NSLocationWhenInUseUsageDescription": "This app needs location access for store locator and delivery tracking",
         "NSMicrophoneUsageDescription": "This app may need microphone access for video recordings",
-        "NSFaceIDUsageDescription": "This app uses Face ID for secure authentication"
+        "NSFaceIDUsageDescription": "This app uses Face ID for secure authentication",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#C9A961"
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "package": "com.tishyaajewels.app",
       "permissions": [
@@ -52,17 +54,10 @@
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT"
-      ],
-      "usesCleartextTraffic": true
+      ]
     },
     "web": {
-      "favicon": "./assets/favicon.png",
-      "bundler": "metro",
-      "config": {
-        "firebase": {
-          "measurementId": "G-0000000000"
-        }
-      }
+      "bundler": "metro"
     },
     "plugins": [
       "expo-camera",

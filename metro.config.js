@@ -3,7 +3,7 @@ const { getDefaultConfig } = require("expo/metro-config");
 const config = getDefaultConfig(__dirname);
 
 // Add any custom Metro configuration here
-config.resolver.unstable_enableSymlinks = true;
+// config.resolver.unstable_enableSymlinks = true; // Removed as per expo doctor recommendation
 
 // Configure for better web performance and prevent React root issues
 config.transformer.minifierConfig = {
