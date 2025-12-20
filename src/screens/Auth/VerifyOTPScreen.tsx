@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 
 export default function VerifyOTPScreen() {
   const router = useRouter();
@@ -31,7 +32,6 @@ export default function VerifyOTPScreen() {
     setLoading(true);
     try {
       // TODO: Implement OTP verification logic
-      console.log("Verifying OTP:", otp);
 
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -56,7 +56,6 @@ export default function VerifyOTPScreen() {
   const handleResendOTP = async () => {
     try {
       // TODO: Implement resend OTP logic
-      console.log("Resending OTP to:", email || phone);
       Alert.alert("Success", "OTP sent successfully!");
     } catch (error) {
       Alert.alert("Error", "Failed to resend OTP. Please try again.");

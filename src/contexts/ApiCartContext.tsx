@@ -35,24 +35,8 @@ export const ApiCartProvider: React.FC<{ children: ReactNode }> = ({
   const { user } = useUser();
   const [isProcessing, setIsProcessing] = useState<Record<string, boolean>>({});
 
-  console.log("🔐 ApiCartProvider Auth State:", {
-    isSignedIn,
-    userId: user?.id,
-    userLoaded: !!user,
-  });
-
   // Single API call for cart data - shared across all components
   const { data: cartItems, isLoading, error, refetch } = useGetCart();
-
-  // Debug cart data
-  console.log("🛒 Cart API Response:", {
-    cartItems: cartItems
-      ? JSON.stringify(cartItems, null, 2)
-      : "null/undefined",
-    itemCount: cartItems?.length || 0,
-    isLoading,
-    error,
-  });
 
   // Only show loading for initial load, not for updates
   const isInitialLoading = isLoading && !cartItems;
@@ -66,32 +50,13 @@ export const ApiCartProvider: React.FC<{ children: ReactNode }> = ({
   const cartCount =
     cartItems?.reduce((total, item) => total + item.quantity, 0) || 0;
 
-  console.log("🧮 ApiCartProvider - Cart count calculation:", {
-    cartItemsLength: cartItems?.length || 0,
-    cartItems: cartItems?.map((item) => ({
-      id: item.id,
-      quantity: item.quantity,
-      price: item.price,
-      productPrice: item.product?.price,
-      productName: item.product?.name || "Unknown",
-    })),
-    calculatedCartCount: cartCount,
-  });
-
   // Add product to cart
   const addItemToCart = (
     productId: string,
     quantity: number = 1,
     navigateToCart: boolean = true
   ) => {
-    console.log("🛒 Add to cart called:", {
-      productId,
-      quantity,
-      navigateToCart,
-    });
-
     if (!isSignedIn) {
-      console.log("❌ User not signed in");
       toast({
         description: "Please sign in to add items to your cart",
         variant: "destructive",
@@ -99,18 +64,15 @@ export const ApiCartProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    console.log("✅ User signed in, proceeding with add to cart");
     setIsProcessing((prev) => ({ ...prev, [productId]: true }));
 
     addToCart(
       { productId, quantity },
       {
-        onSuccess: (data) => {
-          console.log("✅ Add to cart success:", data);
+        onSuccess: () => {
           setIsProcessing((prev) => ({ ...prev, [productId]: false }));
 
           // Explicitly refetch cart data to ensure UI updates
-          console.log("🔄 Refetching cart data after add");
           refetch();
 
           // Show success toast
@@ -123,13 +85,11 @@ export const ApiCartProvider: React.FC<{ children: ReactNode }> = ({
           // Navigate to cart page if requested
           if (navigateToCart) {
             setTimeout(() => {
-              console.log("🔄 Navigating to cart");
               router.push("/cart");
             }, 700); // Allow time for cart to update
           }
         },
-        onError: (error) => {
-          console.log("❌ Add to cart error:", error);
+        onError: () => {
           setIsProcessing((prev) => ({ ...prev, [productId]: false }));
           toast({
             description: "Failed to add item to cart",
@@ -142,7 +102,6 @@ export const ApiCartProvider: React.FC<{ children: ReactNode }> = ({
 
   // Update cart item quantity or remove if quantity is 0
   const updateItemQuantity = (id: string, quantity: number) => {
-    console.log("🔄 Update cart item quantity:", { id, quantity });
     setIsProcessing((prev) => ({ ...prev, [id]: true }));
 
     if (quantity <= 0) {
@@ -151,15 +110,12 @@ export const ApiCartProvider: React.FC<{ children: ReactNode }> = ({
         { cartId: id },
         {
           onSuccess: () => {
-            console.log("✅ Remove from cart success");
             setIsProcessing((prev) => ({ ...prev, [id]: false }));
 
             // Explicitly refetch cart data to ensure UI updates
-            console.log("🔄 Refetching cart data after remove");
             refetch();
           },
           onError: () => {
-            console.log("❌ Remove from cart error");
             setIsProcessing((prev) => ({ ...prev, [id]: false }));
             toast({
               description: "Failed to remove item from cart",
@@ -174,15 +130,12 @@ export const ApiCartProvider: React.FC<{ children: ReactNode }> = ({
         { cartId: id, quantity },
         {
           onSuccess: () => {
-            console.log("✅ Update cart item success");
             setIsProcessing((prev) => ({ ...prev, [id]: false }));
 
             // Explicitly refetch cart data to ensure UI updates
-            console.log("🔄 Refetching cart data after update");
             refetch();
           },
           onError: () => {
-            console.log("❌ Update cart item error");
             setIsProcessing((prev) => ({ ...prev, [id]: false }));
             toast({
               description: "Failed to update cart item",
@@ -196,22 +149,18 @@ export const ApiCartProvider: React.FC<{ children: ReactNode }> = ({
 
   // Remove item from cart
   const removeItem = (id: string) => {
-    console.log("🗑️ Remove item from cart:", { id });
     setIsProcessing((prev) => ({ ...prev, [id]: true }));
 
     removeFromCart(
       { cartId: id },
       {
         onSuccess: () => {
-          console.log("✅ Remove item success");
           setIsProcessing((prev) => ({ ...prev, [id]: false }));
 
           // Explicitly refetch cart data to ensure UI updates
-          console.log("🔄 Refetching cart data after remove item");
           refetch();
         },
         onError: () => {
-          console.log("❌ Remove item error");
           setIsProcessing((prev) => ({ ...prev, [id]: false }));
           toast({
             description: "Failed to remove item from cart",

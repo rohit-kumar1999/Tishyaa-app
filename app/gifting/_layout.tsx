@@ -9,7 +9,7 @@ export default function ProductDetailLayout() {
         presentation: "card",
       }}
     >
-      <Stack.Screen name="[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="gifting" />
     </Stack>
   );
 }

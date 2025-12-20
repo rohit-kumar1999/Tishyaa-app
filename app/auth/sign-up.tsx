@@ -38,7 +38,6 @@ export default function SignUpScreen() {
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setPendingVerification(true);
     } catch (err: any) {
-      console.log(err?.errors);
       Toast.show({
         type: "error",
         text1: "Sign-up Error",

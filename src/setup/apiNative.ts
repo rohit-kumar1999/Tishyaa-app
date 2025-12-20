@@ -21,8 +21,6 @@ class ReactNativeApiClient {
   async request(url: string, options: RequestInit = {}): Promise<any> {
     const fullUrl = `${this.config.baseURL}${url}`;
 
-    console.log("📡 Native API Request:", fullUrl, options);
-
     return new Promise(async (resolve, reject) => {
       try {
         const xhr = await this.createXMLHttpRequest();
@@ -47,15 +45,9 @@ class ReactNativeApiClient {
         xhr.timeout = this.config.timeout;
 
         xhr.onload = () => {
-          console.log("📡 Native API Response:", xhr.status, xhr.statusText);
-
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               const data = JSON.parse(xhr.responseText);
-              console.log(
-                "📡 Native API Success:",
-                data ? "Data received" : "No data"
-              );
               resolve(data);
             } catch (parseError) {
               console.error("📡 Parse Error:", parseError);

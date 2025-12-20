@@ -119,9 +119,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   centerContent: {
+    width: "100%",
     maxWidth: 1024,
-    marginHorizontal: "auto",
     alignItems: "center",
+    alignSelf: "center",
   },
   iconContainer: {
     width: screenWidth > 640 ? 64 : 48,
@@ -158,9 +159,10 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     width: "100%",
-    paddingHorizontal: 0,
+    paddingHorizontal: 16,
   },
   formContent: {
+    width: "100%",
     gap: screenWidth > 640 ? 16 : 12,
   },
   inputContainer: {
@@ -168,6 +170,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
+    flexShrink: 1,
   },
   inputIcon: {
     position: "absolute",
@@ -176,6 +179,7 @@ const styles = StyleSheet.create({
   },
   emailInput: {
     flex: 1,
+    minWidth: 0,
     paddingLeft: screenWidth > 640 ? 48 : 40,
     paddingRight: 16,
     paddingVertical: screenWidth > 640 ? 16 : 14,

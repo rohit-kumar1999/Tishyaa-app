@@ -20,7 +20,15 @@
         "NSLocationWhenInUseUsageDescription": "This app needs location access for store locator and delivery tracking",
         "NSMicrophoneUsageDescription": "This app may need microphone access for video recordings",
         "NSFaceIDUsageDescription": "This app uses Face ID for secure authentication",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "LSApplicationQueriesSchemes": [
+          "tez",
+          "phonepe",
+          "paytmmp",
+          "gpay",
+          "bhim",
+          "upi"
+        ]
       }
     },
     "android": {

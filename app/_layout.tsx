@@ -46,7 +46,7 @@ export default function RootLayout() {
                     options={{ headerShown: false }}
                   />
                   <Stack.Screen
-                    name="product/[id]"
+                    name="product"
                     options={{ headerShown: false }}
                   />
                   <Stack.Screen
@@ -54,7 +54,7 @@ export default function RootLayout() {
                     options={{ headerShown: false }}
                   />
                   <Stack.Screen
-                    name="category/[slug]"
+                    name="gifting"
                     options={{ headerShown: false }}
                   />
                   <Stack.Screen name="cart" options={{ headerShown: false }} />

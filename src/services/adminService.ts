@@ -57,7 +57,6 @@ export const useGetAllProducts = () => {
 export const useDeleteProduct = () => {
   return {
     mutate: (productId: string) => {
-      console.log("Deleting product:", productId);
       // Mock delete operation
     },
     isLoading: false,

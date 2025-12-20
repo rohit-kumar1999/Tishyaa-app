@@ -268,17 +268,6 @@ export default function WishlistScreen() {
             updatedAt: new Date().toISOString(),
           };
 
-          // Debug log for wishlist product transformation
-          console.log("🛒 Wishlist ProductCard Debug:", {
-            itemId: item.id,
-            productId: product.id,
-            productName: product.name,
-            productPrice: product.price,
-            inStock: product.inStock,
-            stockQuantity: product.stockQuantity,
-            active: product.active,
-          });
-
           return <ProductCard product={product} viewMode="grid" />;
         }}
         keyExtractor={(item, index) => `wishlist-${item.id}-${index}`}

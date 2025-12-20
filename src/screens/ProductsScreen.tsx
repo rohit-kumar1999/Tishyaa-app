@@ -67,14 +67,12 @@ const SORT_OPTIONS: SortOption[] = [
 export default function ProductsScreen() {
   const renderCountRef = useRef(0);
   renderCountRef.current += 1;
-  console.log(`🎨 [ProductsScreen] Render #${renderCountRef.current}`);
 
   const router = useRouter();
   const params = useLocalSearchParams();
   const { toggleWishlist, isInWishlist, isWishlistProcessing } = useWishlist();
   const { addItemToCart, isProcessing: isCartProcessing } = useCart();
 
-  console.log(isWishlistProcessing);
   const [filtersRaw, setFiltersRaw] = useLocalStorage<FilterState>(
     "productFilters",
     initialFilters
@@ -147,7 +145,6 @@ export default function ProductsScreen() {
   // Use the raw setter but wrap it to prevent unnecessary updates
   const setFilters = useCallback(
     (update: FilterState | ((prev: FilterState) => FilterState)) => {
-      console.log("🔄 [ProductsScreen] setFilters called");
       setFiltersRaw(update);
     },
     [setFiltersRaw]
@@ -159,10 +156,6 @@ export default function ProductsScreen() {
   // Handle initial category from params
   useEffect(() => {
     if (params?.category && processedCategoryRef.current !== params.category) {
-      console.log(
-        "🏷️ [ProductsScreen] New category param detected:",
-        params.category
-      );
       processedCategoryRef.current = params.category as string;
 
       setFilters((prev) => {
@@ -172,12 +165,6 @@ export default function ProductsScreen() {
           prev.categories.length !== 1 ||
           prev.categories[0] !== newCategory
         ) {
-          console.log(
-            "🏷️ [ProductsScreen] Updating categories from:",
-            prev.categories,
-            "to:",
-            [newCategory]
-          );
           return {
             ...prev,
             categories: [newCategory], // Always replace with single category
@@ -209,7 +196,6 @@ export default function ProductsScreen() {
       prevFiltersHashRef.current &&
       prevFiltersHashRef.current !== currentFiltersHash
     ) {
-      console.log("🔄 [ProductsScreen] Filters changed, resetting page to 1");
       if (pageNumber !== 1) {
         setPageNumber(1);
       }
@@ -251,7 +237,6 @@ export default function ProductsScreen() {
       inStock: filters.inStock || undefined,
     };
 
-    console.log("🔍 [ProductsScreen] queryParams recalculated:", params);
     return params;
   }, [
     pageNumber,
@@ -268,19 +253,11 @@ export default function ProductsScreen() {
     filters.inStock,
   ]);
 
-  // Log when queryParams actually change (not on every render) with more detail
+  // Track when queryParams actually change (not on every render)
   const prevQueryParamsRef = useRef<string>("");
   const currentQueryParamsString = JSON.stringify(queryParams);
   if (prevQueryParamsRef.current !== currentQueryParamsString) {
-    console.log("🔄 [ProductsScreen] Query Params Changed:");
-    console.log("📊 New params:", queryParams);
-    console.log("🆚 Previous:", prevQueryParamsRef.current);
-    console.log("🆚 Current:", currentQueryParamsString);
     prevQueryParamsRef.current = currentQueryParamsString;
-  } else {
-    console.log(
-      "✅ [ProductsScreen] Query Params unchanged - no API call should occur"
-    );
   }
 
   const {
@@ -296,7 +273,6 @@ export default function ProductsScreen() {
     resetCircuitBreaker,
   } = useProducts(queryParams);
 
-  console.log("Error: *********************        ", error);
   const totalPages = pagination?.totalPages || 1;
   const totalProducts = pagination?.totalItems || products.length;
   const currentPage = pagination?.currentPage || pageNumber;

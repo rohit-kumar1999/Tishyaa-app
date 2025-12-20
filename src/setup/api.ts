@@ -87,8 +87,6 @@ class ApiClient {
     }
 
     try {
-      console.log(`🌐 API Request: ${options.method || "GET"} ${fullUrl}`);
-
       // Create AbortController for timeout functionality
       const controller = new AbortController();
       const timeoutId = setTimeout(
@@ -115,7 +113,6 @@ class ApiClient {
       }
 
       const data = await response.json();
-      console.log(`✅ API Success: ${options.method || "GET"} ${fullUrl}`);
       return data;
     } catch (error) {
       console.error(
@@ -233,11 +230,9 @@ class SimpleQueryClient {
   }
 
   invalidateQueries(options: { queryKey: string[] }) {
-    console.log("Invalidating queries:", options.queryKey);
     options.queryKey.forEach((key) => {
       const refetchFn = this.activeQueries.get(key);
       if (refetchFn) {
-        console.log(`Refetching query: ${key}`);
         refetchFn();
       }
     });

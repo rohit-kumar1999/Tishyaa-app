@@ -172,8 +172,6 @@ export default function SignInScreen() {
     }
   }, [isLoaded, startOAuthFlow]);
 
-  console.log("Rendering SignIn component");
-
   return (
     <View style={styles.container}>
       {!isResettingPassword ? (

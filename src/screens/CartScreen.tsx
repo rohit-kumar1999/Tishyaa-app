@@ -27,7 +27,7 @@ export default function CartScreen() {
     refetch,
     error,
   } = useApiCart();
-  console.log("*****************************", cartItems);
+
   // Calculate totals
   const { itemCount, subtotal, shippingCharges, total } = useMemo(() => {
     if (!cartItems || cartItems.length === 0) {
@@ -324,21 +324,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#f0f0f0",
     flexDirection: "row",
-    minHeight: 140,
-    alignItems: "stretch",
+    alignItems: "flex-start",
   },
   imageContainer: {
-    width: 140,
-    height: "100%",
+    width: 100,
+    height: 100,
     borderRadius: 8,
     backgroundColor: "#f8f9fa",
     overflow: "hidden",
-    marginRight: 16,
-    alignSelf: "stretch",
+    marginRight: 12,
   },
   productImage: {
-    width: "100%",
-    height: "100%",
+    width: 100,
+    height: 100,
   },
   itemDetails: {
     flex: 1,

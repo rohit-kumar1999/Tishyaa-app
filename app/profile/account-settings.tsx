@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -36,22 +36,7 @@ export default function AccountSettingsScreen() {
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Log user data for debugging
-  useEffect(() => {
-    if (user) {
-      console.log("User data:", {
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        emailAddress: user.primaryEmailAddress?.emailAddress,
-        imageUrl: user.imageUrl,
-        createdAt: user.createdAt,
-      });
-    }
-  }, [user]);
-
   const handleBackPress = () => {
-    console.log("Back button pressed");
     try {
       // Navigate to profile screen instead of using router.back() to avoid GO_BACK error
       router.push("/profile");
@@ -63,13 +48,10 @@ export default function AccountSettingsScreen() {
   };
 
   const handleChangePassword = () => {
-    console.log(
-      "🔑 handleChangePassword called - navigating to update password"
-    );
     try {
       router.push("/profile/update-password");
     } catch (error) {
-      console.error("❌ Navigation error:", error);
+      console.error("Navigation error:", error);
     }
   };
 
@@ -85,14 +67,11 @@ export default function AccountSettingsScreen() {
     if (deletingAccount) return;
 
     setDeletingAccount(true);
-    console.log("🗑️ Starting account deletion process...");
 
     try {
       const result = await deleteCurrentUser();
 
       if (result.success) {
-        console.log("✅ Account deleted successfully");
-
         // Close modal and show success message
         setShowDeleteModal(false);
         Toast.show({
@@ -108,7 +87,7 @@ export default function AccountSettingsScreen() {
           router.replace("/auth");
         }, 1500);
       } else {
-        console.error("❌ Account deletion failed:", result.message);
+        console.error("Account deletion failed:", result.message);
         setShowDeleteModal(false);
         Toast.show({
           type: "error",
@@ -119,7 +98,7 @@ export default function AccountSettingsScreen() {
         });
       }
     } catch (error) {
-      console.error("❌ Account deletion error:", error);
+      console.error("Account deletion error:", error);
       setShowDeleteModal(false);
       Toast.show({
         type: "error",
@@ -186,49 +165,30 @@ export default function AccountSettingsScreen() {
   };
 
   const uploadImage = async (uri: string) => {
-    console.log("uploadImage called with URI:", uri);
     if (!user) {
-      console.error("❌ No user found - redirecting to sign in");
-      // Direct action: redirect to sign in
+      // Redirect to sign in if no user
       router.push("/auth");
       return;
     }
 
     setUploadingImage(true);
     try {
-      console.log("Starting image validation...");
-
       // Validate file type and size before upload
       const validation = await validateImageFile(uri);
       if (!validation.isValid) {
-        console.error("❌ File validation failed:", validation.error);
-        console.error("❌ Upload Error:", validation.error);
+        console.error("File validation failed:", validation.error);
         return;
       }
-
-      console.log("✅ File validation passed, starting upload...");
 
       // Convert URI to blob for Clerk
       const response = await fetch(uri);
       const blob = await response.blob();
-      console.log(
-        `Blob created (${blob.type}, ${(blob.size / 1024 / 1024).toFixed(
-          2
-        )}MB), uploading to Clerk...`
-      );
 
       // Upload to Clerk using the setProfileImage method
       await user.setProfileImage({ file: blob });
-      console.log("Image uploaded successfully");
-
-      console.log("✅ Success: Profile picture updated successfully!");
       // TODO: Could show a toast notification or update UI feedback instead
     } catch (error: any) {
       console.error("Profile picture upload error:", error);
-      const errorMessage =
-        error?.errors?.[0]?.message ||
-        "Failed to update profile picture. Please try again.";
-      console.error("❌ Upload Error:", errorMessage);
       // TODO: Could show a toast notification or update UI feedback instead
     } finally {
       setUploadingImage(false);
@@ -236,14 +196,10 @@ export default function AccountSettingsScreen() {
   };
 
   const handleChangePhoto = async () => {
-    console.log("📷 handleChangePhoto called");
     try {
       // Directly access photo library for simplicity
       const { mediaLibraryStatus } = await requestPermissions();
       if (mediaLibraryStatus !== "granted") {
-        console.error(
-          "❌ Photo library permission denied - cannot select photos"
-        );
         return;
       }
 
@@ -259,23 +215,8 @@ export default function AccountSettingsScreen() {
       if (!result.canceled && result.assets[0]) {
         const selectedAsset = result.assets[0];
 
-        // Log file information for debugging
-        console.log("📁 Selected file info:", {
-          uri: selectedAsset.uri,
-          type: selectedAsset.type,
-          fileSize: selectedAsset.fileSize,
-          fileName: selectedAsset.fileName,
-        });
-
         // Additional client-side check for file size (if available)
         if (selectedAsset.fileSize && selectedAsset.fileSize > MAX_FILE_SIZE) {
-          console.error(
-            `❌ File too large: ${(
-              selectedAsset.fileSize /
-              1024 /
-              1024
-            ).toFixed(2)}MB. Maximum allowed is 5MB.`
-          );
           return;
         }
 
@@ -404,14 +345,11 @@ export default function AccountSettingsScreen() {
               ]}
               onPress={() => {
                 if (option.loading) return; // Prevent action if loading
-                console.log(`🎯 Option pressed: ${option.title}`);
-                console.log(`🔍 Option ID: ${option.id}`);
-                console.log(`🎪 Function being called:`, option.onPress);
                 try {
                   option.onPress();
                 } catch (error) {
                   console.error(
-                    `❌ Error executing option ${option.title}:`,
+                    `Error executing option ${option.title}:`,
                     error
                   );
                 }

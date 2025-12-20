@@ -8,7 +8,6 @@ import {
   Alert,
   Image,
   Modal,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,38 +16,16 @@ import {
   View,
 } from "react-native";
 import BottomNavigation from "../components/common/BottomNavigation";
+import { TopHeader } from "../components/common/TopHeader";
 import { useApiCart } from "../contexts/ApiCartContext";
+import { usePayment } from "../hooks/usePayment";
 import {
   AddressInput,
   Address as AddressType,
   useCreateAddress,
   useGetAddresses,
 } from "../services/addressService";
-
-// API functions
-const fetchAddresses = async (userId: string, token: string) => {
-  try {
-    const response = await fetch(
-      `https://www.tishyaajewels.com/api/address?userId=${userId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "x-user-id": userId,
-          Accept: "application/json, text/plain, */*",
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch addresses");
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching addresses:", error);
-    throw error;
-  }
-};
+import { PaymentRequest } from "../services/paymentService";
 
 const fetchCoupons = async (token: string, userId: string) => {
   try {
@@ -94,6 +71,9 @@ export default function CheckoutScreen() {
   const { getToken } = useAuth();
   const { user } = useUser();
 
+  // Payment hook
+  const { processPayment, isProcessing, paymentStep } = usePayment();
+
   // Address service hooks
   const {
     data: addressesData,
@@ -111,8 +91,12 @@ export default function CheckoutScreen() {
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [selectedCoupon, setSelectedCoupon] = useState<any>(null);
   const [couponCode, setCouponCode] = useState("");
-  const [paymentStatus, setPaymentStatus] = useState({
-    type: "idle", // idle, processing, success, failed
+  const [paymentStatus, setPaymentStatus] = useState<{
+    type: "idle" | "processing" | "success" | "failed" | "cancelled";
+    message: string;
+    orderId?: string;
+  }>({
+    type: "idle",
     message: "",
   });
 
@@ -297,15 +281,103 @@ export default function CheckoutScreen() {
   };
 
   const handlePlaceOrder = async () => {
-    setPaymentStatus({ type: "processing", message: "Processing payment..." });
+    // Validate address
+    if (!selectedAddress) {
+      Alert.alert(
+        "Address Required",
+        "Please select or add a delivery address."
+      );
+      return;
+    }
 
-    // Simulate payment processing
-    setTimeout(() => {
-      setPaymentStatus({ type: "success", message: "Payment successful!" });
-      setTimeout(() => {
-        router.push("/order-confirmation");
-      }, 1500);
-    }, 3000);
+    // Validate user
+    if (!user?.id) {
+      Alert.alert("Authentication Required", "Please sign in to continue.");
+      return;
+    }
+
+    setPaymentStatus({
+      type: "processing",
+      message: "Initializing payment...",
+    });
+
+    try {
+      // Prepare payment data
+      const paymentData: PaymentRequest = {
+        userId: user.id,
+        cartIds: (cartItems || []).map((item) => item.id),
+        addressId: selectedAddress.id.toString(),
+        netValue: total,
+        amount: total,
+        currency: "INR",
+        subtotal: subtotal,
+        shippingCharges: shippingCharges,
+        couponDiscount: couponDiscount,
+        couponCode: selectedCoupon?.code || null,
+        cartItems: (cartItems || []).map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          price:
+            (item as any).productPrice - ((item as any).productDiscount || 0),
+        })),
+        shippingAddress: {
+          name: selectedAddress.name,
+          street: selectedAddress.street,
+          city: selectedAddress.city,
+          state: selectedAddress.state,
+          pinCode: selectedAddress.zipCode,
+          zipCode: selectedAddress.zipCode,
+          country: "India",
+          phone: selectedAddress.phone,
+        },
+        paymentMethod: "razorpay",
+      };
+
+      // Process payment
+      const result = await processPayment(paymentData);
+      if (result.success) {
+        setPaymentStatus({
+          type: "success",
+          message: "Payment successful!",
+          orderId: result.orderId,
+        });
+
+        setTimeout(() => {
+          if (result.orderId) {
+            router.push({
+              pathname: "/order-confirmation",
+              params: { orderId: result.orderId },
+            });
+          } else {
+            router.push("/order-confirmation");
+          }
+        }, 1500);
+      } else if (result.cancelled) {
+        setPaymentStatus({
+          type: "cancelled",
+          message: "Payment was cancelled. Your order is saved.",
+          orderId: result.orderId,
+        });
+      } else {
+        setPaymentStatus({
+          type: "failed",
+          message: "Payment failed. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("❌ Payment error:", error);
+      setPaymentStatus({
+        type: "failed",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Payment failed. Please try again.",
+      });
+    }
+  };
+
+  const handleRetryPayment = () => {
+    setPaymentStatus({ type: "idle", message: "" });
   };
 
   if (isInitialLoading || (isLoadingAddresses && addresses.length === 0)) {
@@ -319,10 +391,6 @@ export default function CheckoutScreen() {
 
   const renderOrderSummary = () => (
     <View style={styles.orderSummaryContainer}>
-      <Text style={styles.sectionTitle}>
-        Order Summary ({cartItems?.length || 0} items)
-      </Text>
-
       {cartItems?.map((item) => {
         const productName = (item as any).productName || "Unknown Product";
         const productPrice = (item as any).productPrice || 0;
@@ -792,20 +860,7 @@ export default function CheckoutScreen() {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="arrow-back" size={24} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Checkout</Text>
-          <View style={styles.headerSpacer} />
-        </View>
-      </SafeAreaView>
+      <TopHeader />
 
       <ScrollView
         style={styles.scrollContent}
@@ -821,8 +876,18 @@ export default function CheckoutScreen() {
           <View style={styles.paymentModal}>
             <ActivityIndicator size="large" color="#FF6B35" />
             <Text style={styles.paymentStatusText}>
-              {paymentStatus.message}
+              {paymentStatus.message || "Processing payment..."}
             </Text>
+            {paymentStep !== "idle" && (
+              <Text style={styles.paymentStepText}>
+                {paymentStep === "creating_order" && "Creating order..."}
+                {paymentStep === "creating_razorpay" && "Setting up payment..."}
+                {paymentStep === "processing" &&
+                  "Complete payment in Razorpay..."}
+                {paymentStep === "verifying" && "Verifying payment..."}
+                {paymentStep === "creating_payment" && "Finalizing order..."}
+              </Text>
+            )}
           </View>
         </View>
       )}
@@ -834,13 +899,64 @@ export default function CheckoutScreen() {
             <Text style={styles.paymentStatusText}>
               {paymentStatus.message}
             </Text>
+            <Text style={styles.paymentSubText}>
+              Redirecting to order confirmation...
+            </Text>
+          </View>
+        </View>
+      )}
+
+      {paymentStatus.type === "failed" && (
+        <View style={styles.paymentOverlay}>
+          <View style={styles.paymentModal}>
+            <Ionicons name="close-circle" size={60} color="#EF4444" />
+            <Text style={styles.paymentStatusText}>Payment Failed</Text>
+            <Text style={styles.paymentSubText}>{paymentStatus.message}</Text>
+            <View style={styles.paymentButtonRow}>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={handleRetryPayment}
+              >
+                <Text style={styles.retryButtonText}>Try Again</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setPaymentStatus({ type: "idle", message: "" })}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {paymentStatus.type === "cancelled" && (
+        <View style={styles.paymentOverlay}>
+          <View style={styles.paymentModal}>
+            <Ionicons name="alert-circle" size={60} color="#F59E0B" />
+            <Text style={styles.paymentStatusText}>Payment Cancelled</Text>
+            <Text style={styles.paymentSubText}>{paymentStatus.message}</Text>
+            <View style={styles.paymentButtonRow}>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={handleRetryPayment}
+              >
+                <Text style={styles.retryButtonText}>Retry Payment</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => router.push("/profile/orders")}
+              >
+                <Text style={styles.cancelButtonText}>View Orders</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       )}
 
       {/* Bottom Order Button */}
       <View style={styles.bottomContainer}>
-        {!selectedAddress || paymentStatus.type === "processing" ? (
+        {!selectedAddress || isProcessing || paymentStatus.type !== "idle" ? (
           <View style={[styles.orderButton, styles.disabledOrderButton]}>
             <TouchableOpacity
               onPress={handlePlaceOrder}
@@ -850,7 +966,9 @@ export default function CheckoutScreen() {
               <Text style={[styles.orderButtonText, styles.disabledOrderText]}>
                 {!selectedAddress
                   ? "Select Address to Continue"
-                  : "Place Order • ₹{total}"}
+                  : isProcessing
+                  ? "Processing..."
+                  : `Place Order • ₹${total}`}
               </Text>
             </TouchableOpacity>
           </View>
@@ -864,10 +982,22 @@ export default function CheckoutScreen() {
               style={styles.orderButtonInner}
               disabled={false}
             >
-              <Text style={styles.orderButtonText}>Place Order • ₹{total}</Text>
+              <View style={styles.orderButtonContent}>
+                <Ionicons
+                  name="lock-closed"
+                  size={16}
+                  color="#fff"
+                  style={styles.lockIcon}
+                />
+                <Text style={styles.orderButtonText}>Pay Now • ₹{total}</Text>
+              </View>
             </TouchableOpacity>
           </LinearGradient>
         )}
+        <Text style={styles.securePaymentText}>
+          <Ionicons name="shield-checkmark" size={12} color="#666" /> 100%
+          Secure Payments via Razorpay
+        </Text>
       </View>
 
       {renderAddressModal()}
@@ -1452,19 +1582,67 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
+    zIndex: 1000,
   },
   paymentModal: {
     backgroundColor: "#fff",
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 30,
     alignItems: "center",
     margin: 40,
+    minWidth: 280,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   paymentStatusText: {
-    fontSize: 16,
-    fontWeight: "500",
+    fontSize: 18,
+    fontWeight: "600",
     marginTop: 15,
     textAlign: "center",
+    color: "#333",
+  },
+  paymentSubText: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 8,
+    textAlign: "center",
+  },
+  paymentStepText: {
+    fontSize: 12,
+    color: "#888",
+    marginTop: 8,
+    textAlign: "center",
+    fontStyle: "italic",
+  },
+  paymentButtonRow: {
+    flexDirection: "row",
+    marginTop: 20,
+    gap: 12,
+  },
+  retryButton: {
+    backgroundColor: "#FF6B35",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  cancelButton: {
+    backgroundColor: "#E5E5E5",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  cancelButtonText: {
+    color: "#666",
+    fontWeight: "600",
+    fontSize: 14,
   },
 
   // Bottom Button Styles
@@ -1482,6 +1660,14 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: "center",
   },
+  orderButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  lockIcon: {
+    marginRight: 8,
+  },
   orderButtonText: {
     color: "#fff",
     fontSize: 16,
@@ -1492,5 +1678,11 @@ const styles = StyleSheet.create({
   },
   disabledOrderText: {
     color: "#999",
+  },
+  securePaymentText: {
+    fontSize: 12,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 8,
   },
 });

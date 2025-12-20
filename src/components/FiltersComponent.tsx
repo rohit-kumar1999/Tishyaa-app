@@ -109,7 +109,6 @@ export const FiltersComponent: React.FC<FiltersComponentProps> = ({
       localFilters.inStock !== filters.inStock;
 
     if (nonPriceFiltersChanged) {
-      console.log("=== Applying Filters Immediately ===", localFilters);
       onFiltersChange(localFilters);
     }
   }, [
@@ -211,12 +210,6 @@ export const FiltersComponent: React.FC<FiltersComponentProps> = ({
       discounts: updatedDiscounts,
     };
 
-    console.log(
-      "=== Discount Toggle ===",
-      discount,
-      "New discounts:",
-      updatedDiscounts
-    );
     setLocalFilters(newFilters);
   };
 

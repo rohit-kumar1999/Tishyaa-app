@@ -32,8 +32,8 @@ export default function AdminOrdersScreen() {
   const isLoading = false;
   const refetch = () => {};
   // Mock function until adminService is implemented
-  const updateOrderStatus = (data: any) => {
-    console.log("Update order status:", data);
+  const updateOrderStatus = (_data: any) => {
+    // TODO: Implement order status update
   };
 
   const getStatusColor = (status: string) => {

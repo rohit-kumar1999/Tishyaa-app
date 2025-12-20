@@ -9,7 +9,6 @@ let globalResetTimeout: NodeJS.Timeout | null = null;
 
 const resetGlobalCounter = () => {
   globalRequestCount = 0;
-  console.log("🌍 [ProductService] Global request counter reset");
 };
 
 export interface Product {
@@ -215,13 +214,6 @@ export const useProducts = (params?: {
   priceRange?: [number, number];
   inStock?: boolean;
 }) => {
-  const hookCallCountRef = useRef(0);
-  hookCallCountRef.current += 1;
-  console.log(
-    `🎣 [useProducts] Hook called #${hookCallCountRef.current} with params:`,
-    params
-  );
-
   const [data, setData] = useState<ProductResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -304,20 +296,7 @@ export const useProducts = (params?: {
   const resetCircuitBreaker = useCallback(() => {
     requestCountRef.current = 0;
     setError(null);
-    console.log("🔄 [ProductService] Circuit breaker reset");
   }, []);
-
-  // Track when requestBody changes
-  const prevRequestBodyRef = useRef<string>("");
-  const currentRequestBodyString = JSON.stringify(requestBody);
-  if (prevRequestBodyRef.current !== currentRequestBodyString) {
-    console.log(
-      "📦 [ProductService] RequestBody changed, will trigger new API call"
-    );
-    console.log("🆚 Previous:", prevRequestBodyRef.current);
-    console.log("🆚 Current:", currentRequestBodyString);
-    prevRequestBodyRef.current = currentRequestBodyString;
-  }
 
   const fetchProducts = useCallback(async () => {
     // Global circuit breaker to prevent infinite loops across all instances
@@ -357,15 +336,7 @@ export const useProducts = (params?: {
     try {
       setIsLoading(true);
       setError(null);
-      console.log(
-        `🔍 [ProductService] Making API Request #${
-          requestCountRef.current
-        } at ${new Date().toLocaleTimeString()}`
-      );
-      console.log("📦 Body:", JSON.stringify(requestBody, null, 2));
       const response: ProductResponse = await api.post("/product", requestBody);
-      console.log("✅ [ProductService] API Response Success");
-      console.log("🛍️ Products count:", response?.products?.length || 0);
       setData(response);
 
       // Reset counters on successful request
@@ -395,7 +366,6 @@ export const useProducts = (params?: {
 
     // Throttle the API call to prevent rapid successive requests
     throttleTimeoutRef.current = setTimeout(() => {
-      console.log("⏰ [ProductService] Throttled fetchProducts execution");
       fetchProducts();
     }, 300); // 300ms throttle
 
@@ -432,18 +402,10 @@ export const useGetCart = () => {
   const { user } = useUser();
   const userId = user?.id;
 
-  console.log("🔍 useGetCart called:", { userId, isSignedIn });
-
   const result = useApiQuery<CartItem[]>(`/cart?userId=${userId}`, {
     enabled: !!userId && isSignedIn,
     dependencies: [userId],
     errorMessage: "Failed to load cart",
-  });
-
-  console.log("🛒 useGetCart API Result:", {
-    data: result.data ? JSON.stringify(result.data, null, 2) : "null/undefined",
-    isLoading: result.isLoading,
-    error: result.error,
   });
 
   return result;

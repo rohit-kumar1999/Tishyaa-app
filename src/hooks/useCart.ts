@@ -14,12 +14,6 @@ export const useCart = () => {
   const { user } = useUser();
   const [isProcessing, setIsProcessing] = useState<Record<string, boolean>>({});
 
-  console.log("🔐 Cart Auth State:", {
-    isSignedIn,
-    userId: user?.id,
-    userLoaded: !!user,
-  });
-
   // Fetch cart items
   const { data: cartItems, isLoading, error, refetch } = useGetCart();
 
@@ -34,14 +28,7 @@ export const useCart = () => {
     quantity: number = 1,
     navigateToCart: boolean = true
   ) => {
-    console.log("🛒 Add to cart called:", {
-      productId,
-      quantity,
-      navigateToCart,
-    });
-
     if (!isSignedIn) {
-      console.log("❌ User not signed in");
       toast({
         description: "Please sign in to add items to your cart",
         variant: "destructive",
@@ -49,18 +36,15 @@ export const useCart = () => {
       return;
     }
 
-    console.log("✅ User signed in, proceeding with add to cart");
     setIsProcessing((prev) => ({ ...prev, [productId]: true }));
 
     addToCart(
       { productId, quantity },
       {
         onSuccess: (data) => {
-          console.log("✅ Add to cart success:", data);
           setIsProcessing((prev) => ({ ...prev, [productId]: false }));
 
           // Explicitly refetch cart data to ensure UI updates
-          console.log("🔄 Refetching cart data after add");
           refetch();
 
           // Show success toast
@@ -73,13 +57,11 @@ export const useCart = () => {
           // Navigate to cart page if requested
           if (navigateToCart) {
             setTimeout(() => {
-              console.log("🔄 Navigating to cart");
               router.push("/cart");
             }, 700); // Allow time for cart to update
           }
         },
         onError: (error) => {
-          console.log("❌ Add to cart error:", error);
           setIsProcessing((prev) => ({ ...prev, [productId]: false }));
           toast({
             description: "Failed to add item to cart",
@@ -92,7 +74,6 @@ export const useCart = () => {
 
   // Update cart item quantity or remove if quantity is 0
   const updateItemQuantity = (id: string, quantity: number) => {
-    console.log("🔄 Update cart item quantity:", { id, quantity });
     setIsProcessing((prev) => ({ ...prev, [id]: true }));
 
     if (quantity <= 0) {
@@ -101,11 +82,9 @@ export const useCart = () => {
         { cartId: id },
         {
           onSuccess: () => {
-            console.log("✅ Remove from cart success");
             setIsProcessing((prev) => ({ ...prev, [id]: false }));
 
             // Explicitly refetch cart data to ensure UI updates
-            console.log("🔄 Refetching cart data after remove");
             refetch();
             refetch();
           },
@@ -124,15 +103,12 @@ export const useCart = () => {
         { cartId: id, quantity },
         {
           onSuccess: () => {
-            console.log("✅ Update cart item success");
             setIsProcessing((prev) => ({ ...prev, [id]: false }));
 
             // Explicitly refetch cart data to ensure UI updates
-            console.log("🔄 Refetching cart data after update");
             refetch();
           },
           onError: () => {
-            console.log("❌ Update cart item error");
             setIsProcessing((prev) => ({ ...prev, [id]: false }));
             toast({
               description: "Failed to update cart item",
@@ -146,18 +122,15 @@ export const useCart = () => {
 
   // Remove item from cart
   const removeItem = (id: string) => {
-    console.log("🗑️ Remove item from cart:", { id });
     setIsProcessing((prev) => ({ ...prev, [id]: true }));
 
     removeFromCart(
       { cartId: id },
       {
         onSuccess: () => {
-          console.log("✅ Remove item success");
           setIsProcessing((prev) => ({ ...prev, [id]: false }));
 
           // Explicitly refetch cart data to ensure UI updates
-          console.log("🔄 Refetching cart data after remove item");
           refetch();
           refetch();
           toast({
@@ -178,18 +151,6 @@ export const useCart = () => {
   // Calculate total cart item count
   const cartCount =
     cartItems?.reduce((total, item) => total + item.quantity, 0) || 0;
-
-  console.log("🧮 useCart - Cart count calculation:", {
-    cartItemsLength: cartItems?.length || 0,
-    cartItems: cartItems?.map((item) => ({
-      id: item.id,
-      quantity: item.quantity,
-      price: item.price,
-      productPrice: item.product?.price,
-      productName: item.product?.name || "Unknown",
-    })),
-    calculatedCartCount: cartCount,
-  });
 
   return {
     cartItems,

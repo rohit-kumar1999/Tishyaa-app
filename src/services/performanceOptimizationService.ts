@@ -100,8 +100,6 @@ class PerformanceOptimizationService {
    * Handle network state changes
    */
   private async handleNetworkChange(state: any): Promise<void> {
-    console.log("Network state changed:", state);
-
     if (state.isConnected && this.offlineQueue.length > 0) {
       // Process offline queue when connection is restored
       await this.processOfflineQueue();
@@ -115,8 +113,6 @@ class PerformanceOptimizationService {
     previousState: AppStateStatus,
     nextState: AppStateStatus
   ): void {
-    console.log("App state changed from", previousState, "to", nextState);
-
     if (previousState === "background" && nextState === "active") {
       // App came to foreground - refresh data if needed
       this.onAppForeground();
@@ -139,9 +135,6 @@ class PerformanceOptimizationService {
       if (this.networkState.isConnected) {
         await this.processOfflineQueue();
       }
-
-      // Emit app foreground event
-      console.log("App came to foreground");
     } catch (error) {
       console.error("Error handling app foreground:", error);
     }
@@ -154,9 +147,6 @@ class PerformanceOptimizationService {
     try {
       // Save offline queue
       await this.saveOfflineQueue();
-
-      // Emit app background event
-      console.log("App went to background");
     } catch (error) {
       console.error("Error handling app background:", error);
     }
@@ -201,8 +191,6 @@ class PerformanceOptimizationService {
 
       this.offlineQueue.push(offlineAction);
       await this.saveOfflineQueue();
-
-      console.log("Added action to offline queue:", offlineAction.type);
     } catch (error) {
       console.error("Error adding to offline queue:", error);
     }
@@ -215,8 +203,6 @@ class PerformanceOptimizationService {
     if (!this.isOnline() || this.offlineQueue.length === 0) {
       return;
     }
-
-    console.log(`Processing ${this.offlineQueue.length} offline actions`);
 
     try {
       // Process actions in order
@@ -251,24 +237,22 @@ class PerformanceOptimizationService {
     switch (action.type) {
       case "api_call":
         // Process API call
-        console.log("Processing offline API call:", action.data);
         // You would implement actual API call here
         break;
 
       case "analytics_event":
         // Process analytics event
-        console.log("Processing offline analytics event:", action.data);
         // You would send analytics event here
         break;
 
       case "cart_update":
         // Process cart update
-        console.log("Processing offline cart update:", action.data);
         // You would sync cart with server here
         break;
 
       default:
-        console.log("Unknown offline action type:", action.type);
+        // Unknown offline action type
+        break;
     }
   }
 
@@ -294,7 +278,6 @@ class PerformanceOptimizationService {
       const stored = await AsyncStorage.getItem("offline_queue");
       if (stored) {
         this.offlineQueue = JSON.parse(stored);
-        console.log(`Loaded ${this.offlineQueue.length} offline actions`);
       }
     } catch (error) {
       console.error("Error loading offline queue:", error);

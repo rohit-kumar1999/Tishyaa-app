@@ -90,7 +90,6 @@ class NotificationService {
     try {
       // Skip push token registration in development to avoid project ID issues
       if (__DEV__) {
-        console.log("Push notifications disabled in development mode");
         return null;
       }
 
@@ -145,7 +144,6 @@ class NotificationService {
     // Listener for notifications received while app is running
     this.notificationListener = Notifications.addNotificationReceivedListener(
       (notification) => {
-        console.log("Notification received:", notification);
         // Handle notification received while app is active
         this.handleNotificationReceived(notification);
       }
@@ -154,7 +152,6 @@ class NotificationService {
     // Listener for notification responses (user tapped notification)
     this.responseListener =
       Notifications.addNotificationResponseReceivedListener((response) => {
-        console.log("Notification response:", response);
         // Handle notification tap
         this.handleNotificationResponse(response);
       });
@@ -185,7 +182,6 @@ class NotificationService {
     // Navigate to appropriate screen based on notification data
     if (data?.screen) {
       // You would integrate this with your navigation system
-      console.log("Navigate to screen:", data.screen);
     }
   }
 

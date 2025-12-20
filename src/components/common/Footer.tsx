@@ -16,11 +16,42 @@ export const Footer = React.memo(() => {
   // Memoized static categories for performance
   const staticCategories = useMemo(
     () => [
-      { name: "Earrings", path: "/products?category=earrings" },
-      { name: "Necklaces", path: "/products?category=necklaces" },
-      { name: "Bracelets", path: "/products?category=bracelets" },
-      { name: "Rings", path: "/products?category=rings" },
-      { name: "Jewelry Sets", path: "/products?category=sets" },
+      { name: "Earrings", category: "earrings" },
+      { name: "Necklaces", category: "necklaces" },
+      { name: "Bracelets", category: "bracelets" },
+      { name: "Rings", category: "rings" },
+      { name: "Jewelry Sets", category: "sets" },
+    ],
+    []
+  );
+
+  // Customer care items with proper routes
+  const customerCareItems = useMemo(
+    () => [
+      { name: "Contact Us", route: "/contact" },
+      { name: "About Us", route: "/about" },
+      {
+        name: "Shipping Info",
+        route: "/help",
+        params: { section: "shipping" },
+      },
+      {
+        name: "Returns & Exchange",
+        route: "/help",
+        params: { section: "returns" },
+      },
+      { name: "Size Guide", route: "/help", params: { section: "size-guide" } },
+      { name: "FAQ", route: "/help", params: { section: "faq" } },
+      {
+        name: "Care Instructions",
+        route: "/help",
+        params: { section: "care" },
+      },
+      {
+        name: "Privacy Policy",
+        route: "/help",
+        params: { section: "privacy" },
+      },
     ],
     []
   );
@@ -37,17 +68,24 @@ export const Footer = React.memo(() => {
     Linking.openURL(url);
   };
 
-  const handleNavigation = (path: string) => {
-    // Convert web paths to mobile navigation
-    if (path.includes("/products")) {
-      router.push("/(tabs)/explore");
-    } else if (path.includes("/contact")) {
-      router.push("/contact");
-    } else if (path.includes("/about")) {
-      router.push("/about");
+  const handleCategoryPress = (category: string) => {
+    router.push({
+      pathname: "/products",
+      params: { category },
+    });
+  };
+
+  const handleCustomerCarePress = (item: {
+    route: string;
+    params?: Record<string, string>;
+  }) => {
+    if (item.params) {
+      router.push({
+        pathname: item.route as any,
+        params: item.params,
+      });
     } else {
-      // For other paths, you might want to open in web browser or handle differently
-      console.log("Navigate to:", path);
+      router.push(item.route as any);
     }
   };
 
@@ -129,22 +167,39 @@ export const Footer = React.memo(() => {
           <View style={styles.linkSection}>
             <Text style={styles.sectionTitle}>Quick Links</Text>
             <TouchableOpacity
-              onPress={() => handleNavigation("/products")}
+              onPress={() => router.push("/products")}
               activeOpacity={0.7}
             >
               <Text style={styles.linkText}>All Products</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => handleNavigation("/products?newArrivals=true")}
+              onPress={() =>
+                router.push({
+                  pathname: "/products",
+                  params: { newArrivals: "true" },
+                })
+              }
               activeOpacity={0.7}
             >
               <Text style={styles.linkText}>New Arrivals</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => handleNavigation("/gifting")}
+              onPress={() => router.push("/gifting")}
               activeOpacity={0.7}
             >
               <Text style={styles.linkText}>Gift Guide</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push("/categories")}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.linkText}>Categories</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push("/wishlist")}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.linkText}>Wishlist</Text>
             </TouchableOpacity>
           </View>
 
@@ -154,7 +209,7 @@ export const Footer = React.memo(() => {
             {staticCategories.map((category) => (
               <TouchableOpacity
                 key={category.name}
-                onPress={() => handleNavigation(category.path)}
+                onPress={() => handleCategoryPress(category.category)}
                 activeOpacity={0.7}
               >
                 <Text style={styles.linkText}>{category.name}</Text>
@@ -167,25 +222,14 @@ export const Footer = React.memo(() => {
         <View style={styles.supportSection}>
           <Text style={styles.sectionTitle}>Customer Care</Text>
           <View style={styles.supportGrid}>
-            {[
-              "Contact Us",
-              "About Us",
-              "Shipping Info",
-              "Returns & Exchange",
-              "Size Guide",
-              "FAQ",
-              "Care Instructions",
-              "Privacy Policy",
-            ].map((item) => (
+            {customerCareItems.map((item) => (
               <TouchableOpacity
-                key={item}
-                onPress={() =>
-                  handleNavigation(`/${item.toLowerCase().replace(" ", "-")}`)
-                }
+                key={item.name}
+                onPress={() => handleCustomerCarePress(item)}
                 activeOpacity={0.7}
                 style={styles.supportItem}
               >
-                <Text style={styles.linkText}>{item}</Text>
+                <Text style={styles.linkText}>{item.name}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -206,14 +250,21 @@ export const Footer = React.memo(() => {
 
           <View style={styles.legalLinks}>
             <TouchableOpacity
-              onPress={() => handleNavigation("/terms")}
+              onPress={() =>
+                router.push({ pathname: "/help", params: { section: "terms" } })
+              }
               activeOpacity={0.7}
             >
               <Text style={styles.legalText}>Terms of Service</Text>
             </TouchableOpacity>
             <Text style={styles.divider}>•</Text>
             <TouchableOpacity
-              onPress={() => handleNavigation("/privacy-policy")}
+              onPress={() =>
+                router.push({
+                  pathname: "/help",
+                  params: { section: "privacy" },
+                })
+              }
               activeOpacity={0.7}
             >
               <Text style={styles.legalText}>Privacy Policy</Text>

@@ -1,7 +1,6 @@
 // Layout Components
+export { Footer } from "./common/Footer";
 export { default as Layout } from "./Layout";
-export { Footer } from "./layout/Footer";
-export { Header } from "./layout/Header";
 
 // Navigation Components
 export { default as AdminNavigation } from "./AdminNavigation";

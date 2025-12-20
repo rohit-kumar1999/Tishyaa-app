@@ -89,15 +89,7 @@ export const useProductManager = () => {
 
   // Handle wishlist toggle
   const toggleWishlist = (product: Product) => {
-    console.log(
-      "🛠️ toggleWishlist called for product:",
-      product.id,
-      product.name
-    );
-    console.log("🔐 User signed in status:", isSignedIn);
-
     if (!isSignedIn) {
-      console.log("❌ User not signed in, showing alert");
       Alert.alert(
         "Sign In Required",
         "Please sign in to add items to your wishlist",
@@ -108,7 +100,6 @@ export const useProductManager = () => {
             onPress: () => {
               // Navigate to sign in - you can uncomment this if you have router available
               // router.push('/auth/login');
-              console.log("Navigate to sign in");
             },
           },
         ]
@@ -116,19 +107,15 @@ export const useProductManager = () => {
       return;
     }
 
-    console.log("✅ Starting wishlist toggle for product:", product.id);
     setIsWishlistProcessing((prev) => ({ ...prev, [product.id]: true }));
 
     const isCurrentlyInWishlist = isInWishlist(product.id);
-    console.log("📋 Product currently in wishlist:", isCurrentlyInWishlist);
 
     if (isCurrentlyInWishlist) {
-      console.log("🗑️ Removing from wishlist:", product.id);
       // Backend expects DELETE /wishlist?productId=X&userId=Y
       wishlistRemoveMutation
         .mutate({ params: { productId: product.id, userId } })
         .then(() => {
-          console.log("✅ Successfully removed from wishlist");
           setIsWishlistProcessing((prev) => ({
             ...prev,
             [product.id]: false,
@@ -144,12 +131,10 @@ export const useProductManager = () => {
           }));
         });
     } else {
-      console.log("❤️ Adding to wishlist:", product.id);
       // Backend expects POST /wishlist with { productId } in body
       wishlistAddMutation
         .mutate({ productId: product.id })
         .then(() => {
-          console.log("✅ Successfully added to wishlist");
           setIsWishlistProcessing((prev) => ({
             ...prev,
             [product.id]: false,

@@ -18,15 +18,10 @@ export default function AuthIndexScreen() {
   const router = useRouter();
 
   const handleTabChange = (type: "signin" | "signup") => {
-    console.log("Tab changed from", authType, "to:", type);
     setAuthType(type);
   };
 
-  console.log("Current authType:", authType);
-
-  useEffect(() => {
-    console.log("Auth type changed to:", authType);
-  }, [authType]);
+  useEffect(() => {}, [authType]);
 
   return (
     <SignedOut>

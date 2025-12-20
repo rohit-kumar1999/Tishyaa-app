@@ -64,13 +64,10 @@ export default function UpdatePasswordScreen() {
         signOutOfOtherSessions: signOutOtherDevices,
       });
 
-      console.log("✅ Password updated successfully");
-
       // Navigate back to account settings
       router.back();
 
       // TODO: Show success message/toast
-      console.log("Password updated successfully!");
     } catch (error: any) {
       console.error("Password update error:", error);
 

@@ -11,7 +11,6 @@ export default function RootNavigator() {
         <Stack.Screen name="products" options={{ headerShown: false }} />
         <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="categories" options={{ headerShown: false }} />
-        <Stack.Screen name="category/[slug]" options={{ headerShown: false }} />
         <Stack.Screen name="cart" options={{ headerShown: false }} />
         <Stack.Screen name="checkout" options={{ headerShown: false }} />
         <Stack.Screen

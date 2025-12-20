@@ -21,7 +21,6 @@ export const useUserService = () => {
       // Use Clerk's client-side delete method
       await user.delete();
 
-      console.log("✅ User deleted successfully using Clerk client method");
       return { success: true, message: "Account deleted successfully" };
     } catch (error) {
       console.error("Error deleting user:", error);

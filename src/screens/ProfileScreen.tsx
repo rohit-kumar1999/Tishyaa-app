@@ -35,10 +35,8 @@ export default function ProfileScreen() {
     user?.publicMetadata?.role === "superadmin";
 
   const handleSignOut = async () => {
-    console.log("🚪 handleSignOut called");
     try {
       await signOut();
-      console.log("✅ User signed out successfully");
     } catch (error) {
       console.error("❌ Sign out error:", error);
     }

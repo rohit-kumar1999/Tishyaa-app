@@ -83,7 +83,6 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
 
   const toggleWishlist = async (product: any): Promise<void> => {
     if (!isSignedIn) {
-      console.log("❌ User not signed in");
       return;
     }
 

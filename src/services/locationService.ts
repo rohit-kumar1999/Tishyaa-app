@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
-import { Linking, Platform } from "react-native";
+import { Alert, Linking, Platform } from "react-native";
 import Toast from "react-native-toast-message";
 
 export interface LocationCoordinates {
@@ -73,7 +73,6 @@ class LocationService {
       if (Platform.OS === "ios") {
         const { status: backgroundStatus } =
           await Location.requestBackgroundPermissionsAsync();
-        console.log("Background location status:", backgroundStatus);
       }
 
       return true;

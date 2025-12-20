@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
-import { Linking } from "react-native";
+import { Alert, Linking } from "react-native";
 import Toast from "react-native-toast-message";
 
 export interface ShareContent {
@@ -454,12 +454,6 @@ class SocialService {
   ): Promise<void> {
     try {
       // This would typically send analytics to your backend
-      console.log("Social share tracked:", {
-        platform,
-        contentType,
-        contentId,
-        timestamp: new Date().toISOString(),
-      });
     } catch (error) {
       console.error("Error tracking share:", error);
     }

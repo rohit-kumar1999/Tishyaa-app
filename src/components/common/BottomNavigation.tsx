@@ -28,7 +28,7 @@ export default function BottomNavigation({
     },
     {
       key: "category",
-      route: "/category",
+      route: "/categories",
       icon: "grid-outline",
       label: "Category",
     },
