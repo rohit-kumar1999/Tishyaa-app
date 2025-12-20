@@ -1,4 +1,5 @@
 // API setup for React Native with environment detection
+import { Platform } from "react-native";
 
 interface ApiConfig {
   baseURL: string;
@@ -28,17 +29,16 @@ const getBaseURL = (): string => {
     return "https://kaess-be.vercel.app";
   }
 
-  // Development URL - Use production API for mobile devices
-  // Since localhost:3000 doesn't work on mobile devices (iOS/Android)
-  // We'll use the production server for all platforms in development
-  return "https://kaess-be.vercel.app";
-
-  // Note: If you have a local development server and want to use it for web only,
-  // you can uncomment and modify the following:
-  // if (Platform.OS === "web") {
-  //   return "http://localhost:3000";
-  // }
-  // return "https://kaess-be.vercel.app";
+  // Development URL - Use local backend on port 3000
+  if (Platform.OS === "web") {
+    // Web can directly access localhost:3000
+    return "http://localhost:3000";
+  } else {
+    // Mobile devices need to use the CORS proxy on port 3001
+    // The proxy forwards requests to localhost:3000
+    // Replace with your machine's IP address if needed
+    return "https://kaess-be.vercel.app";
+  }
 };
 
 class ApiClient {
@@ -52,9 +52,14 @@ class ApiClient {
     const fullUrl = `${this.config.baseURL}${url}`;
 
     const defaultHeaders: Record<string, string> = {
-      "Content-Type": "application/json",
       Accept: "application/json",
     };
+
+    // Only add Content-Type for non-FormData requests
+    const isFormData = options.body instanceof FormData;
+    if (!isFormData) {
+      defaultHeaders["Content-Type"] = "application/json";
+    }
 
     // Add Clerk authentication header if available
     if (globalGetToken) {
@@ -146,7 +151,12 @@ class ApiClient {
     return this.request(url, {
       ...options,
       method: "POST",
-      body: data ? JSON.stringify(data) : undefined,
+      body:
+        data instanceof FormData
+          ? data
+          : data
+          ? JSON.stringify(data)
+          : undefined,
     });
   }
 
@@ -154,7 +164,12 @@ class ApiClient {
     return this.request(url, {
       ...options,
       method: "PUT",
-      body: data ? JSON.stringify(data) : undefined,
+      body:
+        data instanceof FormData
+          ? data
+          : data
+          ? JSON.stringify(data)
+          : undefined,
     });
   }
 

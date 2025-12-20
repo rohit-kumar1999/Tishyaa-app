@@ -1,7 +1,16 @@
 import { api } from "@/src/setup/api";
 import { useAuth, useUser } from "@clerk/clerk-expo";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useApiMutation, useApiQuery } from "../hooks/useApiQuery";
+
+// Global request tracker to prevent infinite loops across all instances
+let globalRequestCount = 0;
+let globalResetTimeout: NodeJS.Timeout | null = null;
+
+const resetGlobalCounter = () => {
+  globalRequestCount = 0;
+  console.log("🌍 [ProductService] Global request counter reset");
+};
 
 export interface Product {
   id: string;
@@ -206,9 +215,43 @@ export const useProducts = (params?: {
   priceRange?: [number, number];
   inStock?: boolean;
 }) => {
+  const hookCallCountRef = useRef(0);
+  hookCallCountRef.current += 1;
+  console.log(
+    `🎣 [useProducts] Hook called #${hookCallCountRef.current} with params:`,
+    params
+  );
+
   const [data, setData] = useState<ProductResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const requestCountRef = useRef(0);
+
+  // Create stable serialized strings for array dependencies
+  const categoriesString = useMemo(
+    () => params?.categories?.join(",") || "",
+    [params?.categories]
+  );
+  const materialsString = useMemo(
+    () => params?.materials?.join(",") || "",
+    [params?.materials]
+  );
+  const occasionsString = useMemo(
+    () => params?.occasions?.join(",") || "",
+    [params?.occasions]
+  );
+  const discountsString = useMemo(
+    () => params?.discounts?.join(",") || "",
+    [params?.discounts]
+  );
+  const ratingsString = useMemo(
+    () => params?.ratings?.join(",") || "",
+    [params?.ratings]
+  );
+  const priceRangeString = useMemo(
+    () => params?.priceRange?.join(",") || "",
+    [params?.priceRange]
+  );
 
   // Memoize the request body to prevent unnecessary re-renders
   const requestBody = useMemo(
@@ -244,41 +287,124 @@ export const useProducts = (params?: {
       params?.sortBy,
       params?.sortOrder,
       params?.category,
-      JSON.stringify(params?.categories),
-      JSON.stringify(params?.materials),
-      JSON.stringify(params?.occasions),
-      JSON.stringify(params?.discounts),
-      JSON.stringify(params?.ratings),
+      categoriesString,
+      materialsString,
+      occasionsString,
+      discountsString,
+      ratingsString,
       params?.search,
       params?.minPrice,
       params?.maxPrice,
-      JSON.stringify(params?.priceRange),
+      priceRangeString,
       params?.inStock,
     ]
   );
 
+  // Add a simple reset function for the circuit breaker
+  const resetCircuitBreaker = useCallback(() => {
+    requestCountRef.current = 0;
+    setError(null);
+    console.log("🔄 [ProductService] Circuit breaker reset");
+  }, []);
+
+  // Track when requestBody changes
+  const prevRequestBodyRef = useRef<string>("");
+  const currentRequestBodyString = JSON.stringify(requestBody);
+  if (prevRequestBodyRef.current !== currentRequestBodyString) {
+    console.log(
+      "📦 [ProductService] RequestBody changed, will trigger new API call"
+    );
+    console.log("🆚 Previous:", prevRequestBodyRef.current);
+    console.log("🆚 Current:", currentRequestBodyString);
+    prevRequestBodyRef.current = currentRequestBodyString;
+  }
+
   const fetchProducts = useCallback(async () => {
+    // Global circuit breaker to prevent infinite loops across all instances
+    globalRequestCount += 1;
+    requestCountRef.current += 1;
+
+    if (globalRequestCount > 3) {
+      console.error(
+        `🌍 [ProductService] GLOBAL circuit breaker activated! Total requests: ${globalRequestCount}. Forcing 5 second cooldown.`
+      );
+
+      // Clear any existing reset timeout
+      if (globalResetTimeout) {
+        clearTimeout(globalResetTimeout);
+      }
+
+      // Force a longer cooldown period
+      globalResetTimeout = setTimeout(resetGlobalCounter, 5000);
+
+      setError(
+        "System overload detected. Please wait 5 seconds before trying again."
+      );
+      setIsLoading(false);
+      return;
+    }
+
+    if (requestCountRef.current > 2) {
+      console.error(
+        `🚫 [ProductService] Local circuit breaker activated! Request #${requestCountRef.current}. Resetting.`
+      );
+      requestCountRef.current = 0;
+      setError("Multiple rapid requests detected. System reset automatically.");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
-      console.log("=== API Request ===");
-      console.log("URL:", "/product");
-      console.log("Body:", JSON.stringify(requestBody, null, 2));
+      console.log(
+        `🔍 [ProductService] Making API Request #${
+          requestCountRef.current
+        } at ${new Date().toLocaleTimeString()}`
+      );
+      console.log("📦 Body:", JSON.stringify(requestBody, null, 2));
       const response: ProductResponse = await api.post("/product", requestBody);
-      console.log("=== API Response Success ===");
-      console.log("Products count:", response?.products?.length || 0);
-      console.log("Total items:", response?.pagination?.totalItems || 0);
+      console.log("✅ [ProductService] API Response Success");
+      console.log("🛍️ Products count:", response?.products?.length || 0);
       setData(response);
+
+      // Reset counters on successful request
+      requestCountRef.current = 0;
+
+      // Reset global counter gradually
+      if (globalResetTimeout) {
+        clearTimeout(globalResetTimeout);
+      }
+      globalResetTimeout = setTimeout(resetGlobalCounter, 2000);
     } catch (err) {
-      console.error("Error fetching products:", err);
+      console.error("❌ [ProductService] Error fetching products:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch products");
     } finally {
       setIsLoading(false);
     }
   }, [requestBody]);
 
+  // Add throttling to prevent rapid successive calls
+  const throttleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
-    fetchProducts();
+    // Clear any existing timeout
+    if (throttleTimeoutRef.current) {
+      clearTimeout(throttleTimeoutRef.current);
+    }
+
+    // Throttle the API call to prevent rapid successive requests
+    throttleTimeoutRef.current = setTimeout(() => {
+      console.log("⏰ [ProductService] Throttled fetchProducts execution");
+      fetchProducts();
+    }, 300); // 300ms throttle
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (throttleTimeoutRef.current) {
+        clearTimeout(throttleTimeoutRef.current);
+      }
+    };
   }, [fetchProducts]);
 
   const refetch = useCallback(() => {
@@ -296,6 +422,7 @@ export const useProducts = (params?: {
     isLoading,
     error,
     refetch,
+    resetCircuitBreaker, // Expose reset function
   };
 };
 

@@ -1,9 +1,9 @@
 import {
-  createInstagramPostData,
   useCreateInstagramPost,
   useGetInstagramPosts,
   useUploadFile,
 } from "@/src/services/instagramService";
+import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { ResizeMode, Video } from "expo-av";
 import { Image } from "expo-image";
@@ -14,6 +14,7 @@ import {
   Alert,
   Dimensions,
   Linking,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -28,6 +29,9 @@ export const InstagramFeed = () => {
     useState<ImagePicker.ImagePickerAsset | null>(null);
   const [uploadCompleted, setUploadCompleted] = useState(false);
 
+  // Auth
+  const { userId } = useAuth();
+
   // Use service hooks
   const {
     data: instagramPosts = [],
@@ -36,9 +40,6 @@ export const InstagramFeed = () => {
   } = useGetInstagramPosts();
   const createPostMutation = useCreateInstagramPost();
   const uploadFileMutation = useUploadFile();
-
-  // Mock user ID for now - replace with actual auth
-  const userId = "user123";
 
   // Utility functions
   const isVideoFile = (asset: ImagePicker.ImagePickerAsset) => {
@@ -145,43 +146,78 @@ export const InstagramFeed = () => {
     }
 
     try {
+      // Step 1: Upload file to Cloudinary
       const isVideo = asset.type === "video";
-
       const formData = new FormData();
-      formData.append("file", {
-        uri: asset.uri,
-        type: asset.mimeType || (isVideo ? "video/mp4" : "image/jpeg"),
-        name: asset.fileName || `upload.${isVideo ? "mp4" : "jpg"}`,
-      } as any);
+
+      // Handle file upload differently for web vs native
+      if (Platform.OS === "web") {
+        // For web, we need to fetch the blob first
+        try {
+          const response = await fetch(asset.uri);
+          const blob = await response.blob();
+          const fileName =
+            asset.fileName || `upload-${Date.now()}.${isVideo ? "mp4" : "jpg"}`;
+          const file = new File([blob], fileName, {
+            type: asset.mimeType || (isVideo ? "video/mp4" : "image/jpeg"),
+          });
+          formData.append("file", file);
+        } catch (fetchError) {
+          console.error("Error fetching blob:", fetchError);
+          throw new Error("Failed to process file for upload");
+        }
+      } else {
+        // For native platforms (iOS/Android)
+        const fileToUpload: any = {
+          uri: asset.uri,
+          type: asset.mimeType || (isVideo ? "video/mp4" : "image/jpeg"),
+          name:
+            asset.fileName || `upload-${Date.now()}.${isVideo ? "mp4" : "jpg"}`,
+        };
+        formData.append("file", fileToUpload);
+      }
+
+      // Note: folderName is added by transformRequest in the service hook
 
       uploadFileMutation.mutate(formData, {
         onSuccess: (response) => {
-          const postData = createInstagramPostData(
-            userId,
-            response.url,
-            response.media_type
+          // Step 2: Create Instagram post record
+          createPostMutation.mutate(
+            {
+              userId,
+              instagramUrl: null,
+              mediaUrl: response.url,
+              mediaType: response.media_type,
+              isDisplayed: false,
+            },
+            {
+              onSuccess: () => {
+                // Refresh the posts list
+                refetch();
+                // Set upload completed state
+                setUploadCompleted(true);
+                // Clear the selected file after a delay to show success message
+                setTimeout(() => resetUploadState(), 3000);
+                Alert.alert(
+                  "Success! 🎉",
+                  "Thank you! We will post your image/video soon on our Instagram handle! 🎉"
+                );
+              },
+              onError: (error) => {
+                console.error("Error creating Instagram post:", error);
+                // Clear the selected file and reset state on Instagram API failure
+                resetUploadState();
+                Alert.alert(
+                  "Error",
+                  "Failed to create Instagram post. Please try uploading again."
+                );
+              },
+            }
           );
-
-          createPostMutation.mutate(postData, {
-            onSuccess: () => {
-              refetch();
-              setUploadCompleted(true);
-              setTimeout(() => resetUploadState(), 3000);
-              Alert.alert(
-                "Success! 🎉",
-                "Thank you! We will post your media soon on our Instagram handle!"
-              );
-            },
-            onError: (error) => {
-              resetUploadState();
-              Alert.alert(
-                "Error",
-                "Failed to create Instagram post. Please try uploading again."
-              );
-            },
-          });
         },
         onError: (error) => {
+          console.error("Error uploading file:", error);
+          // Clear the selected file and reset state on upload API failure
           resetUploadState();
           Alert.alert(
             "Error",
@@ -190,12 +226,14 @@ export const InstagramFeed = () => {
         },
       });
     } catch (error) {
+      console.error("Unexpected error in handleAutoUpload:", error);
+      // Clear the selected file and reset state on unexpected error
       resetUploadState();
       Alert.alert("Error", "An unexpected error occurred. Please try again.");
     }
   };
 
-  const renderPost = (post: (typeof instagramPosts)[0]) => (
+  const renderPost = (post: NonNullable<typeof instagramPosts>[0]) => (
     <TouchableOpacity
       key={post.id}
       style={styles.postContainer}
@@ -286,7 +324,7 @@ export const InstagramFeed = () => {
               />
             )}
             <View style={styles.uploadOverlay}>
-              {uploadFileMutation.isPending ? (
+              {uploadFileMutation.isLoading ? (
                 <View style={styles.uploadStatusContainer}>
                   <ActivityIndicator size="small" color="#ffffff" />
                   <Text style={styles.uploadStatusText}>
@@ -294,7 +332,7 @@ export const InstagramFeed = () => {
                     ...
                   </Text>
                 </View>
-              ) : createPostMutation.isPending ? (
+              ) : createPostMutation.isLoading ? (
                 <View style={styles.uploadStatusContainer}>
                   <ActivityIndicator size="small" color="#ffffff" />
                   <Text style={styles.uploadStatusText}>Creating post...</Text>
@@ -411,31 +449,34 @@ export const InstagramFeed = () => {
           )}
 
           {/* Real Instagram Posts */}
-          {!isLoadingPosts && instagramPosts.length > 0 && (
+          {!isLoadingPosts && instagramPosts && instagramPosts.length > 0 && (
             <>
               {/* First row - 2 posts */}
               <View style={styles.postsRow}>
-                {instagramPosts.slice(0, 2).map(renderPost)}
+                {instagramPosts?.slice(0, 2).map(renderPost)}
               </View>
               {/* Second row - 3rd post + upload card */}
               <View style={styles.postsRow}>
-                {instagramPosts.length > 2 && renderPost(instagramPosts[2])}
+                {instagramPosts &&
+                  instagramPosts.length > 2 &&
+                  renderPost(instagramPosts[2])}
                 {renderUploadCard()}
               </View>
             </>
           )}
 
           {/* No posts fallback */}
-          {!isLoadingPosts && instagramPosts.length === 0 && (
-            <View style={styles.noPostsContainer}>
-              <View style={styles.noPostsContent}>
-                <Ionicons name="logo-instagram" size={32} color="#ccc" />
-                <Text style={styles.noPostsText}>No posts yet</Text>
-                <Text style={styles.noPostsSubtext}>Be the first!</Text>
+          {!isLoadingPosts &&
+            (!instagramPosts || instagramPosts.length === 0) && (
+              <View style={styles.noPostsContainer}>
+                <View style={styles.noPostsContent}>
+                  <Ionicons name="logo-instagram" size={32} color="#ccc" />
+                  <Text style={styles.noPostsText}>No posts yet</Text>
+                  <Text style={styles.noPostsSubtext}>Be the first!</Text>
+                </View>
+                {renderUploadCard()}
               </View>
-              {renderUploadCard()}
-            </View>
-          )}
+            )}
         </View>
 
         {/* Tips and View All Button */}

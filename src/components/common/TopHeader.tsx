@@ -50,7 +50,9 @@ export const TopHeader = () => {
         <View style={styles.header}>
           {/* Brand Section */}
           <View style={styles.brandSection}>
-            <Text style={styles.brandText}>Tishyaa</Text>
+            <TouchableOpacity onPress={() => router.push("/")}>
+              <Text style={styles.brandText}>Tishyaa</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Actions Section */}

@@ -57,7 +57,7 @@ export const PromoBanner = () => {
   }, []);
 
   const handleShopNow = () => {
-    router.push("/(tabs)/categories");
+    router.push("/products");
   };
 
   // Transform values for floating animation

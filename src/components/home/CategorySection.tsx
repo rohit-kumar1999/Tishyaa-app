@@ -97,7 +97,7 @@ export const CategorySection = () => {
   }, [categories.length, fadeAnim]);
 
   const handleCategoryPress = (categoryId: string) => {
-    router.push(`/category/${categoryId}`);
+    router.push(`/products?category=${categoryId}`);
   };
 
   const renderCategory = (category: (typeof categories)[0]) => (

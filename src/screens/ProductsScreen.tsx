@@ -65,13 +65,17 @@ const SORT_OPTIONS: SortOption[] = [
 ];
 
 export default function ProductsScreen() {
+  const renderCountRef = useRef(0);
+  renderCountRef.current += 1;
+  console.log(`🎨 [ProductsScreen] Render #${renderCountRef.current}`);
+
   const router = useRouter();
   const params = useLocalSearchParams();
   const { toggleWishlist, isInWishlist, isWishlistProcessing } = useWishlist();
   const { addItemToCart, isProcessing: isCartProcessing } = useCart();
 
   console.log(isWishlistProcessing);
-  const [filters, setFilters] = useLocalStorage<FilterState>(
+  const [filtersRaw, setFiltersRaw] = useLocalStorage<FilterState>(
     "productFilters",
     initialFilters
   );
@@ -83,13 +87,104 @@ export default function ProductsScreen() {
   // Ref for scrolling to top
   const flatListRef = useRef<FlatList>(null);
 
+  // Define itemsPerPage constant before using it
+  const itemsPerPageConstant = 20;
+
+  // Create stable string representations for comparison
+  const categoriesKey = useMemo(
+    () => (filtersRaw.categories || []).sort().join(","),
+    [filtersRaw.categories]
+  );
+  const materialsKey = useMemo(
+    () => (filtersRaw.materials || []).sort().join(","),
+    [filtersRaw.materials]
+  );
+  const occasionsKey = useMemo(
+    () => (filtersRaw.occasions || []).sort().join(","),
+    [filtersRaw.occasions]
+  );
+  const discountsKey = useMemo(
+    () => (filtersRaw.discounts || []).sort().join(","),
+    [filtersRaw.discounts]
+  );
+  const ratingsKey = useMemo(
+    () => (filtersRaw.ratings || []).sort().join(","),
+    [filtersRaw.ratings]
+  );
+  const priceRangeKey = useMemo(
+    () => (filtersRaw.priceRange || [0, 100000]).join(","),
+    [filtersRaw.priceRange]
+  );
+
+  // Create a stable memoized version of filters to prevent unnecessary re-renders
+  const filters = useMemo(
+    () => ({
+      categories: filtersRaw.categories || [],
+      priceRange: filtersRaw.priceRange || ([0, 100000] as [number, number]),
+      materials: filtersRaw.materials || [],
+      occasions: filtersRaw.occasions || [],
+      discounts: filtersRaw.discounts || [],
+      ratings: filtersRaw.ratings || [],
+      inStock: filtersRaw.inStock || false,
+      sortBy: filtersRaw.sortBy || "createdAt",
+      sortOrder: filtersRaw.sortOrder || "desc",
+      search: filtersRaw.search,
+    }),
+    [
+      categoriesKey,
+      materialsKey,
+      occasionsKey,
+      discountsKey,
+      ratingsKey,
+      priceRangeKey,
+      filtersRaw.inStock,
+      filtersRaw.sortBy,
+      filtersRaw.sortOrder,
+      filtersRaw.search,
+    ]
+  );
+
+  // Use the raw setter but wrap it to prevent unnecessary updates
+  const setFilters = useCallback(
+    (update: FilterState | ((prev: FilterState) => FilterState)) => {
+      console.log("🔄 [ProductsScreen] setFilters called");
+      setFiltersRaw(update);
+    },
+    [setFiltersRaw]
+  );
+
+  // Track if we've already processed the category param to prevent loops
+  const processedCategoryRef = useRef<string>("");
+
   // Handle initial category from params
   useEffect(() => {
-    if (params?.category) {
-      setFilters((prev) => ({
-        ...prev,
-        categories: [params.category as string],
-      }));
+    if (params?.category && processedCategoryRef.current !== params.category) {
+      console.log(
+        "🏷️ [ProductsScreen] New category param detected:",
+        params.category
+      );
+      processedCategoryRef.current = params.category as string;
+
+      setFilters((prev) => {
+        // Always replace categories when coming from URL params to ensure single category selection
+        const newCategory = params.category as string;
+        if (
+          prev.categories.length !== 1 ||
+          prev.categories[0] !== newCategory
+        ) {
+          console.log(
+            "🏷️ [ProductsScreen] Updating categories from:",
+            prev.categories,
+            "to:",
+            [newCategory]
+          );
+          return {
+            ...prev,
+            categories: [newCategory], // Always replace with single category
+          };
+        }
+        return prev;
+      });
     }
   }, [params?.category]);
 
@@ -105,6 +200,23 @@ export default function ProductsScreen() {
     return () => clearTimeout(delayedSearch);
   }, [searchText, filters.search]);
 
+  // Simple filter change detection without dependencies that cause loops
+  const prevFiltersHashRef = useRef<string>("");
+  const currentFiltersHash = `${categoriesKey}-${materialsKey}-${occasionsKey}-${discountsKey}-${ratingsKey}-${priceRangeKey}-${filters.inStock}-${filters.sortBy}-${filters.sortOrder}`;
+
+  useEffect(() => {
+    if (
+      prevFiltersHashRef.current &&
+      prevFiltersHashRef.current !== currentFiltersHash
+    ) {
+      console.log("🔄 [ProductsScreen] Filters changed, resetting page to 1");
+      if (pageNumber !== 1) {
+        setPageNumber(1);
+      }
+    }
+    prevFiltersHashRef.current = currentFiltersHash;
+  }, [currentFiltersHash, pageNumber]);
+
   // Scroll to top when page changes
   useEffect(() => {
     const scrollToTop = () => {
@@ -118,12 +230,9 @@ export default function ProductsScreen() {
     return () => clearTimeout(timeoutId);
   }, [pageNumber]);
 
-  // Define itemsPerPage constant before using it
-  const itemsPerPageConstant = 20;
-
-  // Prepare query parameters for useProducts hook with stable references
-  const queryParams = useMemo(
-    () => ({
+  // Create a stable queryParams with proper throttling
+  const queryParams = useMemo(() => {
+    const params = {
       page: pageNumber,
       limit: itemsPerPageConstant,
       sortBy: filters.sortBy,
@@ -140,24 +249,40 @@ export default function ProductsScreen() {
           ? filters.priceRange
           : undefined,
       inStock: filters.inStock || undefined,
-    }),
-    [
-      pageNumber,
-      itemsPerPageConstant,
-      filters.sortBy,
-      filters.sortOrder,
-      JSON.stringify(filters.categories),
-      JSON.stringify(filters.materials),
-      JSON.stringify(filters.occasions),
-      JSON.stringify(filters.discounts),
-      JSON.stringify(filters.ratings),
-      filters.search,
-      JSON.stringify(filters.priceRange),
-      filters.inStock,
-    ]
-  );
+    };
 
-  console.log("Query Params:", queryParams);
+    console.log("🔍 [ProductsScreen] queryParams recalculated:", params);
+    return params;
+  }, [
+    pageNumber,
+    itemsPerPageConstant,
+    filters.sortBy,
+    filters.sortOrder,
+    categoriesKey,
+    materialsKey,
+    occasionsKey,
+    discountsKey,
+    ratingsKey,
+    filters.search,
+    priceRangeKey,
+    filters.inStock,
+  ]);
+
+  // Log when queryParams actually change (not on every render) with more detail
+  const prevQueryParamsRef = useRef<string>("");
+  const currentQueryParamsString = JSON.stringify(queryParams);
+  if (prevQueryParamsRef.current !== currentQueryParamsString) {
+    console.log("🔄 [ProductsScreen] Query Params Changed:");
+    console.log("📊 New params:", queryParams);
+    console.log("🆚 Previous:", prevQueryParamsRef.current);
+    console.log("🆚 Current:", currentQueryParamsString);
+    prevQueryParamsRef.current = currentQueryParamsString;
+  } else {
+    console.log(
+      "✅ [ProductsScreen] Query Params unchanged - no API call should occur"
+    );
+  }
+
   const {
     data: productsResponse,
     products,
@@ -168,8 +293,10 @@ export default function ProductsScreen() {
     isLoading,
     error,
     refetch,
+    resetCircuitBreaker,
   } = useProducts(queryParams);
 
+  console.log("Error: *********************        ", error);
   const totalPages = pagination?.totalPages || 1;
   const totalProducts = pagination?.totalItems || products.length;
   const currentPage = pagination?.currentPage || pageNumber;
@@ -428,13 +555,43 @@ export default function ProductsScreen() {
     />
   );
 
+  // Calculate the number of active filters
+  const getActiveFiltersCount = () => {
+    let count = 0;
+
+    // Count array filters
+    if (filters.categories.length > 0) count++;
+    if (filters.materials.length > 0) count++;
+    if (filters.occasions.length > 0) count++;
+    if (filters.discounts.length > 0) count++;
+    if (filters.ratings.length > 0) count++;
+
+    // Count price range filter
+    if (filters.priceRange[0] > 0 || filters.priceRange[1] < 100000) count++;
+
+    // Count stock filter
+    if (filters.inStock) count++;
+
+    // Count search filter
+    if (filters.search && filters.search.trim()) count++;
+
+    return count;
+  };
+
+  const activeFiltersCount = getActiveFiltersCount();
+
   const renderFiltersButton = () => (
     <TouchableOpacity
       style={styles.filtersButton}
       onPress={() => setShowFilters(!showFilters)}
     >
       <Ionicons name="filter" size={20} color="#000" />
-      <Text style={styles.filtersButtonText}>Filters</Text>
+      <View style={styles.filtersTextContainer}>
+        <Text style={styles.filtersButtonText}>Filters</Text>
+        {activeFiltersCount > 0 && (
+          <Text style={styles.filtersCount}>({activeFiltersCount})</Text>
+        )}
+      </View>
       <Text style={styles.showText}>{showFilters ? "Hide" : "Show"}</Text>
     </TouchableOpacity>
   );
@@ -517,15 +674,35 @@ export default function ProductsScreen() {
   };
 
   if (error) {
+    const isCircuitBreakerError = error.includes("Too many requests");
+
     return (
       <SafeAreaView style={styles.container}>
         <TopHeader />
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle" size={64} color="#EF4444" />
-          <Text style={styles.errorTitle}>Error Loading Products</Text>
-          <Text style={styles.errorMessage}>Please try again later</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
-            <Text style={styles.retryButtonText}>Retry</Text>
+          <Text style={styles.errorTitle}>
+            {isCircuitBreakerError
+              ? "Too Many Requests"
+              : "Error Loading Products"}
+          </Text>
+          <Text style={styles.errorMessage}>
+            {isCircuitBreakerError
+              ? "We detected too many API requests. The system has been reset."
+              : "Please try again later"}
+          </Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => {
+              if (isCircuitBreakerError && resetCircuitBreaker) {
+                resetCircuitBreaker();
+              }
+              handleRefresh();
+            }}
+          >
+            <Text style={styles.retryButtonText}>
+              {isCircuitBreakerError ? "Reset & Retry" : "Retry"}
+            </Text>
           </TouchableOpacity>
         </View>
         <BottomNavigation currentRoute="/products" />
@@ -651,11 +828,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
+  filtersTextContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    marginLeft: 8,
+  },
   filtersButtonText: {
     fontSize: 16,
     color: "#000",
-    marginLeft: 8,
-    flex: 1,
+  },
+  filtersCount: {
+    fontSize: 16,
+    color: "#EF4444",
+    fontWeight: "600",
+    marginLeft: 4,
   },
   showText: {
     fontSize: 16,
