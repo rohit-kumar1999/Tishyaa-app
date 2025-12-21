@@ -1,6 +1,6 @@
 import { useOAuth, useSignIn } from "@clerk/clerk-expo";
-import { FontAwesome } from "@expo/vector-icons";
 import type { EmailCodeFactor } from "@clerk/types";
+import { FontAwesome } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import { router } from "expo-router";
 import React, { useCallback, useState } from "react";
@@ -25,7 +25,7 @@ export default function SignInScreen() {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [resetCode, setResetCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  
+
   // 2FA state
   const [needsSecondFactor, setNeedsSecondFactor] = useState(false);
   const [secondFactorCode, setSecondFactorCode] = useState("");
@@ -57,7 +57,8 @@ export default function SignInScreen() {
       } else if (signInAttempt.status === "needs_second_factor") {
         // Handle Client Trust - find email_code factor and prepare verification
         const emailCodeFactor = signInAttempt.supportedSecondFactors?.find(
-          (factor): factor is EmailCodeFactor => factor.strategy === "email_code"
+          (factor): factor is EmailCodeFactor =>
+            factor.strategy === "email_code"
         );
 
         if (emailCodeFactor) {
@@ -129,7 +130,8 @@ export default function SignInScreen() {
     } catch (err: any) {
       toast({
         title: "Verification Error",
-        description: err?.errors?.[0]?.message || "Invalid code. Please try again.",
+        description:
+          err?.errors?.[0]?.message || "Invalid code. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -267,10 +269,12 @@ export default function SignInScreen() {
               maxLength={6}
               placeholderTextColor="#9ca3af"
             />
-            <Pressable onPress={() => {
-              setNeedsSecondFactor(false);
-              setSecondFactorCode("");
-            }}>
+            <Pressable
+              onPress={() => {
+                setNeedsSecondFactor(false);
+                setSecondFactorCode("");
+              }}
+            >
               <Text style={styles.forgotPasswordLink}>Back to Sign In</Text>
             </Pressable>
           </View>

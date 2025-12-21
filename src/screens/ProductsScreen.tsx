@@ -11,7 +11,6 @@ import React, {
 import {
   ActivityIndicator,
   FlatList,
-  Image,
   RefreshControl,
   SafeAreaView,
   StyleSheet,
@@ -22,9 +21,8 @@ import {
 import BottomNavigation from "../components/common/BottomNavigation";
 import { TopHeader } from "../components/common/TopHeader";
 import { FiltersComponent } from "../components/FiltersComponent";
+import ProductCard from "../components/ProductCard";
 import { Select, SortOption } from "../components/ui";
-import { useWishlist } from "../contexts/WishlistContext";
-import { useCart } from "../hooks/useCart";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { Product, useProducts } from "../services/productService";
 
@@ -70,8 +68,6 @@ export default function ProductsScreen() {
 
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { toggleWishlist, isInWishlist, isWishlistProcessing } = useWishlist();
-  const { addItemToCart, isProcessing: isCartProcessing } = useCart();
 
   const [filtersRaw, setFiltersRaw] = useLocalStorage<FilterState>(
     "productFilters",
@@ -386,122 +382,7 @@ export default function ProductsScreen() {
   };
 
   const renderProduct = ({ item }: { item: Product }) => {
-    const discountPercentage = item.originalPrice
-      ? Math.round(
-          ((parseFloat(item.originalPrice) - item.price) /
-            parseFloat(item.originalPrice)) *
-            100
-        )
-      : item.discount
-      ? Math.round(item.discount)
-      : 0;
-
-    return (
-      <TouchableOpacity
-        onPress={() => handleProductPress(item.id)}
-        style={styles.productCard}
-      >
-        <View style={styles.imageContainer}>
-          <Image
-            source={{
-              uri: item.images?.[0] || "https://via.placeholder.com/150",
-            }}
-            style={styles.productImage}
-            resizeMode="cover"
-          />
-          {discountPercentage > 0 && (
-            <View style={styles.discountBadge}>
-              <Text style={styles.discountText}>{discountPercentage}% off</Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.productInfo}>
-          <View style={styles.titleRow}>
-            <Text style={styles.productTitle} numberOfLines={2}>
-              {item.name}
-            </Text>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              onPress={() => {
-                const productData = {
-                  ...item,
-                  materials: item.tags || [],
-                  care: [],
-                  reviewCount: item.ratingCount || 0,
-                  featured: item.hasPromotion || false,
-                  originalPrice: item.originalPrice
-                    ? parseFloat(item.originalPrice)
-                    : item.price,
-                  images: item.images || [],
-                  description: item.description || item.shortDescription || "",
-                  stockQuantity: item.stockQuantity || 0,
-                  weight: 0,
-                  dimensions: undefined,
-                };
-                toggleWishlist(productData);
-              }}
-              disabled={isWishlistProcessing[item.id]}
-            >
-              {isWishlistProcessing[item.id] ? (
-                <ActivityIndicator size="small" color="#DC3545" />
-              ) : (
-                <Ionicons
-                  name={isInWishlist(item.id) ? "heart" : "heart-outline"}
-                  size={22}
-                  color="#DC3545"
-                />
-              )}
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.ratingRow}>
-            <View style={styles.ratingBadge}>
-              <Text style={styles.ratingText}>{item.rating || "3.9"}</Text>
-              <Ionicons
-                name="star"
-                size={10}
-                color="white"
-                style={{ marginLeft: 2 }}
-              />
-            </View>
-            <Text style={styles.reviewText}>({item.ratingCount || "68"})</Text>
-          </View>
-
-          <View style={styles.priceRow}>
-            <Text style={styles.price}>₹{item.price}</Text>
-            {item.originalPrice && (
-              <Text style={styles.originalPrice}>₹{item.originalPrice}</Text>
-            )}
-            {discountPercentage > 0 && (
-              <Text style={styles.discount}>({discountPercentage}% off)</Text>
-            )}
-          </View>
-
-          <TouchableOpacity
-            style={[
-              styles.addToCartButton,
-              (!item.inStock || isCartProcessing[item.id]) &&
-                styles.disabledButton,
-            ]}
-            onPress={() => addItemToCart(item.id, 1, false)}
-            disabled={!item.inStock || isCartProcessing[item.id]}
-          >
-            {isCartProcessing[item.id] ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <>
-                <Ionicons name="bag" size={14} color="white" />
-                <Text style={styles.addToCartText}>
-                  {item.inStock ? "Add to Cart" : "Out of Stock"}
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-    );
+    return <ProductCard product={item} viewMode="grid" />;
   };
 
   const renderHeroSection = () => (
@@ -751,6 +632,8 @@ export default function ProductsScreen() {
         }
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContainer}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
       />
 
       <BottomNavigation currentRoute="/products" />
@@ -765,13 +648,18 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingBottom: 20,
+    paddingHorizontal: 8,
+  },
+  row: {
+    justifyContent: "space-between",
+    gap: 8,
   },
   heroContainer: {
     paddingHorizontal: 20,
     paddingVertical: 32,
     marginBottom: 16,
     borderRadius: 16,
-    marginHorizontal: 16,
+    marginHorizontal: 3,
     marginTop: 16,
   },
   heroTitle: {
@@ -789,7 +677,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   controlsContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 3,
     marginBottom: 16,
   },
 
@@ -828,10 +716,10 @@ const styles = StyleSheet.create({
   productCard: {
     flexDirection: "row",
     backgroundColor: "white",
-    marginHorizontal: 16,
-    marginBottom: 12,
-    borderRadius: 12,
-    padding: 12,
+    marginHorizontal: 12,
+    marginBottom: 10,
+    borderRadius: 10,
+    padding: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -843,8 +731,8 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   productImage: {
-    width: 100,
-    height: 100,
+    width: 130,
+    height: 130,
     borderRadius: 8,
   },
   discountBadge: {
@@ -872,7 +760,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   productTitle: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "500",
     color: "#000",
     flex: 1,
@@ -917,42 +805,42 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   reviewText: {
-    fontSize: 13,
+    fontSize: 11,
     color: "#666",
   },
   priceRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 6,
     flexWrap: "wrap",
   },
   price: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "bold",
     color: "#000",
     marginRight: 8,
   },
   originalPrice: {
-    fontSize: 13,
+    fontSize: 11,
     color: "#666",
     textDecorationLine: "line-through",
     marginRight: 6,
   },
   discount: {
-    fontSize: 13,
+    fontSize: 11,
     color: "#28A745",
   },
   addToCartButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#DC3545",
-    paddingVertical: 8,
+    backgroundColor: "#e11d48",
+    paddingVertical: 6,
     borderRadius: 6,
   },
   addToCartText: {
     color: "white",
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: "600",
     marginLeft: 4,
   },

@@ -322,13 +322,14 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   listContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 8,
     paddingTop: 0,
     paddingBottom: 32,
   },
   row: {
     justifyContent: "space-between",
-    marginBottom: 16,
+    gap: 8,
+    marginBottom: 0,
   },
 
   loadingContainer: {

@@ -16,7 +16,7 @@ import { useToast } from "../hooks/use-toast";
 import { Product } from "../services/productService";
 
 const { width } = Dimensions.get("window");
-const cardWidth = (width - 48) / 2; // 2 columns with margins
+const cardWidth = (width - 24) / 2; // 2 columns with minimal margins
 
 interface ProductCardProps {
   product: Product;
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   },
   gridImage: {
     width: "100%",
-    aspectRatio: 1,
+    aspectRatio: 0.8,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
   },
@@ -232,11 +232,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#fef2f2",
   },
   content: {
-    padding: 16,
+    padding: 10,
     flex: 1,
   },
   gridContent: {
-    minHeight: 140,
+    minHeight: 100,
   },
   listContent: {
     justifyContent: "space-between",
@@ -245,36 +245,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   productName: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: "600",
     color: "#000",
-    marginBottom: 8,
+    marginBottom: 4,
   },
   ratingContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 4,
   },
   rating: {
     flexDirection: "row",
     alignItems: "center",
   },
   ratingText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "500",
     color: "#374151",
     marginLeft: 4,
   },
   reviewCount: {
-    fontSize: 12,
+    fontSize: 10,
     color: "#6b7280",
-    marginLeft: 8,
+    marginLeft: 6,
   },
   description: {
-    fontSize: 13,
+    fontSize: 11,
     color: "#6b7280",
-    lineHeight: 18,
-    marginBottom: 12,
+    lineHeight: 15,
+    marginBottom: 6,
   },
   footer: {
     flexDirection: "row",
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   price: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: "bold",
     color: "#000",
   },
@@ -314,17 +314,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 6,
-    backgroundColor: "#ff0000ff",
-    marginTop: 6,
+    backgroundColor: "#e11d48",
+    marginTop: 4,
   },
   disabledButton: {
     opacity: 0.5,
   },
   addToCartText: {
-    fontSize: 12,
+    fontSize: 11,
     color: "#fff",
     marginLeft: 4,
     fontWeight: "600",
