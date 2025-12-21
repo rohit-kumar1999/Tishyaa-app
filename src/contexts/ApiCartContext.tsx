@@ -1,6 +1,12 @@
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { router } from "expo-router";
-import React, { createContext, ReactNode, useContext, useState } from "react";
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { toast } from "../hooks/use-toast";
 import {
   CartItem,
@@ -35,6 +41,9 @@ export const ApiCartProvider: React.FC<{ children: ReactNode }> = ({
   const { user } = useUser();
   const [isProcessing, setIsProcessing] = useState<Record<string, boolean>>({});
 
+  // Local cart count for instant updates
+  const [localCartCount, setLocalCartCount] = useState(0);
+
   // Single API call for cart data - shared across all components
   const { data: cartItems, isLoading, error, refetch } = useGetCart();
 
@@ -46,9 +55,15 @@ export const ApiCartProvider: React.FC<{ children: ReactNode }> = ({
   const { mutate: updateCart } = useUpdateCartItem();
   const { mutate: removeFromCart } = useRemoveFromCart();
 
-  // Calculate cart count once - always show current count, even during updates
-  const cartCount =
-    cartItems?.reduce((total, item) => total + item.quantity, 0) || 0;
+  // Sync local cart count with API data
+  useEffect(() => {
+    const apiCartCount =
+      cartItems?.reduce((total, item) => total + item.quantity, 0) || 0;
+    setLocalCartCount(apiCartCount);
+  }, [cartItems]);
+
+  // Use local cart count for instant UI updates
+  const cartCount = localCartCount;
 
   // Add product to cart
   const addItemToCart = (
@@ -64,34 +79,42 @@ export const ApiCartProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
+    // Optimistically update cart count immediately
+    setLocalCartCount((prev) => prev + quantity);
+
     setIsProcessing((prev) => ({ ...prev, [productId]: true }));
 
     addToCart(
       { productId, quantity },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
           setIsProcessing((prev) => ({ ...prev, [productId]: false }));
 
-          // Explicitly refetch cart data to ensure UI updates
-          refetch();
+          // Refetch cart data to sync with server
+          await refetch();
 
           // Show success toast
           toast({
+            title: "Added to Cart",
             description: navigateToCart
-              ? "Added to Cart! Redirecting..."
+              ? "Redirecting to cart..."
               : "Product added to your cart",
+            variant: "success",
           });
 
           // Navigate to cart page if requested
           if (navigateToCart) {
             setTimeout(() => {
               router.push("/cart");
-            }, 700); // Allow time for cart to update
+            }, 500);
           }
         },
         onError: () => {
+          // Revert optimistic update on error
+          setLocalCartCount((prev) => prev - quantity);
           setIsProcessing((prev) => ({ ...prev, [productId]: false }));
           toast({
+            title: "Error",
             description: "Failed to add item to cart",
             variant: "destructive",
           });
@@ -102,6 +125,18 @@ export const ApiCartProvider: React.FC<{ children: ReactNode }> = ({
 
   // Update cart item quantity or remove if quantity is 0
   const updateItemQuantity = (id: string, quantity: number) => {
+    // Find current item to calculate difference for optimistic update
+    const currentItem = cartItems?.find((item) => item.id === id);
+    const previousQuantity = currentItem?.quantity || 0;
+    const quantityDiff = quantity - previousQuantity;
+
+    // Optimistically update cart count
+    if (quantity <= 0) {
+      setLocalCartCount((prev) => Math.max(0, prev - previousQuantity));
+    } else {
+      setLocalCartCount((prev) => Math.max(0, prev + quantityDiff));
+    }
+
     setIsProcessing((prev) => ({ ...prev, [id]: true }));
 
     if (quantity <= 0) {
@@ -109,15 +144,16 @@ export const ApiCartProvider: React.FC<{ children: ReactNode }> = ({
       removeFromCart(
         { cartId: id },
         {
-          onSuccess: () => {
+          onSuccess: async () => {
             setIsProcessing((prev) => ({ ...prev, [id]: false }));
-
-            // Explicitly refetch cart data to ensure UI updates
-            refetch();
+            await refetch();
           },
           onError: () => {
+            // Revert optimistic update
+            setLocalCartCount((prev) => prev + previousQuantity);
             setIsProcessing((prev) => ({ ...prev, [id]: false }));
             toast({
+              title: "Error",
               description: "Failed to remove item from cart",
               variant: "destructive",
             });
@@ -129,15 +165,16 @@ export const ApiCartProvider: React.FC<{ children: ReactNode }> = ({
       updateCart(
         { cartId: id, quantity },
         {
-          onSuccess: () => {
+          onSuccess: async () => {
             setIsProcessing((prev) => ({ ...prev, [id]: false }));
-
-            // Explicitly refetch cart data to ensure UI updates
-            refetch();
+            await refetch();
           },
           onError: () => {
+            // Revert optimistic update
+            setLocalCartCount((prev) => prev - quantityDiff);
             setIsProcessing((prev) => ({ ...prev, [id]: false }));
             toast({
+              title: "Error",
               description: "Failed to update cart item",
               variant: "destructive",
             });
@@ -149,18 +186,25 @@ export const ApiCartProvider: React.FC<{ children: ReactNode }> = ({
 
   // Remove item from cart
   const removeItem = (id: string) => {
+    // Find current item for optimistic update
+    const currentItem = cartItems?.find((item) => item.id === id);
+    const previousQuantity = currentItem?.quantity || 0;
+
+    // Optimistically update cart count
+    setLocalCartCount((prev) => Math.max(0, prev - previousQuantity));
+
     setIsProcessing((prev) => ({ ...prev, [id]: true }));
 
     removeFromCart(
       { cartId: id },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
           setIsProcessing((prev) => ({ ...prev, [id]: false }));
-
-          // Explicitly refetch cart data to ensure UI updates
-          refetch();
+          await refetch();
         },
         onError: () => {
+          // Revert optimistic update
+          setLocalCartCount((prev) => prev + previousQuantity);
           setIsProcessing((prev) => ({ ...prev, [id]: false }));
           toast({
             description: "Failed to remove item from cart",

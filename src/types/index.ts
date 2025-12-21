@@ -2,7 +2,6 @@
 export type RootStackParamList = {
   Main: undefined;
   Auth: undefined;
-  Admin: undefined;
   ProductDetail: { productId: string };
   Category: { categoryId: string; categoryName: string };
   Cart: undefined;
@@ -27,14 +26,6 @@ export type AuthStackParamList = {
   Register: undefined;
   ForgotPassword: undefined;
   ResetPassword: { token: string };
-};
-
-export type AdminTabParamList = {
-  Dashboard: undefined;
-  Products: undefined;
-  Orders: undefined;
-  Analytics: undefined;
-  Settings: undefined;
 };
 
 export type HelpStackParamList = {
@@ -63,7 +54,7 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
 // Payment Types
 export interface PaymentMethod {
   id: string;
-  type: 'card' | 'upi' | 'netbanking' | 'wallet' | 'cod';
+  type: "card" | "upi" | "netbanking" | "wallet" | "cod";
   name: string;
   isDefault: boolean;
 }
@@ -93,8 +84,8 @@ export interface SearchFilters {
   maxPrice?: number;
   inStock?: boolean;
   rating?: number;
-  sortBy?: 'price' | 'rating' | 'name' | 'createdAt';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "price" | "rating" | "name" | "createdAt";
+  sortOrder?: "asc" | "desc";
 }
 
 export interface SearchQuery {
@@ -137,7 +128,7 @@ export interface User {
   name: string;
   phone?: string;
   avatar?: string;
-  role: 'user' | 'admin';
+  role: "user" | "admin";
   addresses: Address[];
   createdAt: string;
   updatedAt: string;
@@ -146,7 +137,7 @@ export interface User {
 export interface Address {
   id: string;
   userId: string;
-  type: 'home' | 'work' | 'other';
+  type: "home" | "work" | "other";
   name: string;
   street: string;
   city: string;
@@ -206,8 +197,14 @@ export interface Order {
   tax: number;
   shipping: number;
   total: number;
-  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
+  status:
+    | "pending"
+    | "confirmed"
+    | "processing"
+    | "shipped"
+    | "delivered"
+    | "cancelled";
+  paymentStatus: "pending" | "paid" | "failed" | "refunded";
   paymentMethod: string;
   shippingAddress: Address;
   billingAddress: Address;

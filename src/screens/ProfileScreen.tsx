@@ -29,11 +29,6 @@ export default function ProfileScreen() {
   const { user, isLoaded } = useUser();
   const { signOut, isSignedIn } = useAuth();
 
-  // Check if user is admin
-  const isAdmin =
-    user?.publicMetadata?.role === "admin" ||
-    user?.publicMetadata?.role === "superadmin";
-
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -44,18 +39,6 @@ export default function ProfileScreen() {
 
   // Menu items for signed-in users
   const menuItems: MenuItem[] = [
-    ...(isAdmin
-      ? [
-          {
-            id: "admin",
-            title: "Admin Dashboard",
-            subtitle: "Manage your store",
-            icon: "settings-outline" as const,
-            route: "/admin/dashboard",
-            showChevron: true,
-          },
-        ]
-      : []),
     {
       id: "orders",
       title: "My Orders",

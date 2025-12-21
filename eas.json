@@ -6,13 +6,31 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_b3JpZW50ZWQtYWlyZWRhbGUtODUuY2xlcmsuYWNjb3VudHMuZGV2JA",
+        "CLERK_SECRET_KEY": "sk_test_YV33ZmiPpZNYtuBJQoz5jVcQsxsDw329yb4ckteGze",
+        "EXPO_PUBLIC_RAZORPAY_KEY_ID": "rzp_test_R8ml0R33ruV899",
+        "EXPO_PUBLIC_RAZORPAY_KEY_SECRET": "XLouPwWSpyhXOtAg98nD8SUE"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_b3JpZW50ZWQtYWlyZWRhbGUtODUuY2xlcmsuYWNjb3VudHMuZGV2JA",
+        "CLERK_SECRET_KEY": "sk_test_YV33ZmiPpZNYtuBJQoz5jVcQsxsDw329yb4ckteGze",
+        "EXPO_PUBLIC_RAZORPAY_KEY_ID": "rzp_test_R8ml0R33ruV899",
+        "EXPO_PUBLIC_RAZORPAY_KEY_SECRET": "XLouPwWSpyhXOtAg98nD8SUE"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_b3JpZW50ZWQtYWlyZWRhbGUtODUuY2xlcmsuYWNjb3VudHMuZGV2JA",
+        "CLERK_SECRET_KEY": "sk_test_YV33ZmiPpZNYtuBJQoz5jVcQsxsDw329yb4ckteGze",
+        "EXPO_PUBLIC_RAZORPAY_KEY_ID": "rzp_test_R8ml0R33ruV899",
+        "EXPO_PUBLIC_RAZORPAY_KEY_SECRET": "XLouPwWSpyhXOtAg98nD8SUE"
+      }
     }
   },
   "submit": {

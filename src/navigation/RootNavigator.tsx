@@ -32,9 +32,6 @@ export default function RootNavigator() {
         />
         <Stack.Screen name="auth/verify-otp" options={{ headerShown: false }} />
 
-        {/* Admin */}
-        <Stack.Screen name="admin" options={{ headerShown: false }} />
-
         {/* Help */}
         <Stack.Screen name="help" options={{ headerShown: false }} />
 

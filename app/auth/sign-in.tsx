@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Toast from "react-native-toast-message";
+import { toast } from "../../src/hooks/use-toast";
 import { PasswordInput } from "./_components/PasswordInput";
 
 export default function SignInScreen() {
@@ -44,17 +44,17 @@ export default function SignInScreen() {
         await setActive({ session: signInAttempt.createdSessionId });
         router.replace("/home");
       } else {
-        Toast.show({
-          type: "error",
-          text1: "Sign-in failed",
-          text2: "Incomplete sign-in. Try again.",
+        toast({
+          title: "Sign-in failed",
+          description: "Incomplete sign-in. Try again.",
+          variant: "destructive",
         });
       }
     } catch (err: any) {
-      Toast.show({
-        type: "error",
-        text1: "Sign-in Error",
-        text2: err?.errors?.[0]?.message || "Please try again.",
+      toast({
+        title: "Sign-in Error",
+        description: err?.errors?.[0]?.message || "Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -63,10 +63,10 @@ export default function SignInScreen() {
 
   const onForgotPasswordPress = useCallback(async () => {
     if (!isLoaded || !email) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Please enter your email address.",
+      toast({
+        title: "Error",
+        description: "Please enter your email address.",
+        variant: "destructive",
       });
       return;
     }
@@ -78,16 +78,16 @@ export default function SignInScreen() {
         identifier: email,
       });
       setIsResettingPassword(true);
-      Toast.show({
-        type: "success",
-        text1: "Reset Code Sent",
-        text2: "Check your email for the password reset code.",
+      toast({
+        title: "Reset Code Sent",
+        description: "Check your email for the password reset code.",
+        variant: "success",
       });
     } catch (err: any) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: err?.errors?.[0]?.message || "Failed to send reset code.",
+      toast({
+        title: "Error",
+        description: err?.errors?.[0]?.message || "Failed to send reset code.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -96,10 +96,10 @@ export default function SignInScreen() {
 
   const onResetPassword = useCallback(async () => {
     if (!isLoaded || !resetCode || !newPassword) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Please enter the reset code and new password.",
+      toast({
+        title: "Error",
+        description: "Please enter the reset code and new password.",
+        variant: "destructive",
       });
       return;
     }
@@ -117,24 +117,24 @@ export default function SignInScreen() {
         setIsResettingPassword(false);
         setResetCode("");
         setNewPassword("");
-        Toast.show({
-          type: "success",
-          text1: "Success",
-          text2: "Password reset successfully.",
+        toast({
+          title: "Success",
+          description: "Password reset successfully.",
+          variant: "success",
         });
         router.replace("/home");
       } else {
-        Toast.show({
-          type: "error",
-          text1: "Error",
-          text2: "Invalid reset code. Please try again.",
+        toast({
+          title: "Error",
+          description: "Invalid reset code. Please try again.",
+          variant: "destructive",
         });
       }
     } catch (err: any) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: err?.errors?.[0]?.message || "Failed to reset password.",
+      toast({
+        title: "Error",
+        description: err?.errors?.[0]?.message || "Failed to reset password.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -155,17 +155,17 @@ export default function SignInScreen() {
         await setActiveG?.({ session: createdSessionId });
         router.replace("/home");
       } else {
-        Toast.show({
-          type: "error",
-          text1: "Google Sign-In Failed",
-          text2: "Unable to complete Google sign-in. Try again.",
+        toast({
+          title: "Google Sign-In Failed",
+          description: "Unable to complete Google sign-in. Try again.",
+          variant: "destructive",
         });
       }
     } catch (err: any) {
-      Toast.show({
-        type: "error",
-        text1: "Google Sign-In Error",
-        text2: err?.errors?.[0]?.message || "Please try again.",
+      toast({
+        title: "Google Sign-In Error",
+        description: err?.errors?.[0]?.message || "Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoadingGoogle(false);

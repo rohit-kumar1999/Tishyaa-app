@@ -3,6 +3,7 @@ import { Image } from "expo-image";
 import { launchImageLibraryAsync, MediaTypeOptions } from "expo-image-picker";
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { toast } from "../hooks/use-toast";
 
 interface ImageUploadProps {
   onImageSelected: (uri: string) => void;
@@ -36,10 +37,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         setUploading(false);
       }
     } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Failed to select image",
+      toast({
+        title: "Error",
+        description: "Failed to select image",
+        variant: "destructive",
       });
       setUploading(false);
     }

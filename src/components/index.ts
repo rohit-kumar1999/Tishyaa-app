@@ -3,7 +3,6 @@ export { Footer } from "./common/Footer";
 export { default as Layout } from "./Layout";
 
 // Navigation Components
-export { default as AdminNavigation } from "./AdminNavigation";
 export { default as NavBar } from "./NavBar";
 export { default as SearchDialog } from "./SearchDialog";
 

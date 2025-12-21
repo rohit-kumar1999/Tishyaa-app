@@ -1,7 +1,6 @@
 import React from "react";
 import { StyleSheet, View, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AdminNavigation from "./AdminNavigation";
 import { Footer } from "./common/Footer";
 
 interface LayoutProps {
@@ -15,7 +14,6 @@ const Layout = React.memo<LayoutProps>(
   ({ children, includeFooter = true, includeHeader = true, style }) => {
     return (
       <SafeAreaView style={[styles.container, style]}>
-        <AdminNavigation />
         <View style={styles.main}>{children}</View>
         {includeFooter && <Footer />}
       </SafeAreaView>

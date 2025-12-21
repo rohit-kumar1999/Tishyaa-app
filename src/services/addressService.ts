@@ -8,7 +8,7 @@ import {
 import api from "../setup/api";
 
 export interface Address {
-  id: number;
+  id: string;
   name: string;
   type: string;
   street: string;
@@ -18,6 +18,10 @@ export interface Address {
   country: string;
   phone: string;
   isDefault: boolean;
+  userId?: string;
+  active?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Make all fields required to match the form values
@@ -40,12 +44,12 @@ export const useGetAddresses = () => {
 };
 
 // Get a single address by ID
-export const useGetAddress = (id: number) => {
+export const useGetAddress = (id: string) => {
   const { user } = useUser();
   const userId = user?.id;
 
   return useQuery({
-    queryKey: ["address", id.toString(), userId],
+    queryKey: ["address", id, userId],
     queryFn: () => api.get(`${ADDRESSES_ENDPOINT}/${id}?userId=${userId}`),
     enabled: !!id && !!userId, // Only run if both id and userId are available
   });

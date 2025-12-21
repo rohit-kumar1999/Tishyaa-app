@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Toast from "react-native-toast-message";
+import { toast } from "../../src/hooks/use-toast";
 import { PasswordInput } from "./_components/PasswordInput";
 
 export default function SignUpScreen() {
@@ -38,12 +38,12 @@ export default function SignUpScreen() {
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setPendingVerification(true);
     } catch (err: any) {
-      Toast.show({
-        type: "error",
-        text1: "Sign-up Error",
-        text2:
+      toast({
+        title: "Sign-up Error",
+        description:
           err?.errors?.map((e: any) => e.longMessage).join(", ") ||
           "Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -62,31 +62,31 @@ export default function SignUpScreen() {
       if (signUpAttempt.status === "complete") {
         await setActive({ session: signUpAttempt.createdSessionId });
 
-        Toast.show({
-          type: "success",
-          text1: "Welcome to Tishyaa! 🎉",
-          text2: "Your account has been created successfully.",
+        toast({
+          title: "Welcome to Tishyaa! 🎉",
+          description: "Your account has been created successfully.",
+          variant: "success",
         });
 
         router.replace("/home");
       } else {
-        Toast.show({
-          type: "error",
-          text1: "Verification Incomplete",
-          text2: signUpAttempt.unverifiedFields?.length
+        toast({
+          title: "Verification Incomplete",
+          description: signUpAttempt.unverifiedFields?.length
             ? `Still need to verify: ${signUpAttempt.unverifiedFields.join(
                 ", "
               )}`
             : "Please try again or contact support.",
+          variant: "destructive",
         });
       }
     } catch (err: any) {
-      Toast.show({
-        type: "error",
-        text1: "Verification Error",
-        text2:
+      toast({
+        title: "Verification Error",
+        description:
           err?.errors?.map((e: any) => e.longMessage).join(", ") ||
           "Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);

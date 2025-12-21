@@ -601,6 +601,23 @@ export const useCreatePayment = () => {
   });
 };
 
+// Interface for order state update
+export interface UpdateOrderStateRequest {
+  orderId: string;
+  state: string;
+  metadata?: {
+    paymentId?: string;
+    transactionId?: string;
+    reason?: string;
+  };
+}
+
+export interface UpdateOrderStateResponse {
+  success: boolean;
+  message?: string;
+  order?: Order;
+}
+
 // Hook to get user orders
 export const useGetUserOrders = (
   userId: string,
@@ -868,9 +885,15 @@ class PaymentService {
       }
 
       // Check if native Razorpay SDK is available (for native platforms)
+      // In Expo Go, the native SDK is not available, so we fall back to browser checkout
       if (!this.isNativeSDKAvailable()) {
+        console.log(
+          "ℹ️ Native Razorpay SDK not available, using browser checkout"
+        );
         return await this.openBrowserCheckout(options, orderId);
       }
+
+      // Native SDK is available, use it
       return await this.openNativeCheckout(options, onExternalWallet);
     } catch (error: any) {
       console.error("❌ Unexpected error in processRazorpayPayment:", error);

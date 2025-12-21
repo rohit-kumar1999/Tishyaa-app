@@ -1,4 +1,4 @@
-import { Alert } from "react-native";
+import { toast } from "../hooks/use-toast";
 
 export interface CartProduct {
   id: string;
@@ -37,10 +37,11 @@ export const getShippingMessage = (subtotal: number): string => {
 };
 
 export const showAddToCartSuccess = (productName: string) => {
-  Alert.alert("Added to Cart", `${productName} has been added to your cart.`, [
-    { text: "Continue Shopping", style: "cancel" },
-    { text: "View Cart", onPress: () => {} },
-  ]);
+  toast({
+    title: "Added to Cart",
+    description: `${productName} has been added to your cart.`,
+    variant: "success",
+  });
 };
 
 export const debugCartProduct = (_product: CartProduct): void => {

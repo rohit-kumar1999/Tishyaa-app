@@ -14,8 +14,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Toast from "react-native-toast-message";
 import DeleteAccountModal from "../../src/components/ui/DeleteAccountModal";
+import { toast } from "../../src/hooks/use-toast";
 import { useUserService } from "../../src/services/userService";
 
 interface AccountOption {
@@ -74,11 +74,11 @@ export default function AccountSettingsScreen() {
       if (result.success) {
         // Close modal and show success message
         setShowDeleteModal(false);
-        Toast.show({
-          type: "success",
-          text1: "Account Deleted",
-          text2:
+        toast({
+          title: "Account Deleted",
+          description:
             "Your account has been successfully deleted. Signing you out...",
+          variant: "success",
         });
 
         // Sign out and navigate after a brief delay
@@ -89,22 +89,22 @@ export default function AccountSettingsScreen() {
       } else {
         console.error("Account deletion failed:", result.message);
         setShowDeleteModal(false);
-        Toast.show({
-          type: "error",
-          text1: "Deletion Failed",
-          text2:
+        toast({
+          title: "Deletion Failed",
+          description:
             result.message ||
             "Failed to delete account. Please try again or contact support.",
+          variant: "destructive",
         });
       }
     } catch (error) {
       console.error("Account deletion error:", error);
       setShowDeleteModal(false);
-      Toast.show({
-        type: "error",
-        text1: "Deletion Error",
-        text2:
+      toast({
+        title: "Deletion Error",
+        description:
           "An unexpected error occurred while deleting your account. Please try again or contact support.",
+        variant: "destructive",
       });
     } finally {
       setDeletingAccount(false);

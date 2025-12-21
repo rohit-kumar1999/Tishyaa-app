@@ -228,6 +228,7 @@ export const usePayment = () => {
       handleExternalWallet
     );
 
+    console.log("Razorpay Result:", razorpayResult);
     // Handle payment cancellation
     if (razorpayResult.cancelled) {
       toast({

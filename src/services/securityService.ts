@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as SecureStore from "expo-secure-store";
-import { Alert } from "react-native";
+import { toast } from "../hooks/use-toast";
 
 export interface BiometricType {
   fingerprint: boolean;
@@ -110,10 +110,11 @@ class SecurityService {
       const isAvailable = await this.isBiometricAvailable();
 
       if (!isAvailable) {
-        Alert.alert(
-          "Biometric Authentication Unavailable",
-          "Please set up biometric authentication in your device settings."
-        );
+        toast({
+          title: "Biometric Authentication Unavailable",
+          description:
+            "Please set up biometric authentication in your device settings.",
+        });
         return false;
       }
 
@@ -139,10 +140,11 @@ class SecurityService {
       const isAvailable = await this.isBiometricAvailable();
 
       if (!isAvailable) {
-        Alert.alert(
-          "Biometric Authentication Unavailable",
-          "Please set up fingerprint or face recognition in your device settings first."
-        );
+        toast({
+          title: "Biometric Authentication Unavailable",
+          description:
+            "Please set up fingerprint or face recognition in your device settings first.",
+        });
         return false;
       }
 
@@ -206,12 +208,13 @@ class SecurityService {
       // Check if in lockout period
       if (this.isInLockout()) {
         const remainingTime = this.getRemainingLockoutTime();
-        Alert.alert(
-          "Account Locked",
-          `Too many failed attempts. Please try again in ${Math.ceil(
+        toast({
+          title: "Account Locked",
+          description: `Too many failed attempts. Please try again in ${Math.ceil(
             remainingTime / 60000
-          )} minutes.`
-        );
+          )} minutes.`,
+          variant: "destructive",
+        });
         return false;
       }
 
@@ -260,12 +263,13 @@ class SecurityService {
         Date.now() + this.lockoutDuration
       );
 
-      Alert.alert(
-        "Too Many Failed Attempts",
-        `Account locked for ${
+      toast({
+        title: "Too Many Failed Attempts",
+        description: `Account locked for ${
           this.lockoutDuration / 60000
-        } minutes due to multiple failed authentication attempts.`
-      );
+        } minutes due to multiple failed authentication attempts.`,
+        variant: "destructive",
+      });
     }
 
     await this.saveAppLockState();

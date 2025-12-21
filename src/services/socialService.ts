@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { Alert, Linking } from "react-native";
-import Toast from "react-native-toast-message";
+import { toast } from "../hooks/use-toast";
 
 export interface ShareContent {
   title: string;
@@ -142,10 +142,10 @@ class SocialService {
       return true;
     } catch (error) {
       console.error("Error sharing content:", error);
-      Toast.show({
-        type: "error",
-        text1: "Share Failed",
-        text2: "Unable to share content. Please try again.",
+      toast({
+        title: "Share Failed",
+        description: "Unable to share content. Please try again.",
+        variant: "destructive",
       });
       return false;
     }
@@ -184,10 +184,10 @@ class SocialService {
   async shareToInstagram(content: ShareContent): Promise<boolean> {
     try {
       if (!content.imageUri) {
-        Toast.show({
-          type: "error",
-          text1: "Image required",
-          text2: "Instagram sharing requires an image.",
+        toast({
+          title: "Image required",
+          description: "Instagram sharing requires an image.",
+          variant: "destructive",
         });
         return false;
       }

@@ -112,9 +112,6 @@ export default function RootLayout() {
                     options={{ headerShown: false }}
                   />
 
-                  {/* Admin */}
-                  <Stack.Screen name="admin" options={{ headerShown: false }} />
-
                   {/* Help */}
                   <Stack.Screen name="help" options={{ headerShown: false }} />
 

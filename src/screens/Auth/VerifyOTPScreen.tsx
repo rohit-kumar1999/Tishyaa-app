@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Toast from "react-native-toast-message";
+import { toast } from "../../hooks/use-toast";
 
 export default function VerifyOTPScreen() {
   const router = useRouter();
@@ -21,10 +21,10 @@ export default function VerifyOTPScreen() {
 
   const handleVerifyOTP = async () => {
     if (!otp || otp.length !== 6) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Please enter a valid 6-digit OTP",
+      toast({
+        title: "Error",
+        description: "Please enter a valid 6-digit OTP",
+        variant: "destructive",
       });
       return;
     }
@@ -43,10 +43,10 @@ export default function VerifyOTPScreen() {
         },
       ]);
     } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Invalid OTP. Please try again.",
+      toast({
+        title: "Error",
+        description: "Invalid OTP. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
