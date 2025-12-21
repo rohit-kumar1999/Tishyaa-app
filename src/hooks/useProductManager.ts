@@ -52,8 +52,8 @@ export const useProductManager = () => {
     isLoading: wishlistQueryLoading,
     error: wishlistQueryError,
     refetch: refetchWishlist,
-  } = useApiQuery<any[]>(wishlistUrl || "/wishlist", {
-    enabled: isSignedIn && !!userId && !!wishlistUrl,
+  } = useApiQuery<any[]>(wishlistUrl!, {
+    enabled: !!isSignedIn && !!userId && !!wishlistUrl,
     errorMessage: "Failed to load wishlist",
   });
 

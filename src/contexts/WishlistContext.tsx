@@ -52,8 +52,8 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
     isLoading: isWishlistLoading,
     error: wishlistError,
     refetch: refetchWishlist,
-  } = useApiQuery<WishlistItem[]>(wishlistUrl || "/wishlist", {
-    enabled: isSignedIn && !!userId && !!wishlistUrl,
+  } = useApiQuery<WishlistItem[]>(wishlistUrl!, {
+    enabled: !!isSignedIn && !!userId && !!wishlistUrl,
     errorMessage: "Failed to load wishlist",
   });
 

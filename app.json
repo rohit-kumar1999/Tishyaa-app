@@ -73,12 +73,14 @@
       "expo-notifications",
       "expo-location",
       "expo-local-authentication",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-router"
     ],
     "extra": {
       "eas": {
         "projectId": "df5fa61e-30a9-4745-80a8-8d1ad6fbb819"
       }
-    }
+    },
+    "owner": "rohitaryal1999"
   }
 }

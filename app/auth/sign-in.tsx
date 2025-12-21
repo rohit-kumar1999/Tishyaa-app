@@ -1,5 +1,6 @@
 import { useOAuth, useSignIn } from "@clerk/clerk-expo";
 import { FontAwesome } from "@expo/vector-icons";
+import type { EmailCodeFactor } from "@clerk/types";
 import * as Linking from "expo-linking";
 import { router } from "expo-router";
 import React, { useCallback, useState } from "react";
@@ -24,25 +25,59 @@ export default function SignInScreen() {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [resetCode, setResetCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  
+  // 2FA state
+  const [needsSecondFactor, setNeedsSecondFactor] = useState(false);
+  const [secondFactorCode, setSecondFactorCode] = useState("");
 
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
 
   const onSignInPress = useCallback(async () => {
     if (!isLoaded) return;
 
+    if (!email || !password) {
+      toast({
+        title: "Error",
+        description: "Please enter email and password.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setLoading(true);
-      const signInAttempt =
-        email && password
-          ? await signIn.create({
-              identifier: email,
-              password,
-            })
-          : undefined;
+      const signInAttempt = await signIn.create({
+        identifier: email,
+        password,
+      });
 
-      if (signInAttempt?.status === "complete") {
+      if (signInAttempt.status === "complete") {
         await setActive({ session: signInAttempt.createdSessionId });
         router.replace("/home");
+      } else if (signInAttempt.status === "needs_second_factor") {
+        // Handle Client Trust - find email_code factor and prepare verification
+        const emailCodeFactor = signInAttempt.supportedSecondFactors?.find(
+          (factor): factor is EmailCodeFactor => factor.strategy === "email_code"
+        );
+
+        if (emailCodeFactor) {
+          await signIn.prepareSecondFactor({
+            strategy: "email_code",
+            emailAddressId: emailCodeFactor.emailAddressId,
+          });
+          setNeedsSecondFactor(true);
+          toast({
+            title: "Verification Required",
+            description: "A verification code has been sent to your email.",
+            variant: "success",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "No email verification method available.",
+            variant: "destructive",
+          });
+        }
       } else {
         toast({
           title: "Sign-in failed",
@@ -59,7 +94,48 @@ export default function SignInScreen() {
     } finally {
       setLoading(false);
     }
-  }, [isLoaded, email, password]);
+  }, [isLoaded, email, password, signIn, setActive]);
+
+  // Handle 2FA code verification
+  const onVerifySecondFactor = useCallback(async () => {
+    if (!isLoaded || !secondFactorCode) {
+      toast({
+        title: "Error",
+        description: "Please enter the verification code.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const result = await signIn.attemptSecondFactor({
+        strategy: "email_code",
+        code: secondFactorCode,
+      });
+
+      if (result.status === "complete") {
+        await setActive({ session: result.createdSessionId });
+        setNeedsSecondFactor(false);
+        setSecondFactorCode("");
+        router.replace("/home");
+      } else {
+        toast({
+          title: "Error",
+          description: "Verification failed. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: "Verification Error",
+        description: err?.errors?.[0]?.message || "Invalid code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [isLoaded, secondFactorCode, signIn, setActive]);
 
   const onForgotPasswordPress = useCallback(async () => {
     if (!isLoaded || !email) {
@@ -174,7 +250,44 @@ export default function SignInScreen() {
 
   return (
     <View style={styles.container}>
-      {!isResettingPassword ? (
+      {needsSecondFactor ? (
+        // 2FA Verification Screen
+        <View style={styles.formContainer}>
+          <Text style={styles.title}>Verify Your Identity</Text>
+          <Text style={styles.subtitle}>
+            A verification code has been sent to your email
+          </Text>
+          <View style={styles.inputGroup}>
+            <TextInput
+              style={styles.input}
+              value={secondFactorCode}
+              onChangeText={setSecondFactorCode}
+              placeholder="Enter 6-digit code"
+              keyboardType="number-pad"
+              maxLength={6}
+              placeholderTextColor="#9ca3af"
+            />
+            <Pressable onPress={() => {
+              setNeedsSecondFactor(false);
+              setSecondFactorCode("");
+            }}>
+              <Text style={styles.forgotPasswordLink}>Back to Sign In</Text>
+            </Pressable>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.signInButton, loading && styles.disabledButton]}
+            onPress={onVerifySecondFactor}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Text style={styles.signInButtonText}>Verify</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      ) : !isResettingPassword ? (
         <View style={styles.formContainer}>
           <View style={styles.inputGroup}>
             <TextInput
@@ -276,6 +389,18 @@ const styles = StyleSheet.create({
   formContainer: {
     width: "100%",
     gap: 32,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#111827",
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#6b7280",
+    textAlign: "center",
+    marginTop: -16,
   },
   inputGroup: {
     flexDirection: "column",
