@@ -6,10 +6,10 @@ import {
   StyleSheet,
   Text,
   TextStyle,
-  TouchableOpacity,
   View,
   ViewStyle,
 } from "react-native";
+import { TouchableOpacity } from "../common/TouchableOpacity";
 
 export interface SelectOption {
   label: string;

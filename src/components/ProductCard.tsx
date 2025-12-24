@@ -7,9 +7,9 @@ import {
   Dimensions,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
+import { TouchableOpacity } from "./common/TouchableOpacity";
 import { useApiCart } from "../contexts/ApiCartContext";
 import { useWishlist } from "../contexts/WishlistContext";
 import { useToast } from "../hooks/use-toast";

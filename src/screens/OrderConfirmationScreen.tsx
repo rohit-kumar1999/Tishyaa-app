@@ -10,9 +10,9 @@ import {
   Share,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
+import { TouchableOpacity } from "../components/common/TouchableOpacity";
 // Using React Native's built-in Clipboard
 import { Clipboard as RNClipboard } from "react-native";
 import { Badge } from "../components/ui/badge";

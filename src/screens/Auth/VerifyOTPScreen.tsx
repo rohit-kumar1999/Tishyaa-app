@@ -8,9 +8,9 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
+import { TouchableOpacity } from "../../components/common/TouchableOpacity";
 import { toast } from "../../hooks/use-toast";
 
 export default function VerifyOTPScreen() {

@@ -8,9 +8,9 @@ import {
   Image,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
+import { TouchableOpacity } from "./TouchableOpacity";
 import { cameraService } from "../../services/cameraService";
 
 const { width } = Dimensions.get("window");

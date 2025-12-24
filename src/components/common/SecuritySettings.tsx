@@ -8,9 +8,9 @@ import {
   StyleSheet,
   Switch,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
+import { TouchableOpacity } from "./TouchableOpacity";
 import securityService, {
   BiometricType,
   SecuritySettings as SecuritySettingsType,

@@ -8,9 +8,9 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
+import { TouchableOpacity } from "./common/TouchableOpacity";
 import { z } from "zod";
 import { useApiCart } from "../contexts/ApiCartContext";
 import { usePayment } from "../hooks/usePayment";

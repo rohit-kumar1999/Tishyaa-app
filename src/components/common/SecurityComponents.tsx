@@ -8,9 +8,9 @@ import {
   Modal,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
+import { TouchableOpacity } from "./TouchableOpacity";
 import securityService from "../../services/securityService";
 
 const { width, height } = Dimensions.get("window");

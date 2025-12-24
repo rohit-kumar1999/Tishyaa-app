@@ -9,9 +9,9 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
+import { TouchableOpacity } from "../components/common/TouchableOpacity";
 import BottomNavigation from "../components/common/BottomNavigation";
 import { Footer } from "../components/common/Footer";
 import { TopHeader } from "../components/common/TopHeader";

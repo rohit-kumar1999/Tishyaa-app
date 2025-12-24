@@ -15,14 +15,15 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BottomNavigation from "../components/common/BottomNavigation";
 import { TopHeader } from "../components/common/TopHeader";
+import { TouchableOpacity } from "../components/common/TouchableOpacity";
 import ReviewSection from "../components/products/ReviewSection";
 import { useWishlist } from "../contexts/WishlistContext";
+import { toast } from "../hooks/use-toast";
 import { useApiQuery } from "../hooks/useApiQuery";
 import { useCart } from "../hooks/useCart";
 import { Product } from "../services/productService";
@@ -238,53 +239,104 @@ export default function ProductDetailScreen() {
 
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
+      console.log("Permission status:", status);
+
       if (status !== "granted") {
+        toast({
+          title: "Permission Denied",
+          description: "Please enable location access to use this feature.",
+          variant: "destructive",
+        });
         setIsLocating(false);
         return;
       }
 
-      const location = await Location.getCurrentPositionAsync({});
+      // Get current position
+      console.log("Getting location...");
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
       const { latitude, longitude } = location.coords;
+      console.log("Got coordinates:", latitude, longitude);
 
-      // Demo pincode based on location
-      let demoPincode = "110001"; // Default Delhi
+      // Use reverse geocoding to get actual address/pincode
+      console.log("Reverse geocoding...");
+      const reverseGeocode = await Location.reverseGeocodeAsync({
+        latitude,
+        longitude,
+      });
+      console.log(
+        "Reverse geocode result:",
+        JSON.stringify(reverseGeocode, null, 2)
+      );
 
-      if (
-        latitude > 19.0 &&
-        latitude < 19.3 &&
-        longitude > 72.7 &&
-        longitude < 73.0
-      ) {
-        demoPincode = "400001"; // Mumbai
-      } else if (
-        latitude > 12.9 &&
-        latitude < 13.1 &&
-        longitude > 77.5 &&
-        longitude < 77.7
-      ) {
-        demoPincode = "560001"; // Bangalore
-      } else if (
-        latitude > 13.0 &&
-        latitude < 13.2 &&
-        longitude > 80.1 &&
-        longitude < 80.3
-      ) {
-        demoPincode = "600001"; // Chennai
-      } else if (
-        latitude > 22.4 &&
-        latitude < 22.7 &&
-        longitude > 88.2 &&
-        longitude < 88.5
-      ) {
-        demoPincode = "700001"; // Kolkata
+      let detectedPincode = "";
+
+      if (reverseGeocode && reverseGeocode.length > 0) {
+        const address = reverseGeocode[0];
+        // Try to get postal code from the address
+        // expo-location can return postalCode in different fields
+        detectedPincode = address.postalCode || address.isoCountryCode || "";
+
+        // Clean up the pincode - remove spaces and non-numeric chars for India
+        detectedPincode = detectedPincode.replace(/\s/g, "").trim();
+
+        console.log("Address object:", address);
+        console.log("Detected pincode:", detectedPincode);
       }
 
-      setPincode(demoPincode);
-      const delivery = calculateDeliveryDate(demoPincode);
-      setDeliveryInfo(delivery);
+      // If we got a valid pincode (6 digits for India, or any non-empty value as fallback)
+      if (detectedPincode && detectedPincode.length >= 5) {
+        // For India, ensure it's numeric and 6 digits
+        const cleanPincode = detectedPincode.replace(/\D/g, "").slice(0, 6);
+
+        if (cleanPincode.length === 6) {
+          setPincode(cleanPincode);
+          const delivery = calculateDeliveryDate(cleanPincode);
+          setDeliveryInfo(delivery);
+          setShowPincodeInput(false);
+          toast({
+            title: "Location Detected",
+            description: `Pincode: ${cleanPincode}`,
+          });
+        } else {
+          // Got location but couldn't parse pincode
+          toast({
+            title: "Location detected",
+            description: `Got location but couldn't extract pincode. Please enter manually.`,
+            variant: "destructive",
+          });
+        }
+      } else {
+        // Fallback: Show coordinates info
+        toast({
+          title: "Could not detect pincode",
+          description: `Location: ${latitude.toFixed(4)}, ${longitude.toFixed(
+            4
+          )}. Please enter pincode manually.`,
+          variant: "destructive",
+        });
+      }
+
       setIsLocating(false);
-      setShowPincodeInput(false);
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Location error:", error);
+      console.error("Error message:", error?.message);
+      console.error("Error code:", error?.code);
+
+      let errorMessage = "Unable to get your location.";
+      if (error?.message?.includes("timeout")) {
+        errorMessage = "Location request timed out. Please try again.";
+      } else if (error?.message?.includes("disabled")) {
+        errorMessage =
+          "Location services are disabled. Please enable them in settings.";
+      }
+
+      toast({
+        title: "Location Error",
+        description: `${errorMessage} Please enter pincode manually.`,
+        variant: "destructive",
+      });
       setIsLocating(false);
     }
   };
@@ -652,9 +704,13 @@ export default function ProductDetailScreen() {
                   </TouchableOpacity>
                   <View style={styles.pincodeSeperator} />
                   <TouchableOpacity
-                    onPress={handleLocateMe}
+                    onPress={() => {
+                      console.log("Locate Me button pressed!");
+                      handleLocateMe();
+                    }}
                     disabled={isLocating}
-                    style={styles.locateButton}
+                    style={[styles.locateButton, { padding: 8, minWidth: 100 }]}
+                    activeOpacity={0.6}
                   >
                     {isLocating ? (
                       <ActivityIndicator size="small" color="#8B5CF6" />

@@ -4,9 +4,9 @@ import {
   StyleSheet,
   Text,
   TextStyle,
-  TouchableOpacity,
   ViewStyle,
 } from "react-native";
+import { TouchableOpacity } from "../common/TouchableOpacity";
 
 export interface ButtonProps {
   children: React.ReactNode;

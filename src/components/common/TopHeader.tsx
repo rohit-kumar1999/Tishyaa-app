@@ -1,22 +1,19 @@
 import { SignedIn, SignedOut, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
-import React from "react";
-import {
-  Image,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { router, usePathname } from "expo-router";
+import React, { useCallback } from "react";
+import { Image, SafeAreaView, StyleSheet, Text, View } from "react-native";
 import { useApiCart } from "../../contexts/ApiCartContext";
 import { useWishlist } from "../../contexts/WishlistContext";
+import { TouchableOpacity } from "./TouchableOpacity";
 
 export const TopHeader = () => {
   // Use Clerk authentication
   const { user } = useUser();
+
+  // Get current pathname to prevent unnecessary navigation
+  const pathname = usePathname();
 
   // Get wishlist count from context
   const { wishlistCount } = useWishlist();
@@ -24,24 +21,41 @@ export const TopHeader = () => {
   // Get cart count from shared cart context
   const { cartCount } = useApiCart();
 
+  // Only navigate to home if not already there
+  const handleLogoPress = useCallback(() => {
+    if (pathname !== "/" && pathname !== "/home") {
+      router.push("/");
+    }
+  }, [pathname]);
+
   const handleSearchPress = () => {
-    router.push("/search");
+    if (pathname !== "/search") {
+      router.push("/search");
+    }
   };
 
   const handleWishlistPress = () => {
-    router.push("/wishlist");
+    if (pathname !== "/wishlist") {
+      router.push("/wishlist");
+    }
   };
 
   const handleCartPress = () => {
-    router.push("/cart");
+    if (pathname !== "/cart") {
+      router.push("/cart");
+    }
   };
 
   const handleProfilePress = () => {
-    router.push("/profile");
+    if (pathname !== "/profile") {
+      router.push("/profile");
+    }
   };
 
   const handleSignInPress = () => {
-    router.push("/auth");
+    if (pathname !== "/auth") {
+      router.push("/auth");
+    }
   };
 
   return (
@@ -50,7 +64,7 @@ export const TopHeader = () => {
         <View style={styles.header}>
           {/* Brand Section */}
           <View style={styles.brandSection}>
-            <TouchableOpacity onPress={() => router.push("/")}>
+            <TouchableOpacity onPress={handleLogoPress}>
               <Text style={styles.brandText}>Tishyaa</Text>
             </TouchableOpacity>
           </View>

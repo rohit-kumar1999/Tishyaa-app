@@ -7,9 +7,9 @@ export {
 } from "./AccessibilityUtils";
 export {
   CachedImage,
-  cacheManager,
   ImageCacheManager,
   LazyImage,
+  cacheManager,
 } from "./CachedImage";
 export { ErrorBoundary } from "./ErrorBoundary";
 export { ImageUpload } from "./ImageUpload";
@@ -28,7 +28,14 @@ export {
   PerformanceLoadingOverlay,
   PerformanceMetrics,
 } from "./PerformanceComponents";
+export { PressableButton, SafePressable } from "./PressableButton";
 export * from "./SecurityComponents";
 export * from "./SecuritySettings";
 export * from "./SocialShare";
 export * from "./StoreLocator";
+export {
+  OriginalPressable,
+  OriginalTouchableOpacity,
+  Pressable,
+  TouchableOpacity,
+} from "./TouchableOpacity";

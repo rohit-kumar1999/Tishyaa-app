@@ -2,7 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { launchImageLibraryAsync, MediaTypeOptions } from "expo-image-picker";
 import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { TouchableOpacity } from "./common/TouchableOpacity";
 import { toast } from "../hooks/use-toast";
 
 interface ImageUploadProps {

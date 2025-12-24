@@ -9,9 +9,9 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
+import { TouchableOpacity } from "../common/TouchableOpacity";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Review, ReviewFormData } from "../../services/reviewService";
 

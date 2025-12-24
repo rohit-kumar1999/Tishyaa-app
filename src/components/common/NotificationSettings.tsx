@@ -6,9 +6,9 @@ import {
   StyleSheet,
   Switch,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
+import { TouchableOpacity } from "./TouchableOpacity";
 import notificationService, {
   NotificationPreferences,
 } from "../../services/notificationService";

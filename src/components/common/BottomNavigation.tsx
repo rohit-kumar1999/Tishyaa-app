@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, usePathname } from "expo-router";
-import React from "react";
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity } from "react-native";
+import React, { useCallback } from "react";
+import { SafeAreaView, StyleSheet, Text } from "react-native";
+import { TouchableOpacity } from "./TouchableOpacity";
 
 interface BottomNavigationProps {
   currentRoute?: string;
@@ -14,9 +15,26 @@ export default function BottomNavigation({
   const pathname = usePathname();
   const activeRoute = currentRoute || pathname;
 
-  const navigateTo = (route: string) => {
-    router.push(route);
-  };
+  // Only navigate if not already on the target route
+  const navigateTo = useCallback(
+    (route: string) => {
+      // Extract base route without query params for comparison
+      const baseRoute = route.split("?")[0];
+      const currentBase = pathname.split("?")[0];
+
+      // Don't navigate if already on the same base route
+      if (
+        baseRoute === currentBase ||
+        (baseRoute === "/home" && currentBase === "/") ||
+        (baseRoute === "/" && currentBase === "/home")
+      ) {
+        return;
+      }
+
+      router.push(route);
+    },
+    [pathname]
+  );
 
   const tabs = [
     { key: "home", route: "/home", icon: "home", label: "Home" },

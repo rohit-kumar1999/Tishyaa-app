@@ -5,9 +5,9 @@ import {
   ActivityIndicator,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
+import { TouchableOpacity } from "../common/TouchableOpacity";
 import { toast } from "../../hooks/use-toast";
 import {
   forceRefreshReviews,

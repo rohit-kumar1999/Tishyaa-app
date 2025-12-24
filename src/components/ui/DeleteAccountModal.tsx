@@ -8,9 +8,9 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
+import { TouchableOpacity } from "../common/TouchableOpacity";
 
 interface DeleteAccountModalProps {
   visible: boolean;

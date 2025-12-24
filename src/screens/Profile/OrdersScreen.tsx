@@ -2,7 +2,7 @@ import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -17,10 +17,10 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
 import BottomNavigation from "../../components/common/BottomNavigation";
+import { TouchableOpacity } from "../../components/common/TouchableOpacity";
 import { toast } from "../../hooks/use-toast";
 import { usePayment } from "../../hooks/usePayment";
 import { Order, useGetUserOrders } from "../../services/paymentService";
@@ -305,6 +305,10 @@ export default function ProfileOrdersScreen() {
   const [filterPage, setFilterPage] = useState(1);
   const itemsPerPage = 10;
 
+  // Double-click prevention refs
+  const lastClickTimeRef = useRef<{ [key: string]: number }>({});
+  const CLICK_DEBOUNCE_MS = 1000;
+
   // Return/Exchange Modal State
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [showExchangeModal, setShowExchangeModal] = useState(false);
@@ -444,6 +448,14 @@ export default function ProfileOrdersScreen() {
   // Handle retry payment
   const handleRetryPayment = useCallback(
     async (order: Order) => {
+      // Prevent double clicks
+      const now = Date.now();
+      const lastClick = lastClickTimeRef.current[`retry_${order.id}`] || 0;
+      if (now - lastClick < CLICK_DEBOUNCE_MS) {
+        return;
+      }
+      lastClickTimeRef.current[`retry_${order.id}`] = now;
+
       try {
         setProcessingOrderId(order.id);
         const result = await retryOrderPayment(order);
@@ -583,6 +595,14 @@ Thank you for shopping with Tishyaa Jewels!
 
   // Handle submit return request
   const handleSubmitReturn = useCallback(async () => {
+    // Prevent double clicks
+    const now = Date.now();
+    const lastClick = lastClickTimeRef.current["submit_return"] || 0;
+    if (now - lastClick < CLICK_DEBOUNCE_MS) {
+      return;
+    }
+    lastClickTimeRef.current["submit_return"] = now;
+
     if (!selectedReason || selectedItems.length === 0) {
       toast({
         title: "Error",
@@ -652,6 +672,14 @@ Thank you for shopping with Tishyaa Jewels!
 
   // Handle submit exchange request
   const handleSubmitExchange = useCallback(async () => {
+    // Prevent double clicks
+    const now = Date.now();
+    const lastClick = lastClickTimeRef.current["submit_exchange"] || 0;
+    if (now - lastClick < CLICK_DEBOUNCE_MS) {
+      return;
+    }
+    lastClickTimeRef.current["submit_exchange"] = now;
+
     if (!selectedReason || selectedItems.length === 0) {
       toast({
         title: "Error",
@@ -1854,8 +1882,77 @@ Thank you for shopping with Tishyaa Jewels!
     </View>
   );
 
+  // Handle page change for server-side pagination
+  const handlePageChange = useCallback((newPage: number) => {
+    setCurrentPage(newPage);
+    setFilterPage(1); // Reset filter page when changing server page
+  }, []);
+
   // Pagination controls
   const renderPagination = () => {
+    // For "all" filter, use server-side pagination
+    if (selectedFilter === "all") {
+      if (totalPages <= 1) return null;
+
+      return (
+        <View style={styles.paginationContainer}>
+          <TouchableOpacity
+            style={[
+              styles.paginationButton,
+              currentPage === 1 && styles.paginationButtonDisabled,
+            ]}
+            onPress={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1 || isLoading}
+          >
+            <Ionicons
+              name="chevron-back"
+              size={18}
+              color={currentPage === 1 ? "#D1D5DB" : "#374151"}
+            />
+            <Text
+              style={[
+                styles.paginationButtonText,
+                currentPage === 1 && styles.paginationButtonTextDisabled,
+              ]}
+            >
+              Prev
+            </Text>
+          </TouchableOpacity>
+
+          <Text style={styles.paginationInfo}>
+            Page {currentPage} of {totalPages}
+          </Text>
+
+          <TouchableOpacity
+            style={[
+              styles.paginationButton,
+              currentPage === totalPages && styles.paginationButtonDisabled,
+            ]}
+            onPress={() =>
+              currentPage < totalPages && handlePageChange(currentPage + 1)
+            }
+            disabled={currentPage === totalPages || isLoading}
+          >
+            <Text
+              style={[
+                styles.paginationButtonText,
+                currentPage === totalPages &&
+                  styles.paginationButtonTextDisabled,
+              ]}
+            >
+              Next
+            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={currentPage === totalPages ? "#D1D5DB" : "#374151"}
+            />
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    // For filtered views, use local pagination
     if (filteredTotalPages <= 1) return null;
 
     return (
@@ -1942,8 +2039,13 @@ Thank you for shopping with Tishyaa Jewels!
             )}
           </View>
           <Text style={styles.orderCount}>
-            {allFilteredOrders.length} order
-            {allFilteredOrders.length !== 1 ? "s" : ""}
+            {selectedFilter === "all" ? totalOrders : allFilteredOrders.length}{" "}
+            order
+            {(selectedFilter === "all"
+              ? totalOrders
+              : allFilteredOrders.length) !== 1
+              ? "s"
+              : ""}
           </Text>
         </View>
 

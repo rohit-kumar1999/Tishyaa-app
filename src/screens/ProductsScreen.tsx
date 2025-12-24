@@ -15,9 +15,9 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
+import { TouchableOpacity } from "../components/common/TouchableOpacity";
 import BottomNavigation from "../components/common/BottomNavigation";
 import { TopHeader } from "../components/common/TopHeader";
 import { FiltersComponent } from "../components/FiltersComponent";
