@@ -2,8 +2,8 @@
 export { CartProvider, useCart, useCartContext } from "./CartContext";
 export {
   HomepageDataProvider,
-  useCategories,
-  useFeaturedProducts,
-  useHomepageData,
+  useFeaturedProductsContext,
+  useHomepageCategoriesContext,
+  useHomepageDataContext,
 } from "./HomepageDataContext";
 export { WishlistProvider, useWishlist } from "./WishlistContext";

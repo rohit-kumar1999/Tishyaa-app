@@ -1,4 +1,4 @@
-import { useApiMutation, useApiQuery } from "@/src/hooks/useApiQuery";
+import { useApiMutation, useApiQuery } from "@/hooks/useApiQuery";
 
 // Instagram post interface
 export interface InstagramPost {

@@ -1,4 +1,4 @@
-import { api } from "@/src/setup/api";
+import { api } from "@/setup/api";
 import { useCallback, useEffect, useState } from "react";
 import { Category } from "./categoryService";
 import { Product, ProductResponse } from "./productService";

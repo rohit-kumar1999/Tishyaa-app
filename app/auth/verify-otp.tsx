@@ -1,4 +1,4 @@
-import VerifyOTPScreen from "@/src/screens/Auth/VerifyOTPScreen";
+import VerifyOTPScreen from "@/screens/Auth/VerifyOTPScreen";
 import React from "react";
 
 export default function VerifyOTP() {

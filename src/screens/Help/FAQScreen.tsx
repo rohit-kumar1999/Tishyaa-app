@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   SafeAreaView,
@@ -12,7 +12,6 @@ import {
 } from "react-native";
 
 export default function FAQScreen() {
-  const navigation = useNavigation();
   const [searchText, setSearchText] = useState("");
   const [openItems, setOpenItems] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -208,7 +207,7 @@ export default function FAQScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => router.push("/home")}
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color="#1F2937" />

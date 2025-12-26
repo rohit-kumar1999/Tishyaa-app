@@ -238,6 +238,21 @@ export default function ProductDetailScreen() {
     setIsLocating(true);
 
     try {
+      // First check if location services are enabled on the device
+      const isLocationEnabled = await Location.hasServicesEnabledAsync();
+      console.log("Location services enabled:", isLocationEnabled);
+
+      if (!isLocationEnabled) {
+        toast({
+          title: "Location Services Disabled",
+          description:
+            "Please enable GPS/Location Services in your device settings and try again.",
+          variant: "destructive",
+        });
+        setIsLocating(false);
+        return;
+      }
+
       const { status } = await Location.requestForegroundPermissionsAsync();
       console.log("Permission status:", status);
 
@@ -251,11 +266,69 @@ export default function ProductDetailScreen() {
         return;
       }
 
-      // Get current position
+      // Get current position - try multiple methods
       console.log("Getting location...");
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
+      let location = null;
+
+      // Method 1: Try last known position first (faster, less battery)
+      try {
+        console.log("Trying getLastKnownPositionAsync...");
+        location = await Location.getLastKnownPositionAsync({
+          maxAge: 300000, // Accept location up to 5 minutes old
+          requiredAccuracy: 1000, // Accept accuracy up to 1km
+        });
+        console.log("Last known position result:", location);
+      } catch (lastKnownError: any) {
+        console.log(
+          "getLastKnownPositionAsync failed:",
+          lastKnownError?.message
+        );
+      }
+
+      // Method 2: If no last known, get current position
+      if (!location) {
+        try {
+          console.log("Trying getCurrentPositionAsync with Low accuracy...");
+          location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Low, // Use low accuracy for faster results
+          });
+          console.log("getCurrentPositionAsync (Low) result:", location);
+        } catch (lowAccuracyError: any) {
+          console.log(
+            "getCurrentPositionAsync (Low) failed:",
+            lowAccuracyError?.message
+          );
+
+          // Method 3: Try with Lowest accuracy as last resort
+          try {
+            console.log(
+              "Trying getCurrentPositionAsync with Lowest accuracy..."
+            );
+            location = await Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.Lowest,
+            });
+            console.log("getCurrentPositionAsync (Lowest) result:", location);
+          } catch (lowestError: any) {
+            console.log(
+              "getCurrentPositionAsync (Lowest) failed:",
+              lowestError?.message
+            );
+          }
+        }
+      }
+
+      // If still no location, show user-friendly message
+      if (!location) {
+        toast({
+          title: "Location Unavailable",
+          description:
+            "Could not detect your location. Please ensure GPS is enabled, go outdoors for better signal, or enter your pincode manually.",
+          variant: "destructive",
+        });
+        setIsLocating(false);
+        return;
+      }
+
       const { latitude, longitude } = location.coords;
       console.log("Got coordinates:", latitude, longitude);
 
@@ -325,11 +398,22 @@ export default function ProductDetailScreen() {
       console.error("Error code:", error?.code);
 
       let errorMessage = "Unable to get your location.";
-      if (error?.message?.includes("timeout")) {
+      const errorCode = error?.code;
+      const errorMsg = error?.message?.toLowerCase() || "";
+
+      if (
+        errorCode === "ERR_CURRENT_LOCATION_IS_UNAVAILABLE" ||
+        errorMsg.includes("unavailable")
+      ) {
+        errorMessage =
+          "Location is currently unavailable. Please check that location services are enabled in your device settings.";
+      } else if (errorMsg.includes("timeout")) {
         errorMessage = "Location request timed out. Please try again.";
-      } else if (error?.message?.includes("disabled")) {
+      } else if (errorMsg.includes("disabled") || errorMsg.includes("denied")) {
         errorMessage =
           "Location services are disabled. Please enable them in settings.";
+      } else if (errorMsg.includes("network")) {
+        errorMessage = "Network error. Please check your internet connection.";
       }
 
       toast({

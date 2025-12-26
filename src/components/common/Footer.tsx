@@ -30,28 +30,12 @@ export const Footer = React.memo(() => {
     () => [
       { name: "Contact Us", route: "/contact" },
       { name: "About Us", route: "/about" },
-      {
-        name: "Shipping Info",
-        route: "/help",
-        params: { section: "shipping" },
-      },
-      {
-        name: "Returns & Exchange",
-        route: "/help",
-        params: { section: "returns" },
-      },
-      { name: "Size Guide", route: "/help", params: { section: "size-guide" } },
-      { name: "FAQ", route: "/help", params: { section: "faq" } },
-      {
-        name: "Care Instructions",
-        route: "/help",
-        params: { section: "care" },
-      },
-      {
-        name: "Privacy Policy",
-        route: "/help",
-        params: { section: "privacy" },
-      },
+      { name: "Shipping Info", route: "/help/shipping" },
+      { name: "Returns & Exchange", route: "/help/returns" },
+      { name: "Size Guide", route: "/help/size-guide" },
+      { name: "FAQ", route: "/help/faq" },
+      { name: "Care Instructions", route: "/help/care" },
+      { name: "Privacy Policy", route: "/help/privacy" },
     ],
     []
   );
@@ -75,18 +59,8 @@ export const Footer = React.memo(() => {
     });
   };
 
-  const handleCustomerCarePress = (item: {
-    route: string;
-    params?: Record<string, string>;
-  }) => {
-    if (item.params) {
-      router.push({
-        pathname: item.route as any,
-        params: item.params,
-      });
-    } else {
-      router.push(item.route as any);
-    }
+  const handleCustomerCarePress = (item: { route: string }) => {
+    router.push(item.route as any);
   };
 
   return (

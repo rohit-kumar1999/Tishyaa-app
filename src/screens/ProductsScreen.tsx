@@ -17,9 +17,9 @@ import {
   Text,
   View,
 } from "react-native";
-import { TouchableOpacity } from "../components/common/TouchableOpacity";
 import BottomNavigation from "../components/common/BottomNavigation";
 import { TopHeader } from "../components/common/TopHeader";
+import { TouchableOpacity } from "../components/common/TouchableOpacity";
 import { FiltersComponent } from "../components/FiltersComponent";
 import ProductCard from "../components/ProductCard";
 import { Select, SortOption } from "../components/ui";
@@ -148,6 +148,7 @@ export default function ProductsScreen() {
 
   // Track if we've already processed the category param to prevent loops
   const processedCategoryRef = useRef<string>("");
+  const processedSearchRef = useRef<string>("");
 
   // Handle initial category from params
   useEffect(() => {
@@ -170,6 +171,20 @@ export default function ProductsScreen() {
       });
     }
   }, [params?.category]);
+
+  // Handle search from URL params (from SearchDialog)
+  useEffect(() => {
+    if (params?.search && processedSearchRef.current !== params.search) {
+      processedSearchRef.current = params.search as string;
+      const searchParam = params.search as string;
+      setSearchText(searchParam);
+      setFilters((prev) => ({
+        ...prev,
+        search: searchParam,
+      }));
+      setPageNumber(1);
+    }
+  }, [params?.search]);
 
   // Search functionality with debounce
   useEffect(() => {

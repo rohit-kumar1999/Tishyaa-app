@@ -1,3 +1,3 @@
-import ProductDetailScreen from "@/src/screens/ProductDetailScreen";
+import ProductDetailScreen from "@/screens/ProductDetailScreen";
 
 export default ProductDetailScreen;

@@ -1,5 +1,5 @@
-import { useApiQuery } from "@/src/hooks/useApiQuery";
-import { api } from "@/src/setup/api";
+import { useApiQuery } from "@/hooks/useApiQuery";
+import { api } from "@/setup/api";
 import { useCallback, useEffect, useState } from "react";
 
 // Feature flag to control API vs mock data

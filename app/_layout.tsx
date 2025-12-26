@@ -1,6 +1,6 @@
-import { AuthInitializer } from "@/src/components/AuthInitializer";
-import { CartProvider, WishlistProvider } from "@/src/contexts";
-import { ApiCartProvider } from "@/src/contexts/ApiCartContext";
+import { AuthInitializer } from "@/components/AuthInitializer";
+import { CartProvider, WishlistProvider } from "@/contexts";
+import { ApiCartProvider } from "@/contexts/ApiCartContext";
 import { ClerkProvider } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";

@@ -1,4 +1,4 @@
-import { api } from "@/src/setup/api";
+import { api } from "@/setup/api";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useApiMutation, useApiQuery } from "../hooks/useApiQuery";

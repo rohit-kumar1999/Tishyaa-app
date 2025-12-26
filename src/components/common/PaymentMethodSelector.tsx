@@ -9,12 +9,12 @@ import {
   Text,
   View,
 } from "react-native";
-import { TouchableOpacity } from "./TouchableOpacity";
 import paymentService, {
   PaymentMethod,
   PaymentOptions,
   UPIPaymentOptions,
 } from "../../services/paymentService";
+import { TouchableOpacity } from "./TouchableOpacity";
 
 const { width } = Dimensions.get("window");
 
@@ -82,17 +82,16 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         transactionRef: orderId,
       };
 
-      const result = await paymentService.processPayment(
-        selectedMethod,
-        paymentOptions,
-        upiOptions
+      // For now, show not implemented message since processPayment needs proper integration
+      // TODO: Integrate with usePayment hook for full payment flow
+      Alert.alert(
+        "Payment Method",
+        `Selected: ${selectedMethod}. Please use the checkout flow for complete payment processing.`
       );
-
-      if (result.success) {
-        paymentService.handlePaymentSuccess(result, onPaymentSuccess);
-      } else {
-        paymentService.handlePaymentFailure(result, onPaymentFailure);
-      }
+      onPaymentFailure({
+        success: false,
+        error: "Direct payment not implemented",
+      });
     } catch (error) {
       console.error("Payment error:", error);
       Alert.alert("Error", "Payment failed. Please try again.");

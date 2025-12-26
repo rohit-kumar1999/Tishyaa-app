@@ -2,10 +2,11 @@ import { SignedIn, SignedOut, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, usePathname } from "expo-router";
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { Image, SafeAreaView, StyleSheet, Text, View } from "react-native";
 import { useApiCart } from "../../contexts/ApiCartContext";
 import { useWishlist } from "../../contexts/WishlistContext";
+import SearchDialog from "./SearchDialog";
 import { TouchableOpacity } from "./TouchableOpacity";
 
 export const TopHeader = () => {
@@ -21,6 +22,9 @@ export const TopHeader = () => {
   // Get cart count from shared cart context
   const { cartCount } = useApiCart();
 
+  // Search dialog state
+  const [searchDialogVisible, setSearchDialogVisible] = useState(false);
+
   // Only navigate to home if not already there
   const handleLogoPress = useCallback(() => {
     if (pathname !== "/" && pathname !== "/home") {
@@ -29,9 +33,7 @@ export const TopHeader = () => {
   }, [pathname]);
 
   const handleSearchPress = () => {
-    if (pathname !== "/search") {
-      router.push("/search");
-    }
+    setSearchDialogVisible(true);
   };
 
   const handleWishlistPress = () => {
@@ -137,6 +139,12 @@ export const TopHeader = () => {
           </View>
         </View>
       </LinearGradient>
+
+      {/* Search Dialog Modal */}
+      <SearchDialog
+        visible={searchDialogVisible}
+        onClose={() => setSearchDialogVisible(false)}
+      />
     </SafeAreaView>
   );
 };

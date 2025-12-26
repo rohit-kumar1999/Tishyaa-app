@@ -1,6 +1,6 @@
-import ProductCard from "@/src/components/ProductCard";
-import { useWishlist } from "@/src/contexts/WishlistContext";
-import { Product } from "@/src/services/productService";
+import ProductCard from "@/components/ProductCard";
+import { useWishlist } from "@/contexts/WishlistContext";
+import { Product } from "@/services/productService";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";

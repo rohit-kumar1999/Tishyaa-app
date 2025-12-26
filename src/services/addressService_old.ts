@@ -1,11 +1,14 @@
-import {
-  useApiMutation,
-  useApiPutMutation,
-  useApiDeleteMutation,
-} from "@/hooks/useApiQuery";
-import { useQuery } from "@tanstack/react-query";
-import api from "@/setup/api";
-import { useUserData } from "@/hooks/useUserData";
+// DEPRECATED: This file is no longer in use
+// TODO: Remove this file after confirming it's not referenced anywhere
+
+// import {
+//   useApiMutation,
+//   useApiPutMutation,
+//   useApiDeleteMutation,
+// } from "@/hooks/useApiQuery";
+// import { useQuery } from "@tanstack/react-query";
+// import api from "@/setup/api";
+// import { useUserData } from "@/hooks/useUserData";
 
 export interface Address {
   id: number;

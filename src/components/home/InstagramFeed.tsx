@@ -2,7 +2,7 @@ import {
   useCreateInstagramPost,
   useGetInstagramPosts,
   useUploadFile,
-} from "@/src/services/instagramService";
+} from "@/services/instagramService";
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { ResizeMode, Video } from "expo-av";
