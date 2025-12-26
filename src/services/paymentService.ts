@@ -654,8 +654,8 @@ export const storeFailedPayment = async (
       require("@react-native-async-storage/async-storage").default;
     const storageKey = `failed_payment_${paymentData.razorpayPaymentId}`;
     await AsyncStorage.setItem(storageKey, JSON.stringify(paymentData));
-  } catch (error) {
-    console.error("Failed to store payment data:", error);
+  } catch {
+    // Silent fail
   }
 };
 
@@ -676,8 +676,8 @@ export const getFailedPayments = async (): Promise<FailedPaymentData[]> => {
         failedPayments.push(JSON.parse(data));
       }
     }
-  } catch (error) {
-    console.error("Failed to retrieve failed payments:", error);
+  } catch {
+    // Silent fail
   }
   return failedPayments;
 };
@@ -691,8 +691,8 @@ export const removeFailedPayment = async (
       require("@react-native-async-storage/async-storage").default;
     const storageKey = `failed_payment_${razorpayPaymentId}`;
     await AsyncStorage.removeItem(storageKey);
-  } catch (error) {
-    console.error("Failed to remove payment data:", error);
+  } catch {
+    // Silent fail
   }
 };
 
@@ -818,10 +818,6 @@ class PaymentService {
       const orderId = razorpayOrder.razorpay_order_id || razorpayOrder.id;
 
       if (!orderId) {
-        console.error(
-          "❌ Invalid Razorpay order - missing order ID:",
-          razorpayOrder
-        );
         return {
           success: false,
           error: "Invalid Razorpay order - no order ID",
@@ -868,10 +864,6 @@ class PaymentService {
       });
 
       if (!validation.valid) {
-        console.error(
-          "❌ Razorpay options validation failed:",
-          validation.error
-        );
         return {
           success: false,
           error: validation.error || "Invalid payment configuration",
@@ -887,16 +879,12 @@ class PaymentService {
       // Check if native Razorpay SDK is available (for native platforms)
       // In Expo Go, the native SDK is not available, so we fall back to browser checkout
       if (!this.isNativeSDKAvailable()) {
-        console.log(
-          "ℹ️ Native Razorpay SDK not available, using browser checkout"
-        );
         return await this.openBrowserCheckout(options, orderId);
       }
 
       // Native SDK is available, use it
       return await this.openNativeCheckout(options, onExternalWallet);
     } catch (error: any) {
-      console.error("❌ Unexpected error in processRazorpayPayment:", error);
       const parsed = parseRazorpayError(error);
       return {
         success: false,
@@ -929,7 +917,6 @@ class PaymentService {
           // Validate response format (as per documentation)
           const validation = validateRazorpayResponse(data);
           if (!validation.valid) {
-            console.error("❌ Invalid response format:", validation.error);
             resolve({
               success: false,
               error: "Invalid payment response. Please contact support.",
@@ -1104,7 +1091,6 @@ class PaymentService {
             handler: (response: any) => {
               const validation = validateRazorpayResponse(response);
               if (!validation.valid) {
-                console.error("❌ Invalid response:", validation.error);
                 resolve({
                   success: false,
                   error: "Invalid payment response. Please contact support.",

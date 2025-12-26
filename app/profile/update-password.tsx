@@ -69,8 +69,6 @@ export default function UpdatePasswordScreen() {
 
       // TODO: Show success message/toast
     } catch (error: any) {
-      console.error("Password update error:", error);
-
       // Handle Clerk-specific errors
       const errorMessage =
         error?.errors?.[0]?.message ||

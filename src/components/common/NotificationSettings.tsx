@@ -8,10 +8,10 @@ import {
   Text,
   View,
 } from "react-native";
-import { TouchableOpacity } from "./TouchableOpacity";
 import notificationService, {
   NotificationPreferences,
 } from "../../services/notificationService";
+import { TouchableOpacity } from "./TouchableOpacity";
 
 export const NotificationSettings: React.FC = () => {
   const [preferences, setPreferences] = useState<NotificationPreferences>({
@@ -32,8 +32,8 @@ export const NotificationSettings: React.FC = () => {
     try {
       const stored = await notificationService.loadNotificationPreferences();
       setPreferences(stored);
-    } catch (error) {
-      console.error("Error loading preferences:", error);
+    } catch {
+      // Silent fail
     } finally {
       setLoading(false);
     }
@@ -48,8 +48,7 @@ export const NotificationSettings: React.FC = () => {
 
     try {
       await notificationService.saveNotificationPreferences(newPreferences);
-    } catch (error) {
-      console.error("Error saving preferences:", error);
+    } catch {
       Alert.alert("Error", "Failed to save notification preferences");
     }
   };

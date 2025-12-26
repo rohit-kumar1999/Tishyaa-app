@@ -76,8 +76,7 @@ class LocationService {
       }
 
       return true;
-    } catch (error) {
-      console.error("Error requesting location permissions:", error);
+    } catch {
       return false;
     }
   }
@@ -89,8 +88,7 @@ class LocationService {
     try {
       const { status } = await Location.getForegroundPermissionsAsync();
       return status === "granted";
-    } catch (error) {
-      console.error("Error checking location permissions:", error);
+    } catch {
       return false;
     }
   }
@@ -116,8 +114,7 @@ class LocationService {
 
       this.currentLocation = location;
       return location;
-    } catch (error) {
-      console.error("Error getting current location:", error);
+    } catch {
       Alert.alert(
         "Location Error",
         "Unable to get your current location. Please try again."
@@ -160,8 +157,7 @@ class LocationService {
 
       this.watchingLocation = true;
       return true;
-    } catch (error) {
-      console.error("Error watching location:", error);
+    } catch {
       return false;
     }
   }
@@ -201,8 +197,7 @@ class LocationService {
       }
 
       return null;
-    } catch (error) {
-      console.error("Error reverse geocoding:", error);
+    } catch {
       return null;
     }
   }
@@ -223,8 +218,7 @@ class LocationService {
       }
 
       return null;
-    } catch (error) {
-      console.error("Error geocoding address:", error);
+    } catch {
       return null;
     }
   }
@@ -284,8 +278,7 @@ class LocationService {
 
       // Sort by distance
       return storesWithDistance.sort((a, b) => a.distance - b.distance);
-    } catch (error) {
-      console.error("Error getting nearby stores:", error);
+    } catch {
       return this.getAllStores();
     }
   }
@@ -374,8 +367,7 @@ class LocationService {
           await Linking.openURL(webUrl);
         }
       }
-    } catch (error) {
-      console.error("Error opening directions:", error);
+    } catch {
       toast({
         title: "Error",
         description: "Unable to open directions. Please try again.",
@@ -422,8 +414,7 @@ class LocationService {
       };
 
       return mockTracking;
-    } catch (error) {
-      console.error("Error getting delivery tracking:", error);
+    } catch {
       return null;
     }
   }
@@ -439,8 +430,8 @@ class LocationService {
         { id: Date.now().toString(), name, ...address },
       ];
       await AsyncStorage.setItem("saved_addresses", JSON.stringify(updated));
-    } catch (error) {
-      console.error("Error saving address:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -453,8 +444,7 @@ class LocationService {
     try {
       const saved = await AsyncStorage.getItem("saved_addresses");
       return saved ? JSON.parse(saved) : [];
-    } catch (error) {
-      console.error("Error getting saved addresses:", error);
+    } catch {
       return [];
     }
   }

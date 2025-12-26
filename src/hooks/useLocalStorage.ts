@@ -20,8 +20,8 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
         if (item) {
           setStoredValue(JSON.parse(item));
         }
-      } catch (error) {
-        console.error(`Error reading AsyncStorage key "${key}":`, error);
+      } catch {
+        // Storage read failed
       } finally {
         setIsLoading(false);
       }
@@ -39,8 +39,8 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
           value instanceof Function ? value(valueRef.current) : value;
         setStoredValue(valueToStore);
         await AsyncStorage.setItem(key, JSON.stringify(valueToStore));
-      } catch (error) {
-        console.error(`Error setting AsyncStorage key "${key}":`, error);
+      } catch {
+        // Storage write failed
       }
     },
     [key]

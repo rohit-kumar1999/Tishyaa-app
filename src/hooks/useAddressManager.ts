@@ -21,11 +21,6 @@ export const useAddressManager = () => {
   // - Array of addresses: [...addresses]
   // - Object with data property: { data: [...addresses] }
   // - Single address: { id: ..., name: ..., ... }
-  console.log(
-    "Address API Response:",
-    JSON.stringify(addressesResponse, null, 2)
-  );
-
   const addressesRaw: Address[] = Array.isArray(addressesResponse)
     ? addressesResponse
     : Array.isArray(addressesResponse?.data)
@@ -40,8 +35,6 @@ export const useAddressManager = () => {
     if (!a.isDefault && b.isDefault) return 1;
     return 0;
   });
-
-  console.log("Processed addresses:", addresses.length, addresses);
 
   // Mutations
   const createAddressMutation = useCreateAddress();
@@ -102,8 +95,7 @@ export const useAddressManager = () => {
 
         resetAndCloseForm();
         refetch();
-      } catch (error) {
-        console.error("Address submit error:", error);
+      } catch {
         Alert.alert(
           "Error",
           isEditMode ? "Failed to update address" : "Failed to add address"
@@ -139,8 +131,7 @@ export const useAddressManager = () => {
           } as any);
           refetch();
         }
-      } catch (error) {
-        console.error("Set default address error:", error);
+      } catch {
         Alert.alert("Error", "Failed to set default address");
       } finally {
         setIsSettingDefault(null);
@@ -165,8 +156,7 @@ export const useAddressManager = () => {
               try {
                 await deleteAddressMutation.mutate(addressId);
                 refetch();
-              } catch (error) {
-                console.error("Delete address error:", error);
+              } catch {
                 Alert.alert("Error", "Failed to delete address");
               } finally {
                 setIsDeleting(null);

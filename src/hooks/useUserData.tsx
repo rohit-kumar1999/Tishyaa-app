@@ -1,24 +1,24 @@
-import { useState, useEffect } from 'react'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useState } from "react";
 
 // Interface for the return type of our custom hook
 interface UserData {
-  userId: string | null
-  isLoaded: boolean
-  isSignedIn: boolean
-  userFullName: string | null
-  userEmail: string | null
-  primaryEmailAddress: string | null
+  userId: string | null;
+  isLoaded: boolean;
+  isSignedIn: boolean;
+  userFullName: string | null;
+  userEmail: string | null;
+  primaryEmailAddress: string | null;
 }
 
 // User data interface for storage
 interface StoredUser {
-  id: string
-  fullName: string
-  email: string
+  id: string;
+  fullName: string;
+  email: string;
 }
 
-const USER_STORAGE_KEY = '@tishyaa_user'
+const USER_STORAGE_KEY = "@tishyaa_user";
 
 /**
  * Custom hook to provide user data throughout the application
@@ -33,14 +33,14 @@ export const useUserData = (): UserData => {
     userFullName: null,
     userEmail: null,
     primaryEmailAddress: null,
-  })
+  });
 
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const storedUser = await AsyncStorage.getItem(USER_STORAGE_KEY)
+        const storedUser = await AsyncStorage.getItem(USER_STORAGE_KEY);
         if (storedUser) {
-          const user: StoredUser = JSON.parse(storedUser)
+          const user: StoredUser = JSON.parse(storedUser);
           setUserData({
             userId: user.id,
             isLoaded: true,
@@ -48,47 +48,44 @@ export const useUserData = (): UserData => {
             userFullName: user.fullName,
             userEmail: user.email,
             primaryEmailAddress: user.email,
-          })
+          });
         } else {
-          setUserData(prev => ({
+          setUserData((prev) => ({
             ...prev,
             isLoaded: true,
             isSignedIn: false,
-          }))
+          }));
         }
-      } catch (error) {
-        console.error('Error loading user data:', error)
-        setUserData(prev => ({
+      } catch {
+        setUserData((prev) => ({
           ...prev,
           isLoaded: true,
           isSignedIn: false,
-        }))
+        }));
       }
-    }
+    };
 
-    loadUserData()
-  }, [])
+    loadUserData();
+  }, []);
 
-  return userData
-}
+  return userData;
+};
 
 // Helper functions for user management
 export const signInUser = async (user: StoredUser) => {
   try {
-    await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user))
-    return true
-  } catch (error) {
-    console.error('Error signing in user:', error)
-    return false
+    await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    return true;
+  } catch {
+    return false;
   }
-}
+};
 
 export const signOutUser = async () => {
   try {
-    await AsyncStorage.removeItem(USER_STORAGE_KEY)
-    return true
-  } catch (error) {
-    console.error('Error signing out user:', error)
-    return false
+    await AsyncStorage.removeItem(USER_STORAGE_KEY);
+    return true;
+  } catch {
+    return false;
   }
-}
+};

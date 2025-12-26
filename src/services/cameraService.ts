@@ -32,8 +32,7 @@ class CameraService {
         camera: cameraPermission.status === "granted",
         mediaLibrary: mediaPermission.status === "granted",
       };
-    } catch (error) {
-      console.error("Error requesting permissions:", error);
+    } catch {
       return { camera: false, mediaLibrary: false };
     }
   }
@@ -51,8 +50,7 @@ class CameraService {
         camera: cameraPermission.status === "granted",
         mediaLibrary: mediaPermission.status === "granted",
       };
-    } catch (error) {
-      console.error("Error checking permissions:", error);
+    } catch {
       return { camera: false, mediaLibrary: false };
     }
   }
@@ -88,8 +86,7 @@ class CameraService {
       });
 
       return result;
-    } catch (error) {
-      console.error("Error taking photo:", error);
+    } catch {
       toast({
         title: "Error",
         description: "Failed to take photo. Please try again.",
@@ -130,8 +127,7 @@ class CameraService {
       });
 
       return result;
-    } catch (error) {
-      console.error("Error picking image:", error);
+    } catch {
       toast({
         title: "Error",
         description: "Failed to select image. Please try again.",
@@ -171,8 +167,7 @@ class CameraService {
       });
 
       return result;
-    } catch (error) {
-      console.error("Error picking multiple images:", error);
+    } catch {
       toast({
         title: "Error",
         description: "Failed to select images. Please try again.",
@@ -202,8 +197,7 @@ class CameraService {
       await MediaLibrary.createAlbumAsync("Tishyaa Jewels", asset, false);
 
       return true;
-    } catch (error) {
-      console.error("Error saving to gallery:", error);
+    } catch {
       return false;
     }
   }
@@ -229,8 +223,7 @@ class CameraService {
       }
 
       return null;
-    } catch (error) {
-      console.error("Error resizing image:", error);
+    } catch {
       return null;
     }
   }
@@ -242,8 +235,7 @@ class CameraService {
     try {
       const info = await FileSystem.getInfoAsync(uri);
       return info;
-    } catch (error) {
-      console.error("Error getting image info:", error);
+    } catch {
       return null;
     }
   }
@@ -293,8 +285,7 @@ class CameraService {
         encoding: "base64",
       });
       return base64;
-    } catch (error) {
-      console.error("Error converting to base64:", error);
+    } catch {
       return null;
     }
   }
@@ -320,8 +311,7 @@ class CameraService {
       }
 
       return null;
-    } catch (error) {
-      console.error("Error generating thumbnail:", error);
+    } catch {
       return null;
     }
   }

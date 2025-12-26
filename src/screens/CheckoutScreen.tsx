@@ -14,9 +14,9 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { TouchableOpacity } from "../components/common/TouchableOpacity";
 import BottomNavigation from "../components/common/BottomNavigation";
 import { TopHeader } from "../components/common/TopHeader";
+import { TouchableOpacity } from "../components/common/TouchableOpacity";
 import { useApiCart } from "../contexts/ApiCartContext";
 import { usePayment } from "../hooks/usePayment";
 import {
@@ -43,7 +43,6 @@ const fetchCoupons = async (token: string, userId: string) => {
 
     return await response.json();
   } catch (error) {
-    console.error("Error fetching coupons:", error);
     throw error;
   }
 };
@@ -163,8 +162,7 @@ export default function CheckoutScreen() {
         setIsLoadingCoupons(true);
         const couponsData = await fetchCoupons(token, user.id);
         setCoupons(couponsData.filter((coupon: Coupon) => coupon.active));
-      } catch (error) {
-        console.error("Error loading coupons:", error);
+      } catch {
         Alert.alert("Error", "Failed to load coupons");
       } finally {
         setIsLoadingCoupons(false);
@@ -246,8 +244,7 @@ export default function CheckoutScreen() {
 
       // Refetch addresses to get the updated list
       refetchAddresses();
-    } catch (error) {
-      console.error("Error creating address:", error);
+    } catch {
       Alert.alert("Error", "Failed to create address. Please try again.");
     }
   };
@@ -365,7 +362,6 @@ export default function CheckoutScreen() {
         });
       }
     } catch (error) {
-      console.error("❌ Payment error:", error);
       setPaymentStatus({
         type: "failed",
         message:

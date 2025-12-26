@@ -15,8 +15,7 @@ export const AuthInitializer = () => {
     setAuthTokenGetter(async () => {
       try {
         return await getToken();
-      } catch (error) {
-        console.warn("Failed to get Clerk token:", error);
+      } catch {
         return null;
       }
     });

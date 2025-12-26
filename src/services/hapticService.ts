@@ -1,15 +1,15 @@
-import * as Haptics from 'expo-haptics';
-import { Platform } from 'react-native';
+import * as Haptics from "expo-haptics";
+import { Platform } from "react-native";
 
 export enum HapticFeedbackType {
-  LIGHT = 'light',
-  MEDIUM = 'medium',
-  HEAVY = 'heavy',
-  SUCCESS = 'success',
-  WARNING = 'warning',
-  ERROR = 'error',
-  SELECTION = 'selection',
-  IMPACT = 'impact',
+  LIGHT = "light",
+  MEDIUM = "medium",
+  HEAVY = "heavy",
+  SUCCESS = "success",
+  WARNING = "warning",
+  ERROR = "error",
+  SELECTION = "selection",
+  IMPACT = "impact",
 }
 
 class HapticService {
@@ -17,7 +17,7 @@ class HapticService {
    * Check if haptic feedback is available on the device
    */
   isAvailable(): boolean {
-    return Platform.OS === 'ios' || Platform.OS === 'android';
+    return Platform.OS === "ios" || Platform.OS === "android";
   }
 
   /**
@@ -25,11 +25,11 @@ class HapticService {
    */
   async light(): Promise<void> {
     if (!this.isAvailable()) return;
-    
+
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (error) {
-      console.warn('Haptic feedback not available:', error);
+    } catch {
+      // Haptic feedback not available
     }
   }
 
@@ -38,11 +38,11 @@ class HapticService {
    */
   async medium(): Promise<void> {
     if (!this.isAvailable()) return;
-    
+
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (error) {
-      console.warn('Haptic feedback not available:', error);
+    } catch {
+      // Haptic feedback not available
     }
   }
 
@@ -51,11 +51,11 @@ class HapticService {
    */
   async heavy(): Promise<void> {
     if (!this.isAvailable()) return;
-    
+
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    } catch (error) {
-      console.warn('Haptic feedback not available:', error);
+    } catch {
+      // Haptic feedback not available
     }
   }
 
@@ -64,11 +64,11 @@ class HapticService {
    */
   async success(): Promise<void> {
     if (!this.isAvailable()) return;
-    
+
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (error) {
-      console.warn('Haptic feedback not available:', error);
+    } catch {
+      // Haptic feedback not available
     }
   }
 
@@ -77,11 +77,11 @@ class HapticService {
    */
   async warning(): Promise<void> {
     if (!this.isAvailable()) return;
-    
+
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    } catch (error) {
-      console.warn('Haptic feedback not available:', error);
+    } catch {
+      // Haptic feedback not available
     }
   }
 
@@ -90,11 +90,11 @@ class HapticService {
    */
   async error(): Promise<void> {
     if (!this.isAvailable()) return;
-    
+
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } catch (error) {
-      console.warn('Haptic feedback not available:', error);
+    } catch {
+      // Haptic feedback not available
     }
   }
 
@@ -103,11 +103,11 @@ class HapticService {
    */
   async selection(): Promise<void> {
     if (!this.isAvailable()) return;
-    
+
     try {
       await Haptics.selectionAsync();
-    } catch (error) {
-      console.warn('Haptic feedback not available:', error);
+    } catch {
+      // Haptic feedback not available
     }
   }
 
@@ -257,12 +257,15 @@ class HapticService {
   /**
    * Custom haptic pattern for special actions
    */
-  async customPattern(pattern: HapticFeedbackType[], delays: number[] = []): Promise<void> {
+  async customPattern(
+    pattern: HapticFeedbackType[],
+    delays: number[] = []
+  ): Promise<void> {
     for (let i = 0; i < pattern.length; i++) {
       await this.trigger(pattern[i]);
-      
+
       if (i < pattern.length - 1 && delays[i]) {
-        await new Promise(resolve => setTimeout(resolve, delays[i]));
+        await new Promise((resolve) => setTimeout(resolve, delays[i]));
       }
     }
   }

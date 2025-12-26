@@ -40,8 +40,7 @@ export default function AccountSettingsScreen() {
     try {
       // Navigate to profile screen instead of using router.back() to avoid GO_BACK error
       router.push("/profile");
-    } catch (error) {
-      console.error("Navigation back error:", error);
+    } catch {
       // Fallback navigation
       router.replace("/profile");
     }
@@ -50,8 +49,8 @@ export default function AccountSettingsScreen() {
   const handleChangePassword = () => {
     try {
       router.push("/profile/update-password");
-    } catch (error) {
-      console.error("Navigation error:", error);
+    } catch {
+      // Navigation failed silently
     }
   };
 
@@ -87,7 +86,6 @@ export default function AccountSettingsScreen() {
           router.replace("/auth");
         }, 1500);
       } else {
-        console.error("Account deletion failed:", result.message);
         setShowDeleteModal(false);
         toast({
           title: "Deletion Failed",
@@ -97,8 +95,7 @@ export default function AccountSettingsScreen() {
           variant: "destructive",
         });
       }
-    } catch (error) {
-      console.error("Account deletion error:", error);
+    } catch {
       setShowDeleteModal(false);
       toast({
         title: "Deletion Error",
@@ -176,7 +173,6 @@ export default function AccountSettingsScreen() {
       // Validate file type and size before upload
       const validation = await validateImageFile(uri);
       if (!validation.isValid) {
-        console.error("File validation failed:", validation.error);
         return;
       }
 
@@ -187,8 +183,7 @@ export default function AccountSettingsScreen() {
       // Upload to Clerk using the setProfileImage method
       await user.setProfileImage({ file: blob });
       // TODO: Could show a toast notification or update UI feedback instead
-    } catch (error: any) {
-      console.error("Profile picture upload error:", error);
+    } catch {
       // TODO: Could show a toast notification or update UI feedback instead
     } finally {
       setUploadingImage(false);
@@ -222,8 +217,8 @@ export default function AccountSettingsScreen() {
 
         await uploadImage(selectedAsset.uri);
       }
-    } catch (error) {
-      console.error("Photo library error:", error);
+    } catch {
+      // Photo selection failed silently
     }
   };
 
@@ -347,11 +342,8 @@ export default function AccountSettingsScreen() {
                 if (option.loading) return; // Prevent action if loading
                 try {
                   option.onPress();
-                } catch (error) {
-                  console.error(
-                    `Error executing option ${option.title}:`,
-                    error
-                  );
+                } catch {
+                  // Option execution failed
                 }
               }}
               activeOpacity={0.7}

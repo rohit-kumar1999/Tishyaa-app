@@ -153,8 +153,8 @@ export default function WishlistScreen() {
     setRefreshing(true);
     try {
       await refetchWishlist();
-    } catch (error) {
-      console.error("Failed to refresh wishlist:", error);
+    } catch {
+      // Refresh failed silently
     } finally {
       setRefreshing(false);
     }

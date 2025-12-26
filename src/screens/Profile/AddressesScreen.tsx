@@ -15,8 +15,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { TouchableOpacity } from "../../components/common/TouchableOpacity";
 import BottomNavigation from "../../components/common/BottomNavigation";
+import { TouchableOpacity } from "../../components/common/TouchableOpacity";
 import { useAddressManager } from "../../hooks/useAddressManager";
 import { Address, AddressInput } from "../../services/addressService";
 
@@ -68,12 +68,6 @@ export default function AddressesScreen() {
   // Initialize form when modal opens
   React.useEffect(() => {
     if (isAddressModalOpen) {
-      console.log(
-        "Modal opened - isEditMode:",
-        isEditMode,
-        "currentAddress:",
-        JSON.stringify(currentAddress, null, 2)
-      );
       if (isEditMode && currentAddress) {
         // Normalize type to uppercase to match ADDRESS_TYPES ids
         const normalizedType = (currentAddress.type || "HOME").toUpperCase();

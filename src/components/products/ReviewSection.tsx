@@ -1,13 +1,7 @@
 import { useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-import { TouchableOpacity } from "../common/TouchableOpacity";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { toast } from "../../hooks/use-toast";
 import {
   forceRefreshReviews,
@@ -19,6 +13,7 @@ import {
   useMarkReviewHelpful,
   useUpdateReview,
 } from "../../services/reviewService";
+import { TouchableOpacity } from "../common/TouchableOpacity";
 import { ReviewCard } from "../ReviewCard";
 import ReviewFormModal from "./ReviewFormModal";
 
@@ -148,8 +143,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({
           ? "Review updated successfully!"
           : "Review submitted successfully!",
       });
-    } catch (error) {
-      console.error("Error submitting review:", error);
+    } catch {
       toast({
         description: "Failed to submit review. Please try again.",
         variant: "destructive",
@@ -169,8 +163,8 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({
       await forceRefreshReviews(productId);
       await new Promise((resolve) => setTimeout(resolve, 300));
       await refetchReviews();
-    } catch (error) {
-      console.error("Error deleting review:", error);
+    } catch {
+      // Delete failed silently
     }
   };
 
@@ -189,8 +183,8 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({
       await forceRefreshReviews(productId);
       await new Promise((resolve) => setTimeout(resolve, 300));
       await refetchReviews();
-    } catch (error) {
-      console.error("Error marking review as helpful:", error);
+    } catch {
+      // Mark helpful failed silently
     }
   };
 

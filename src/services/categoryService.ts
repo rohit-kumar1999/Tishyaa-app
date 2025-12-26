@@ -195,7 +195,6 @@ export const useHomepageCategories = () => {
 
       setCategories(transformApiCategories(apiCategories));
     } catch (err) {
-      console.error("Failed to fetch categories:", err);
       setError(err as Error);
       // Fallback to mock data on error
       setCategories(transformApiCategories(mockCategories));

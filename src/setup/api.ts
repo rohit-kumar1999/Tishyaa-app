@@ -68,8 +68,8 @@ class ApiClient {
         if (token) {
           defaultHeaders["Authorization"] = `Bearer ${token}`;
         }
-      } catch (error) {
-        console.warn("Failed to get auth token:", error);
+      } catch {
+        // Token fetch failed
       }
     }
 
@@ -81,8 +81,8 @@ class ApiClient {
           defaultHeaders["x-user-id"] = userId;
           defaultHeaders["x-user-role"] = "user"; // Default role, can be made configurable later
         }
-      } catch (error) {
-        console.warn("Failed to get user ID:", error);
+      } catch {
+        // User ID fetch failed
       }
     }
 
@@ -115,11 +115,6 @@ class ApiClient {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error(
-        `❌ API Failed: ${options.method || "GET"} ${fullUrl}`,
-        error
-      );
-
       if (error instanceof Error) {
         if (error.name === "AbortError") {
           throw new Error(
@@ -209,8 +204,7 @@ export const testApiConnection = async (): Promise<boolean> => {
 
     clearTimeout(timeoutId);
     return response.ok;
-  } catch (error) {
-    console.error("API Connection Test Failed:", error);
+  } catch {
     return false;
   }
 };

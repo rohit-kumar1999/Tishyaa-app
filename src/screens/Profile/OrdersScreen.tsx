@@ -467,8 +467,7 @@ export default function ProfileOrdersScreen() {
             [{ text: "OK", onPress: () => refetch() }]
           );
         }
-      } catch (error) {
-        console.error("Retry payment error:", error);
+      } catch {
         Alert.alert(
           "Payment Error",
           "Failed to process payment. Please try again later."

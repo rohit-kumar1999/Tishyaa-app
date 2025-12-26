@@ -123,8 +123,7 @@ export const useProductManager = () => {
           // Force immediate refetch to sync with server
           refetchWishlist();
         })
-        .catch((error: any) => {
-          console.error("❌ Failed to remove from wishlist:", error);
+        .catch(() => {
           setIsWishlistProcessing((prev) => ({
             ...prev,
             [product.id]: false,
@@ -142,8 +141,7 @@ export const useProductManager = () => {
           // Force immediate refetch to sync with server
           refetchWishlist();
         })
-        .catch((error: any) => {
-          console.error("❌ Failed to add to wishlist:", error);
+        .catch(() => {
           setIsWishlistProcessing((prev) => ({
             ...prev,
             [product.id]: false,

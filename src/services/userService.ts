@@ -23,8 +23,6 @@ export const useUserService = () => {
 
       return { success: true, message: "Account deleted successfully" };
     } catch (error) {
-      console.error("Error deleting user:", error);
-
       // Handle specific Clerk errors
       const errorMessage =
         error instanceof Error ? error.message : "Failed to delete account";

@@ -10,11 +10,11 @@ import {
   Text,
   View,
 } from "react-native";
-import { TouchableOpacity } from "./TouchableOpacity";
 import securityService, {
   BiometricType,
   SecuritySettings as SecuritySettingsType,
 } from "../../services/securityService";
+import { TouchableOpacity } from "./TouchableOpacity";
 
 export const SecuritySettings: React.FC = () => {
   const [settings, setSettings] = useState<SecuritySettingsType>({
@@ -51,8 +51,7 @@ export const SecuritySettings: React.FC = () => {
       // Get biometric types
       const types = await securityService.getBiometricTypes();
       setBiometricTypes(types);
-    } catch (error) {
-      console.error("Error initializing security settings:", error);
+    } catch {
       Alert.alert("Error", "Failed to load security settings");
     } finally {
       setLoading(false);
@@ -67,8 +66,7 @@ export const SecuritySettings: React.FC = () => {
       setSettings(newSettings);
 
       await securityService.updateSecuritySettings({ [key]: value });
-    } catch (error) {
-      console.error("Error updating setting:", error);
+    } catch {
       Alert.alert("Error", "Failed to update setting");
       // Revert on error
       setSettings(settings);
@@ -104,8 +102,7 @@ export const SecuritySettings: React.FC = () => {
           );
         }
       }
-    } catch (error) {
-      console.error("Error toggling biometric:", error);
+    } catch {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   };

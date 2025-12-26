@@ -32,8 +32,8 @@ export default function ProfileScreen() {
   const handleSignOut = async () => {
     try {
       await signOut();
-    } catch (error) {
-      console.error("❌ Sign out error:", error);
+    } catch {
+      // Sign out failed silently
     }
   };
 

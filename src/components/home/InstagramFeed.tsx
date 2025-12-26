@@ -69,11 +69,10 @@ export const InstagramFeed = () => {
       } else {
         await Linking.openURL(instagramUrl);
       }
-    } catch (error) {
-      console.error("Error opening Instagram:", error);
+    } catch {
       try {
         await Linking.openURL(instagramUrl);
-      } catch (fallbackError) {
+      } catch {
         Alert.alert("Error", "Cannot open Instagram post");
       }
     }
@@ -133,8 +132,7 @@ export const InstagramFeed = () => {
         setUploadCompleted(false);
         handleAutoUpload(asset);
       }
-    } catch (error) {
-      console.error("Error selecting media:", error);
+    } catch {
       Alert.alert("Error", "Failed to select media. Please try again.");
     }
   };
@@ -162,8 +160,7 @@ export const InstagramFeed = () => {
             type: asset.mimeType || (isVideo ? "video/mp4" : "image/jpeg"),
           });
           formData.append("file", file);
-        } catch (fetchError) {
-          console.error("Error fetching blob:", fetchError);
+        } catch {
           throw new Error("Failed to process file for upload");
         }
       } else {
@@ -203,8 +200,7 @@ export const InstagramFeed = () => {
                   "Thank you! We will post your image/video soon on our Instagram handle! 🎉"
                 );
               },
-              onError: (error) => {
-                console.error("Error creating Instagram post:", error);
+              onError: () => {
                 // Clear the selected file and reset state on Instagram API failure
                 resetUploadState();
                 Alert.alert(
@@ -215,8 +211,7 @@ export const InstagramFeed = () => {
             }
           );
         },
-        onError: (error) => {
-          console.error("Error uploading file:", error);
+        onError: () => {
           // Clear the selected file and reset state on upload API failure
           resetUploadState();
           Alert.alert(
@@ -225,8 +220,7 @@ export const InstagramFeed = () => {
           );
         },
       });
-    } catch (error) {
-      console.error("Unexpected error in handleAutoUpload:", error);
+    } catch {
       // Clear the selected file and reset state on unexpected error
       resetUploadState();
       Alert.alert("Error", "An unexpected error occurred. Please try again.");

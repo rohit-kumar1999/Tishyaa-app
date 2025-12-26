@@ -92,8 +92,7 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         success: false,
         error: "Direct payment not implemented",
       });
-    } catch (error) {
-      console.error("Payment error:", error);
+    } catch {
       Alert.alert("Error", "Payment failed. Please try again.");
       onPaymentFailure({ success: false, error: "Payment failed" });
     } finally {

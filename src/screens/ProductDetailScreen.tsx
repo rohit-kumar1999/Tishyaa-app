@@ -240,7 +240,6 @@ export default function ProductDetailScreen() {
     try {
       // First check if location services are enabled on the device
       const isLocationEnabled = await Location.hasServicesEnabledAsync();
-      console.log("Location services enabled:", isLocationEnabled);
 
       if (!isLocationEnabled) {
         toast({
@@ -254,7 +253,6 @@ export default function ProductDetailScreen() {
       }
 
       const { status } = await Location.requestForegroundPermissionsAsync();
-      console.log("Permission status:", status);
 
       if (status !== "granted") {
         toast({
@@ -267,52 +265,32 @@ export default function ProductDetailScreen() {
       }
 
       // Get current position - try multiple methods
-      console.log("Getting location...");
       let location = null;
 
       // Method 1: Try last known position first (faster, less battery)
       try {
-        console.log("Trying getLastKnownPositionAsync...");
         location = await Location.getLastKnownPositionAsync({
-          maxAge: 300000, // Accept location up to 5 minutes old
-          requiredAccuracy: 1000, // Accept accuracy up to 1km
+          maxAge: 300000,
+          requiredAccuracy: 1000,
         });
-        console.log("Last known position result:", location);
-      } catch (lastKnownError: any) {
-        console.log(
-          "getLastKnownPositionAsync failed:",
-          lastKnownError?.message
-        );
+      } catch {
+        // Silently continue to next method
       }
 
       // Method 2: If no last known, get current position
       if (!location) {
         try {
-          console.log("Trying getCurrentPositionAsync with Low accuracy...");
           location = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Low, // Use low accuracy for faster results
+            accuracy: Location.Accuracy.Low,
           });
-          console.log("getCurrentPositionAsync (Low) result:", location);
-        } catch (lowAccuracyError: any) {
-          console.log(
-            "getCurrentPositionAsync (Low) failed:",
-            lowAccuracyError?.message
-          );
-
+        } catch {
           // Method 3: Try with Lowest accuracy as last resort
           try {
-            console.log(
-              "Trying getCurrentPositionAsync with Lowest accuracy..."
-            );
             location = await Location.getCurrentPositionAsync({
               accuracy: Location.Accuracy.Lowest,
             });
-            console.log("getCurrentPositionAsync (Lowest) result:", location);
-          } catch (lowestError: any) {
-            console.log(
-              "getCurrentPositionAsync (Lowest) failed:",
-              lowestError?.message
-            );
+          } catch {
+            // All methods failed
           }
         }
       }
@@ -330,18 +308,12 @@ export default function ProductDetailScreen() {
       }
 
       const { latitude, longitude } = location.coords;
-      console.log("Got coordinates:", latitude, longitude);
 
       // Use reverse geocoding to get actual address/pincode
-      console.log("Reverse geocoding...");
       const reverseGeocode = await Location.reverseGeocodeAsync({
         latitude,
         longitude,
       });
-      console.log(
-        "Reverse geocode result:",
-        JSON.stringify(reverseGeocode, null, 2)
-      );
 
       let detectedPincode = "";
 
@@ -353,9 +325,6 @@ export default function ProductDetailScreen() {
 
         // Clean up the pincode - remove spaces and non-numeric chars for India
         detectedPincode = detectedPincode.replace(/\s/g, "").trim();
-
-        console.log("Address object:", address);
-        console.log("Detected pincode:", detectedPincode);
       }
 
       // If we got a valid pincode (6 digits for India, or any non-empty value as fallback)
@@ -393,10 +362,6 @@ export default function ProductDetailScreen() {
 
       setIsLocating(false);
     } catch (error: any) {
-      console.error("Location error:", error);
-      console.error("Error message:", error?.message);
-      console.error("Error code:", error?.code);
-
       let errorMessage = "Unable to get your location.";
       const errorCode = error?.code;
       const errorMsg = error?.message?.toLowerCase() || "";
@@ -435,8 +400,8 @@ export default function ProductDetailScreen() {
         url: `https://www.tishyaajewels.com/product/${id}`,
         title: product?.name,
       });
-    } catch (error) {
-      console.error("Error sharing:", error);
+    } catch {
+      // Share cancelled or failed
     }
   };
 
@@ -788,10 +753,7 @@ export default function ProductDetailScreen() {
                   </TouchableOpacity>
                   <View style={styles.pincodeSeperator} />
                   <TouchableOpacity
-                    onPress={() => {
-                      console.log("Locate Me button pressed!");
-                      handleLocateMe();
-                    }}
+                    onPress={handleLocateMe}
                     disabled={isLocating}
                     style={[styles.locateButton, { padding: 8, minWidth: 100 }]}
                     activeOpacity={0.6}

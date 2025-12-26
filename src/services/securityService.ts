@@ -53,8 +53,8 @@ class SecurityService {
 
       // Check if app should be locked based on settings
       await this.checkAutoLock();
-    } catch (error) {
-      console.error("Failed to initialize security service:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -67,8 +67,7 @@ class SecurityService {
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
 
       return hasHardware && isEnrolled;
-    } catch (error) {
-      console.error("Error checking biometric availability:", error);
+    } catch {
       return false;
     }
   }
@@ -90,8 +89,7 @@ class SecurityService {
         ),
         iris: types.includes(LocalAuthentication.AuthenticationType.IRIS),
       };
-    } catch (error) {
-      console.error("Error getting biometric types:", error);
+    } catch {
       return {
         fingerprint: false,
         faceId: false,
@@ -126,8 +124,7 @@ class SecurityService {
       });
 
       return result.success;
-    } catch (error) {
-      console.error("Biometric authentication error:", error);
+    } catch {
       return false;
     }
   }
@@ -159,8 +156,7 @@ class SecurityService {
       }
 
       return false;
-    } catch (error) {
-      console.error("Error enabling biometric:", error);
+    } catch {
       return false;
     }
   }
@@ -181,8 +177,7 @@ class SecurityService {
       }
 
       return false;
-    } catch (error) {
-      console.error("Error disabling biometric:", error);
+    } catch {
       return false;
     }
   }
@@ -195,8 +190,8 @@ class SecurityService {
       this.appLockState.isLocked = true;
       this.appLockState.lockedAt = new Date();
       await this.saveAppLockState();
-    } catch (error) {
-      console.error("Error locking app:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -245,8 +240,7 @@ class SecurityService {
         await this.recordFailedAttempt();
         return false;
       }
-    } catch (error) {
-      console.error("Error unlocking app:", error);
+    } catch {
       await this.recordFailedAttempt();
       return false;
     }
@@ -358,8 +352,7 @@ class SecurityService {
         authenticationPrompt: "Authenticate to access secure data",
       });
       return true;
-    } catch (error) {
-      console.error("Error storing secure data:", error);
+    } catch {
       return false;
     }
   }
@@ -375,8 +368,7 @@ class SecurityService {
         authenticationPrompt: "Authenticate to access secure data",
       });
       return value;
-    } catch (error) {
-      console.error("Error getting secure data:", error);
+    } catch {
       return null;
     }
   }
@@ -388,8 +380,7 @@ class SecurityService {
     try {
       await SecureStore.deleteItemAsync(key);
       return true;
-    } catch (error) {
-      console.error("Error deleting secure data:", error);
+    } catch {
       return false;
     }
   }
@@ -415,8 +406,8 @@ class SecurityService {
         "security_settings",
         JSON.stringify(this.securitySettings)
       );
-    } catch (error) {
-      console.error("Error saving security settings:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -432,8 +423,8 @@ class SecurityService {
           ...JSON.parse(stored),
         };
       }
-    } catch (error) {
-      console.error("Error loading security settings:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -448,8 +439,8 @@ class SecurityService {
         lockoutUntil: this.appLockState.lockoutUntil?.toISOString(),
       };
       await AsyncStorage.setItem("app_lock_state", JSON.stringify(stateToSave));
-    } catch (error) {
-      console.error("Error saving app lock state:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -469,8 +460,8 @@ class SecurityService {
             : null,
         };
       }
-    } catch (error) {
-      console.error("Error loading app lock state:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -487,8 +478,8 @@ class SecurityService {
       };
 
       await AsyncStorage.removeItem("app_lock_state");
-    } catch (error) {
-      console.error("Error clearing security data:", error);
+    } catch {
+      // Silent fail
     }
   }
 }

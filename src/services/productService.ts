@@ -148,7 +148,6 @@ export const useFeaturedProducts = () => {
       const transformedProducts = transformApiProducts(response.products);
       setProducts(transformedProducts);
     } catch (err) {
-      console.error("Error fetching featured products:", err);
       setError(
         err instanceof Error ? err.message : "Failed to fetch featured products"
       );
@@ -304,10 +303,6 @@ export const useProducts = (params?: {
     requestCountRef.current += 1;
 
     if (globalRequestCount > 3) {
-      console.error(
-        `🌍 [ProductService] GLOBAL circuit breaker activated! Total requests: ${globalRequestCount}. Forcing 5 second cooldown.`
-      );
-
       // Clear any existing reset timeout
       if (globalResetTimeout) {
         clearTimeout(globalResetTimeout);
@@ -324,9 +319,6 @@ export const useProducts = (params?: {
     }
 
     if (requestCountRef.current > 2) {
-      console.error(
-        `🚫 [ProductService] Local circuit breaker activated! Request #${requestCountRef.current}. Resetting.`
-      );
       requestCountRef.current = 0;
       setError("Multiple rapid requests detected. System reset automatically.");
       setIsLoading(false);
@@ -348,7 +340,6 @@ export const useProducts = (params?: {
       }
       globalResetTimeout = setTimeout(resetGlobalCounter, 2000);
     } catch (err) {
-      console.error("❌ [ProductService] Error fetching products:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch products");
     } finally {
       setIsLoading(false);

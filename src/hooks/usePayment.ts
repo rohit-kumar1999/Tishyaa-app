@@ -104,8 +104,6 @@ export const usePayment = () => {
       // For Razorpay payments
       return await processRazorpayPayment(paymentData);
     } catch (error) {
-      console.error("Payment process failed:", error);
-
       const errorMessage =
         error instanceof Error
           ? error.message
@@ -228,7 +226,6 @@ export const usePayment = () => {
       handleExternalWallet
     );
 
-    console.log("Razorpay Result:", razorpayResult);
     // Handle payment cancellation
     if (razorpayResult.cancelled) {
       toast({
@@ -294,10 +291,8 @@ export const usePayment = () => {
           razorpay_signature: razorpayResult.signature,
         },
       });
-    } catch (paymentRecordError) {
+    } catch {
       // Payment was successful but record creation failed
-      console.error("Payment record creation failed:", paymentRecordError);
-
       // Store for recovery
       const failedPaymentData: FailedPaymentData = {
         razorpayPaymentId: razorpayResult.paymentId!,
@@ -499,8 +494,6 @@ export const usePayment = () => {
         },
       };
     } catch (error) {
-      console.error("Retry payment failed:", error);
-
       const errorMessage =
         error instanceof Error
           ? error.message
@@ -592,9 +585,7 @@ export const usePayment = () => {
         success: true,
         orderId: failedPayment.backendOrderId,
       };
-    } catch (error) {
-      console.error("Payment recovery failed:", error);
-
+    } catch {
       toast({
         title: "Recovery Failed",
         description: "Please contact support with your payment details.",

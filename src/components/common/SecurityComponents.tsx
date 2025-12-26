@@ -10,8 +10,8 @@ import {
   Text,
   View,
 } from "react-native";
-import { TouchableOpacity } from "./TouchableOpacity";
 import securityService from "../../services/securityService";
+import { TouchableOpacity } from "./TouchableOpacity";
 
 const { width, height } = Dimensions.get("window");
 
@@ -49,8 +49,7 @@ export const AppLockScreen: React.FC<AppLockScreenProps> = ({
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         setError("Authentication failed. Please try again.");
       }
-    } catch (error) {
-      console.error("Unlock error:", error);
+    } catch {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setError("Unable to authenticate. Please try again.");
     } finally {
@@ -146,7 +145,6 @@ export const BiometricPrompt: React.FC<BiometricPromptProps> = ({
         onCancel();
       }
     } catch (error) {
-      console.error("Biometric authentication error:", error);
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       onError?.(
         error instanceof Error ? error.message : "Authentication failed"

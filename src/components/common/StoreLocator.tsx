@@ -40,8 +40,7 @@ export const StoreLocator: React.FC = () => {
       // Get nearby stores
       const nearbyStores = await locationService.getNearbyStores(100); // 100km radius
       setStores(nearbyStores);
-    } catch (error) {
-      console.error("Error loading stores:", error);
+    } catch {
       Alert.alert("Error", "Failed to load store locations. Please try again.");
     } finally {
       setLoading(false);
@@ -57,8 +56,7 @@ export const StoreLocator: React.FC = () => {
   const handleGetDirections = async (store: StoreLocation) => {
     try {
       await locationService.openDirections(store);
-    } catch (error) {
-      console.error("Error opening directions:", error);
+    } catch {
       Alert.alert("Error", "Unable to open directions. Please try again.");
     }
   };

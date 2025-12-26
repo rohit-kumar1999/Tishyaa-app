@@ -45,11 +45,8 @@ class PerformanceOptimizationService {
       if (this.networkState.isConnected) {
         await this.processOfflineQueue();
       }
-    } catch (error) {
-      console.error(
-        "Failed to initialize performance optimization service:",
-        error
-      );
+    } catch {
+      // Silent fail
     }
   }
 
@@ -67,8 +64,8 @@ class PerformanceOptimizationService {
         this.updateNetworkState(state);
         this.handleNetworkChange(state);
       });
-    } catch (error) {
-      console.error("Failed to initialize network monitoring:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -135,8 +132,8 @@ class PerformanceOptimizationService {
       if (this.networkState.isConnected) {
         await this.processOfflineQueue();
       }
-    } catch (error) {
-      console.error("Error handling app foreground:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -147,8 +144,8 @@ class PerformanceOptimizationService {
     try {
       // Save offline queue
       await this.saveOfflineQueue();
-    } catch (error) {
-      console.error("Error handling app background:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -191,8 +188,8 @@ class PerformanceOptimizationService {
 
       this.offlineQueue.push(offlineAction);
       await this.saveOfflineQueue();
-    } catch (error) {
-      console.error("Error adding to offline queue:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -213,20 +210,15 @@ class PerformanceOptimizationService {
           this.offlineQueue = this.offlineQueue.filter(
             (a) => a.id !== action.id
           );
-        } catch (error) {
-          console.error(
-            "Failed to process offline action:",
-            action.type,
-            error
-          );
+        } catch {
           // Keep failed action in queue for retry
         }
       }
 
       // Save updated queue
       await this.saveOfflineQueue();
-    } catch (error) {
-      console.error("Error processing offline queue:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -265,8 +257,8 @@ class PerformanceOptimizationService {
         "offline_queue",
         JSON.stringify(this.offlineQueue)
       );
-    } catch (error) {
-      console.error("Error saving offline queue:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -279,8 +271,7 @@ class PerformanceOptimizationService {
       if (stored) {
         this.offlineQueue = JSON.parse(stored);
       }
-    } catch (error) {
-      console.error("Error loading offline queue:", error);
+    } catch {
       this.offlineQueue = [];
     }
   }
@@ -292,8 +283,8 @@ class PerformanceOptimizationService {
     try {
       this.offlineQueue = [];
       await AsyncStorage.removeItem("offline_queue");
-    } catch (error) {
-      console.error("Error clearing offline queue:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -316,8 +307,8 @@ class PerformanceOptimizationService {
       };
 
       await AsyncStorage.setItem(`cache_${key}`, JSON.stringify(cacheItem));
-    } catch (error) {
-      console.error("Error caching data:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -341,8 +332,7 @@ class PerformanceOptimizationService {
       }
 
       return null;
-    } catch (error) {
-      console.error("Error getting cached data:", error);
+    } catch {
       return null;
     }
   }
@@ -366,8 +356,8 @@ class PerformanceOptimizationService {
           }
         }
       }
-    } catch (error) {
-      console.error("Error clearing expired cache:", error);
+    } catch {
+      // Silent fail
     }
   }
 

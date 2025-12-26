@@ -119,8 +119,7 @@ export class AccessibilityUtils {
   static async isScreenReaderEnabled(): Promise<boolean> {
     try {
       return await AccessibilityInfo.isScreenReaderEnabled();
-    } catch (error) {
-      console.warn("Error checking screen reader status:", error);
+    } catch {
       return false;
     }
   }
@@ -128,8 +127,7 @@ export class AccessibilityUtils {
   static async isReduceMotionEnabled(): Promise<boolean> {
     try {
       return await AccessibilityInfo.isReduceMotionEnabled();
-    } catch (error) {
-      console.warn("Error checking reduce motion status:", error);
+    } catch {
       return false;
     }
   }

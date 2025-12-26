@@ -61,8 +61,7 @@ export const SocialShare: React.FC<SocialShareProps> = ({
       } else {
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-    } catch (error) {
-      console.error("Share error:", error);
+    } catch {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert("Share Failed", `Unable to share via ${platform.name}`);
     } finally {
@@ -223,8 +222,7 @@ export const ReferralShare: React.FC<ReferralShareProps> = ({
       } else {
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-    } catch (error) {
-      console.error("Referral share error:", error);
+    } catch {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setSharing(false);

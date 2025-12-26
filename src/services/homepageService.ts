@@ -193,7 +193,6 @@ export const useHomepageData = () => {
 
       setData(homepageData);
     } catch (err) {
-      console.error("Error fetching homepage data:", err);
       setError(
         err instanceof Error ? err.message : "Failed to fetch homepage data"
       );

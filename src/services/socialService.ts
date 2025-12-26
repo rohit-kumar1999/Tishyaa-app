@@ -140,8 +140,7 @@ class SocialService {
       }
 
       return true;
-    } catch (error) {
-      console.error("Error sharing content:", error);
+    } catch {
       toast({
         title: "Share Failed",
         description: "Unable to share content. Please try again.",
@@ -172,8 +171,7 @@ class SocialService {
         );
         return false;
       }
-    } catch (error) {
-      console.error("Error sharing to WhatsApp:", error);
+    } catch {
       return false;
     }
   }
@@ -207,8 +205,7 @@ class SocialService {
         );
         return false;
       }
-    } catch (error) {
-      console.error("Error sharing to Instagram:", error);
+    } catch {
       return false;
     }
   }
@@ -239,8 +236,7 @@ class SocialService {
         await Linking.openURL(webUrl);
         return true;
       }
-    } catch (error) {
-      console.error("Error sharing to Facebook:", error);
+    } catch {
       return false;
     }
   }
@@ -271,8 +267,7 @@ class SocialService {
         await Linking.openURL(webUrl);
         return true;
       }
-    } catch (error) {
-      console.error("Error sharing to Twitter:", error);
+    } catch {
       return false;
     }
   }
@@ -298,8 +293,7 @@ class SocialService {
         );
         return false;
       }
-    } catch (error) {
-      console.error("Error sharing to Telegram:", error);
+    } catch {
       return false;
     }
   }
@@ -412,7 +406,6 @@ class SocialService {
 
       return code;
     } catch (error) {
-      console.error("Error generating referral code:", error);
       throw error;
     }
   }
@@ -424,8 +417,7 @@ class SocialService {
     try {
       const stored = await AsyncStorage.getItem("referral_data");
       return stored ? JSON.parse(stored) : null;
-    } catch (error) {
-      console.error("Error getting referral data:", error);
+    } catch {
       return null;
     }
   }
@@ -454,8 +446,8 @@ class SocialService {
   ): Promise<void> {
     try {
       // This would typically send analytics to your backend
-    } catch (error) {
-      console.error("Error tracking share:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -477,8 +469,7 @@ class SocialService {
         },
         recentShares: [],
       };
-    } catch (error) {
-      console.error("Error getting share stats:", error);
+    } catch {
       return null;
     }
   }

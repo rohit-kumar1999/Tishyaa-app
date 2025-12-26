@@ -55,8 +55,8 @@ class ImageCacheManager {
 
       // Clean up old cache on initialization
       await this.cleanupOldCache();
-    } catch (error) {
-      console.error("Failed to initialize image cache:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -86,8 +86,7 @@ class ImageCacheManager {
       }
 
       return null;
-    } catch (error) {
-      console.error("Error getting cached image path:", error);
+    } catch {
       return null;
     }
   }
@@ -124,8 +123,7 @@ class ImageCacheManager {
       }
 
       return null;
-    } catch (error) {
-      console.error("Error caching image:", error);
+    } catch {
       return null;
     }
   }
@@ -136,8 +134,8 @@ class ImageCacheManager {
   ): Promise<void> {
     try {
       await AsyncStorage.setItem(`image_cache_${key}`, JSON.stringify(info));
-    } catch (error) {
-      console.error("Error saving cache info:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -145,8 +143,7 @@ class ImageCacheManager {
     try {
       const info = await AsyncStorage.getItem(`image_cache_${key}`);
       return info ? JSON.parse(info) : null;
-    } catch (error) {
-      console.error("Error getting cache info:", error);
+    } catch {
       return null;
     }
   }
@@ -156,8 +153,8 @@ class ImageCacheManager {
       const localPath = `${this.cacheDir}${key}`;
       await FileSystem.deleteAsync(localPath, { idempotent: true });
       await AsyncStorage.removeItem(`image_cache_${key}`);
-    } catch (error) {
-      console.error("Error removing cached image:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -174,8 +171,8 @@ class ImageCacheManager {
           await this.removeCachedImage(key);
         }
       }
-    } catch (error) {
-      console.error("Error cleaning up old cache:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -208,8 +205,8 @@ class ImageCacheManager {
           totalSize -= item.info.size;
         }
       }
-    } catch (error) {
-      console.error("Error checking cache size:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -222,8 +219,8 @@ class ImageCacheManager {
         const key = fullKey.replace("image_cache_", "");
         await this.removeCachedImage(key);
       }
-    } catch (error) {
-      console.error("Error clearing cache:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -244,8 +241,7 @@ class ImageCacheManager {
       }
 
       return totalSize;
-    } catch (error) {
-      console.error("Error getting cache size:", error);
+    } catch {
       return 0;
     }
   }
@@ -313,7 +309,6 @@ export const CachedImage: React.FC<CachedImageProps> = ({
         onLoadEnd?.();
       }
     } catch (err) {
-      console.error("Error loading cached image:", err);
       if (isMounted.current) {
         setError(true);
         setLoading(false);

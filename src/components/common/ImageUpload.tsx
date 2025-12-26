@@ -10,8 +10,8 @@ import {
   Text,
   View,
 } from "react-native";
-import { TouchableOpacity } from "./TouchableOpacity";
 import { cameraService } from "../../services/cameraService";
+import { TouchableOpacity } from "./TouchableOpacity";
 
 const { width } = Dimensions.get("window");
 
@@ -70,8 +70,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
         updateImages([...images, newImage]);
       }
-    } catch (error) {
-      console.error("Error adding image:", error);
+    } catch {
       Alert.alert("Error", "Failed to add image. Please try again.");
     } finally {
       setLoading(false);
@@ -101,8 +100,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
         updateImages([...images, ...newImages]);
       }
-    } catch (error) {
-      console.error("Error adding multiple images:", error);
+    } catch {
       Alert.alert("Error", "Failed to add images. Please try again.");
     } finally {
       setLoading(false);

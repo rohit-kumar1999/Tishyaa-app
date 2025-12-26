@@ -69,8 +69,8 @@ class NotificationService {
 
       // Load user preferences
       await this.loadNotificationPreferences();
-    } catch (error) {
-      console.error("Failed to initialize notifications:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -131,8 +131,7 @@ class NotificationService {
       }
 
       return token;
-    } catch (error) {
-      console.error("Error registering for push notifications:", error);
+    } catch {
       return null;
     }
   }
@@ -204,8 +203,7 @@ class NotificationService {
       });
 
       return identifier;
-    } catch (error) {
-      console.error("Error sending local notification:", error);
+    } catch {
       return null;
     }
   }
@@ -240,8 +238,7 @@ class NotificationService {
       });
 
       return identifier;
-    } catch (error) {
-      console.error("Error scheduling notification:", error);
+    } catch {
       return null;
     }
   }
@@ -252,8 +249,8 @@ class NotificationService {
   async cancelNotification(identifier: string): Promise<void> {
     try {
       await Notifications.cancelScheduledNotificationAsync(identifier);
-    } catch (error) {
-      console.error("Error canceling notification:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -263,8 +260,8 @@ class NotificationService {
   async cancelAllNotifications(): Promise<void> {
     try {
       await Notifications.cancelAllScheduledNotificationsAsync();
-    } catch (error) {
-      console.error("Error canceling all notifications:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -276,8 +273,7 @@ class NotificationService {
   > {
     try {
       return await Notifications.getAllScheduledNotificationsAsync();
-    } catch (error) {
-      console.error("Error getting pending notifications:", error);
+    } catch {
       return [];
     }
   }
@@ -288,8 +284,8 @@ class NotificationService {
   async setBadgeCount(count: number): Promise<void> {
     try {
       await Notifications.setBadgeCountAsync(count);
-    } catch (error) {
-      console.error("Error setting badge count:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -299,8 +295,8 @@ class NotificationService {
   async clearBadge(): Promise<void> {
     try {
       await Notifications.setBadgeCountAsync(0);
-    } catch (error) {
-      console.error("Error clearing badge:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -322,8 +318,8 @@ class NotificationService {
         "notification_preferences",
         JSON.stringify(preferences)
       );
-    } catch (error) {
-      console.error("Error saving notification preferences:", error);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -336,8 +332,8 @@ class NotificationService {
       if (stored) {
         return JSON.parse(stored);
       }
-    } catch (error) {
-      console.error("Error loading notification preferences:", error);
+    } catch {
+      // Fall through to defaults
     }
 
     // Default preferences
@@ -442,8 +438,8 @@ class NotificationService {
       for (const notification of toCancel) {
         await this.cancelNotification(notification.identifier);
       }
-    } catch (error) {
-      console.error("Error canceling notifications by type:", error);
+    } catch {
+      // Silent fail
     }
   }
 

@@ -26,10 +26,6 @@ export const CategorySection = () => {
   const { categories, isLoading, error, refetch } = useHomepageDataContext();
   const isError = !!error;
 
-  // Log error in development
-  if (error && __DEV__) {
-    console.warn("Failed to load categories:", error);
-  }
   const minSwipeDistance = 50;
 
   const visible = categories

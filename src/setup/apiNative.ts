@@ -50,11 +50,9 @@ class ReactNativeApiClient {
               const data = JSON.parse(xhr.responseText);
               resolve(data);
             } catch (parseError) {
-              console.error("📡 Parse Error:", parseError);
               reject(new Error(`Failed to parse response: ${parseError}`));
             }
           } else {
-            console.error("📡 Native API Error:", xhr.responseText);
             reject(
               new Error(
                 `API Error: ${xhr.status} ${xhr.statusText} - ${xhr.responseText}`
@@ -64,12 +62,10 @@ class ReactNativeApiClient {
         };
 
         xhr.onerror = () => {
-          console.error("📡 Native Network Error");
           reject(new Error("Network request failed"));
         };
 
         xhr.ontimeout = () => {
-          console.error("📡 Native Request Timeout");
           reject(new Error("Request timeout"));
         };
 
@@ -80,7 +76,6 @@ class ReactNativeApiClient {
           xhr.send();
         }
       } catch (error) {
-        console.error("📡 Native Request Setup Error:", error);
         reject(error);
       }
     });
