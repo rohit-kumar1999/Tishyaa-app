@@ -38,6 +38,7 @@ const CategoryImage: React.FC<CategoryImageProps> = ({ category, onPress }) => {
           style={styles.image}
           contentFit="cover"
           transition={300}
+          cachePolicy="memory-disk"
         />
         <View style={styles.overlay} />
       </View>

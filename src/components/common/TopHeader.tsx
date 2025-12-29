@@ -1,15 +1,17 @@
 import { SignedIn, SignedOut, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, usePathname } from "expo-router";
-import React, { useCallback, useState } from "react";
-import { Image, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import React, { memo, useCallback, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useApiCart } from "../../contexts/ApiCartContext";
 import { useWishlist } from "../../contexts/WishlistContext";
 import SearchDialog from "./SearchDialog";
 import { TouchableOpacity } from "./TouchableOpacity";
 
-export const TopHeader = () => {
+const TopHeaderComponent = () => {
   // Use Clerk authentication
   const { user } = useUser();
 
@@ -61,7 +63,7 @@ export const TopHeader = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <LinearGradient colors={["#fdf2f8", "#fce7f3"]} style={styles.gradient}>
         <View style={styles.header}>
           {/* Brand Section */}
@@ -117,6 +119,8 @@ export const TopHeader = () => {
                   <Image
                     source={{ uri: user.imageUrl }}
                     style={styles.profileImage}
+                    cachePolicy="memory-disk"
+                    transition={150}
                   />
                 ) : (
                   <View style={styles.profileIcon}>
@@ -148,6 +152,8 @@ export const TopHeader = () => {
     </SafeAreaView>
   );
 };
+
+export const TopHeader = memo(TopHeaderComponent);
 
 const styles = StyleSheet.create({
   safeArea: {

@@ -4,12 +4,12 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { TouchableOpacity } from "../../components/common/TouchableOpacity";
 import { toast } from "../../hooks/use-toast";
 

@@ -10,7 +10,8 @@ interface HomepageDataContextType {
   occasions: HomepageData["occasions"];
   pagination: HomepageData["pagination"];
   meta: HomepageData["meta"];
-  isLoading: boolean;
+  isLoading: boolean; // True only on initial load with no cached data
+  isFetching: boolean; // True when fetching (including background)
   error: string | null;
   refetch: () => void;
 }

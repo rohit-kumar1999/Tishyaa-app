@@ -1,5 +1,6 @@
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
@@ -8,10 +9,8 @@ import {
   Alert,
   Dimensions,
   FlatList,
-  Image,
   Modal,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   Share,
   StyleSheet,
@@ -19,6 +18,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import BottomNavigation from "../../components/common/BottomNavigation";
 import { TouchableOpacity } from "../../components/common/TouchableOpacity";
 import { toast } from "../../hooks/use-toast";
@@ -387,18 +387,20 @@ export default function ProfileOrdersScreen() {
   }, [orders, selectedFilter, getCurrentStatus, STATE_CATEGORIES]);
 
   // Calculate counts for each filter category
+  // Note: We only have accurate total count from API pagination
+  // Individual status counts are only available for current page
   const filterCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: orders.length };
+    // Use totalOrders from API for accurate total count across all pages
+    const counts: Record<string, number> = { all: totalOrders };
 
-    Object.entries(STATE_CATEGORIES).forEach(([key, states]) => {
-      counts[key] = orders.filter((order) => {
-        const status = getCurrentStatus(order);
-        return states.includes(status);
-      }).length;
+    // For other categories, we can't show accurate counts since we only have current page data
+    // So we'll leave them undefined and show just the label
+    Object.entries(STATE_CATEGORIES).forEach(([key]) => {
+      counts[key] = -1; // -1 means don't show count
     });
 
     return counts;
-  }, [orders, getCurrentStatus, STATE_CATEGORIES]);
+  }, [totalOrders, STATE_CATEGORIES]);
 
   // Filter tabs with dynamic counts
   const filterTabs = useMemo(
@@ -774,7 +776,7 @@ Thank you for shopping with Tishyaa Jewels!
         >
           {item.label}
         </Text>
-        {item.count !== undefined && (
+        {item.count !== undefined && item.count >= 0 && (
           <View
             style={[
               styles.filterBadge,
@@ -844,7 +846,9 @@ Thank you for shopping with Tishyaa Jewels!
               <Image
                 source={{ uri: firstProduct.product.images[0] }}
                 style={styles.productImage}
-                resizeMode="cover"
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                transition={150}
               />
             ) : (
               <View style={[styles.productImage, styles.placeholderImage]}>
@@ -898,13 +902,6 @@ Thank you for shopping with Tishyaa Jewels!
                 <Text style={styles.primaryButtonText}>View Details</Text>
               </TouchableOpacity>
             )}
-
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={() => handleDownloadInvoice(order)}
-            >
-              <Ionicons name="download-outline" size={16} color="#6B7280" />
-            </TouchableOpacity>
           </View>
         </TouchableOpacity>
       );
@@ -1082,7 +1079,9 @@ Thank you for shopping with Tishyaa Jewels!
                     <Image
                       source={{ uri: line.product.images[0] }}
                       style={styles.orderItemImage}
-                      resizeMode="cover"
+                      contentFit="cover"
+                      cachePolicy="memory-disk"
+                      transition={150}
                     />
                   ) : (
                     <View
@@ -1254,8 +1253,6 @@ Thank you for shopping with Tishyaa Jewels!
                 </Text>
               </TouchableOpacity>
             </View>
-
-            <View style={{ height: 40 }} />
           </ScrollView>
         </SafeAreaView>
       </Modal>
@@ -1391,6 +1388,8 @@ Thank you for shopping with Tishyaa Jewels!
                         <Image
                           source={{ uri: item.images[0] }}
                           style={styles.returnItemImg}
+                          contentFit="cover"
+                          cachePolicy="memory-disk"
                         />
                       ) : (
                         <Ionicons
@@ -1687,6 +1686,8 @@ Thank you for shopping with Tishyaa Jewels!
                         <Image
                           source={{ uri: item.images[0] }}
                           style={styles.returnItemImg}
+                          contentFit="cover"
+                          cachePolicy="memory-disk"
                         />
                       ) : (
                         <Ionicons
@@ -2037,15 +2038,7 @@ Thank you for shopping with Tishyaa Jewels!
               />
             )}
           </View>
-          <Text style={styles.orderCount}>
-            {selectedFilter === "all" ? totalOrders : allFilteredOrders.length}{" "}
-            order
-            {(selectedFilter === "all"
-              ? totalOrders
-              : allFilteredOrders.length) !== 1
-              ? "s"
-              : ""}
-          </Text>
+          <View style={{ width: 24 }} />
         </View>
 
         {/* Filter Tabs */}
@@ -2061,7 +2054,7 @@ Thank you for shopping with Tishyaa Jewels!
         </View>
 
         {/* Orders List */}
-        {isLoading ? (
+        {isLoading && orders.length === 0 ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#e11d48" />
             <Text style={styles.loadingText}>Loading your orders...</Text>

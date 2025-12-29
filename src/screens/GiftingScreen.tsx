@@ -1,11 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useRef } from "react";
 import {
   Animated,
   Dimensions,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -542,7 +542,13 @@ export default function GiftingScreen() {
           onPress={() => router.push(`/product/${item.id}`)}
         >
           <View style={styles.featuredImageContainer}>
-            <Image source={{ uri: item.image }} style={styles.featuredImage} />
+            <Image
+              source={{ uri: item.image }}
+              style={styles.featuredImage}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              recyclingKey={`gift-${item.id}`}
+            />
 
             {/* Badges */}
             <View style={styles.featuredBadges}>

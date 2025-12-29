@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React from "react";
+import React, { memo, useCallback } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -10,57 +10,64 @@ import {
   Text,
   View,
 } from "react-native";
-import { TouchableOpacity } from "../common/TouchableOpacity";
 import { useApiCart } from "../../contexts/ApiCartContext";
 import { useHomepageDataContext } from "../../contexts/HomepageDataContext";
 import { useWishlist } from "../../contexts/WishlistContext";
 import { Product } from "../../types";
+import { TouchableOpacity } from "../common/TouchableOpacity";
 
 const screenWidth = Dimensions.get("window").width;
 
-export const FeaturedProducts = () => {
-  const { featuredProducts, isLoading, error } = useHomepageDataContext();
+export const FeaturedProducts = memo(() => {
+  const { featuredProducts, isLoading, isFetching, error } =
+    useHomepageDataContext();
   const { toggleWishlist, isInWishlist, isWishlistProcessing } = useWishlist();
   const { addItemToCart, isProcessing: isCartProcessing } = useApiCart();
 
-  const handleToggleWishlist = (product: any) => {
-    // Convert product to Product type for toggleWishlist
-    const productData: Product = {
-      id: product.id,
-      name: product.name || "",
-      description: product.description || "",
-      price: product.price || 0,
-      originalPrice: product.originalPrice || product.price,
-      images: product.images || [],
-      category: product.category || "",
-      subcategory: product.subcategory,
-      tags: product.tags || [],
-      inStock: product.inStock ?? product.active ?? true,
-      stockQuantity: product.stockQuantity || 0,
-      weight: product.weight,
-      dimensions: product.dimensions,
-      materials: product.materials || [],
-      care: product.care || [],
-      rating: product.rating || 0,
-      reviewCount: product.reviewCount || 0,
-      featured: product.featured || false,
-      createdAt: product.createdAt || new Date().toISOString(),
-      updatedAt: product.updatedAt || new Date().toISOString(),
-    };
-    toggleWishlist(productData);
-  };
+  const handleToggleWishlist = useCallback(
+    (product: any) => {
+      // Convert product to Product type for toggleWishlist
+      const productData: Product = {
+        id: product.id,
+        name: product.name || "",
+        description: product.description || "",
+        price: product.price || 0,
+        originalPrice: product.originalPrice || product.price,
+        images: product.images || [],
+        category: product.category || "",
+        subcategory: product.subcategory,
+        tags: product.tags || [],
+        inStock: product.inStock ?? product.active ?? true,
+        stockQuantity: product.stockQuantity || 0,
+        weight: product.weight,
+        dimensions: product.dimensions,
+        materials: product.materials || [],
+        care: product.care || [],
+        rating: product.rating || 0,
+        reviewCount: product.reviewCount || 0,
+        featured: product.featured || false,
+        createdAt: product.createdAt || new Date().toISOString(),
+        updatedAt: product.updatedAt || new Date().toISOString(),
+      };
+      toggleWishlist(productData);
+    },
+    [toggleWishlist]
+  );
 
-  const handleAddToCart = (product: any) => {
-    addItemToCart(product.id, 1, true);
-  };
+  const handleAddToCart = useCallback(
+    (product: any) => {
+      addItemToCart(product.id, 1, true);
+    },
+    [addItemToCart]
+  );
 
-  const handleProductPress = (productId: string) => {
+  const handleProductPress = useCallback((productId: string) => {
     router.push(`/product/${productId}`);
-  };
+  }, []);
 
-  const handleViewAllPress = () => {
+  const handleViewAllPress = useCallback(() => {
     router.push("/products");
-  };
+  }, []);
 
   const renderProduct = (product: (typeof featuredProducts)[0]) => (
     <View key={product.id} style={styles.productCard}>
@@ -79,6 +86,7 @@ export const FeaturedProducts = () => {
             }}
             style={styles.productImage}
             contentFit="cover"
+            cachePolicy="memory-disk"
           />
 
           {/* Badges */}
@@ -177,7 +185,8 @@ export const FeaturedProducts = () => {
     </View>
   );
 
-  if (isLoading) {
+  // Only show loading state when there's no cached data
+  if (isLoading && featuredProducts.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.contentContainer}>
@@ -254,7 +263,7 @@ export const FeaturedProducts = () => {
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

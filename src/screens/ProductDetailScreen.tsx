@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
 import { router, useLocalSearchParams } from "expo-router";
@@ -7,7 +8,6 @@ import {
   ActivityIndicator,
   Dimensions,
   FlatList,
-  Image,
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
@@ -166,6 +166,7 @@ export default function ProductDetailScreen() {
   const {
     data: product,
     isLoading,
+    isFetching,
     error,
   } = useApiQuery<ProductWithRelated>(`/product/${id}`, {
     enabled: !!id,
@@ -443,8 +444,8 @@ export default function ProductDetailScreen() {
   // Check if out of stock
   const isOutOfStock = product?.active !== undefined && !product?.active;
 
-  // Loading state
-  if (isLoading) {
+  // Loading state - only show when no cached data
+  if (isLoading && !product) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#F43F5E" />
@@ -453,7 +454,7 @@ export default function ProductDetailScreen() {
   }
 
   // Error state
-  if (error || !product) {
+  if ((error && !product) || (!isLoading && !product)) {
     return (
       <View style={styles.errorContainer}>
         <Ionicons name="alert-circle" size={64} color="#6B7280" />
@@ -467,6 +468,11 @@ export default function ProductDetailScreen() {
         </TouchableOpacity>
       </View>
     );
+  }
+
+  // Guard: If still loading and no product, return null (shouldn't reach here)
+  if (!product) {
+    return null;
   }
 
   return (
@@ -487,11 +493,10 @@ export default function ProductDetailScreen() {
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
-              bounces={false}
-              decelerationRate="fast"
+              bounces={true}
+              decelerationRate={0.9}
               snapToInterval={screenWidth}
               snapToAlignment="center"
-              disableIntervalMomentum
               onScroll={onImageScroll}
               scrollEventThrottle={16}
               getItemLayout={(_, index) => ({
@@ -505,7 +510,9 @@ export default function ProductDetailScreen() {
                   <Image
                     source={{ uri: item }}
                     style={styles.mainImage}
-                    resizeMode="cover"
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                    transition={200}
                   />
                 </View>
               )}
@@ -516,30 +523,6 @@ export default function ProductDetailScreen() {
               <View style={styles.discountBadge}>
                 <Text style={styles.discountText}>{product.discount}% OFF</Text>
               </View>
-            )}
-
-            {/* Navigation Arrows */}
-            {productImages.length > 1 && (
-              <>
-                {selectedImageIndex > 0 && (
-                  <TouchableOpacity
-                    style={[styles.carouselArrow, styles.carouselArrowLeft]}
-                    onPress={() => scrollToImage(selectedImageIndex - 1)}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="chevron-back" size={24} color="#fff" />
-                  </TouchableOpacity>
-                )}
-                {selectedImageIndex < productImages.length - 1 && (
-                  <TouchableOpacity
-                    style={[styles.carouselArrow, styles.carouselArrowRight]}
-                    onPress={() => scrollToImage(selectedImageIndex + 1)}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="chevron-forward" size={24} color="#fff" />
-                  </TouchableOpacity>
-                )}
-              </>
             )}
           </View>
 
@@ -575,7 +558,8 @@ export default function ProductDetailScreen() {
                 <Image
                   source={{ uri: image }}
                   style={styles.thumbnailImage}
-                  resizeMode="cover"
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
                 />
               </TouchableOpacity>
             ))}
@@ -1074,7 +1058,9 @@ export default function ProductDetailScreen() {
                           uri: rpImages[currentImageIndex] || rpImages[0],
                         }}
                         style={styles.relatedImage}
-                        resizeMode="cover"
+                        contentFit="cover"
+                        cachePolicy="memory-disk"
+                        transition={200}
                       />
 
                       {/* Discount Badge */}

@@ -1,12 +1,12 @@
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Modal,
   ScrollView,
   StyleSheet,
@@ -417,7 +417,8 @@ export default function CheckoutScreen() {
                 <Image
                   source={{ uri: imageUrl }}
                   style={styles.productImage}
-                  resizeMode="contain"
+                  contentFit="contain"
+                  cachePolicy="memory-disk"
                 />
               ) : (
                 <View style={[styles.productImage, styles.placeholderImage]}>

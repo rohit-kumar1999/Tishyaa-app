@@ -1,7 +1,7 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { memo, useCallback, useMemo } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -9,11 +9,11 @@ import {
   Text,
   View,
 } from "react-native";
-import { TouchableOpacity } from "./common/TouchableOpacity";
 import { useApiCart } from "../contexts/ApiCartContext";
 import { useWishlist } from "../contexts/WishlistContext";
 import { useToast } from "../hooks/use-toast";
 import { Product } from "../services/productService";
+import { TouchableOpacity } from "./common/TouchableOpacity";
 
 const { width } = Dimensions.get("window");
 const cardWidth = (width - 24) / 2; // 2 columns with minimal margins
@@ -23,10 +23,10 @@ interface ProductCardProps {
   viewMode?: "grid" | "list";
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({
+const ProductCard: React.FC<ProductCardProps> = memo(function ProductCard({
   product,
   viewMode = "grid",
-}) => {
+}) {
   const { isInWishlist, toggleWishlist, isWishlistProcessing } = useWishlist();
   const { addItemToCart, isProcessing: isCartProcessing } = useApiCart();
 
@@ -36,22 +36,27 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const router = useRouter();
   const { toast } = useToast();
 
-  const isOutOfStock =
-    !product.active || !product.inStock || product.stockQuantity <= 0;
+  const isOutOfStock = useMemo(
+    () => !product.active || !product.inStock || product.stockQuantity <= 0,
+    [product.active, product.inStock, product.stockQuantity]
+  );
 
-  const addProductToCart = (product: Product) => {
-    addItemToCart(product.id, 1, true); // Set navigateToCart to true
-  };
+  const addProductToCart = useCallback(
+    (prod: Product) => {
+      addItemToCart(prod.id, 1, true); // Set navigateToCart to true
+    },
+    [addItemToCart]
+  );
 
-  const handleProductPress = () => {
+  const handleProductPress = useCallback(() => {
     router.push(`/product/${product.id}`);
-  };
+  }, [router, product.id]);
 
-  const handleWishlistPress = () => {
+  const handleWishlistPress = useCallback(() => {
     toggleWishlist(product);
-  };
+  }, [toggleWishlist, product]);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = useCallback(() => {
     if (isOutOfStock) {
       toast({
         description: "This product is currently out of stock",
@@ -60,11 +65,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
       return;
     }
     addProductToCart(product);
-  };
+  }, [isOutOfStock, toast, addProductToCart, product]);
 
-  const getImageUri = () => {
+  const imageUri = useMemo(() => {
     return product.images && product.images.length > 0 ? product.images[0] : "";
-  };
+  }, [product.images]);
 
   const cardStyle = viewMode === "list" ? styles.listCard : styles.gridCard;
   const imageStyle = viewMode === "list" ? styles.listImage : styles.gridImage;
@@ -79,10 +84,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
     >
       <View style={[styles.imageContainer, imageStyle]}>
         <Image
-          source={{ uri: getImageUri() }}
+          source={{ uri: imageUri }}
           style={styles.image}
           contentFit="cover"
           transition={300}
+          cachePolicy="memory-disk"
+          recyclingKey={product.id}
         />
 
         {/* Badges */}
@@ -156,7 +163,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       </View>
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   card: {

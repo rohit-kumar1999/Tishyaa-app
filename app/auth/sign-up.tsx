@@ -1,3 +1,4 @@
+import { PasswordInput } from "@/components/PasswordInput";
 import { useSignUp } from "@clerk/clerk-expo";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -10,7 +11,6 @@ import {
   View,
 } from "react-native";
 import { toast } from "../../src/hooks/use-toast";
-import { PasswordInput } from "./_components/PasswordInput";
 
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();

@@ -1,3 +1,4 @@
+import { PasswordInput } from "@/components/PasswordInput";
 import { useOAuth, useSignIn } from "@clerk/clerk-expo";
 import type { EmailCodeFactor } from "@clerk/types";
 import { FontAwesome } from "@expo/vector-icons";
@@ -14,7 +15,6 @@ import {
   View,
 } from "react-native";
 import { toast } from "../../src/hooks/use-toast";
-import { PasswordInput } from "./_components/PasswordInput";
 
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();

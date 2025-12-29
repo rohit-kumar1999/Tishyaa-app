@@ -8,13 +8,13 @@ import {
   Animated,
   Pressable,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import BottomNavigation from "../../components/common/BottomNavigation";
 import {
   UserPreferences,
@@ -176,7 +176,7 @@ export default function PreferencesScreen() {
         </View>
 
         {/* Content */}
-        {isLoading ? (
+        {isLoading && !userPreferences ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#e11d48" />
             <Text style={styles.loadingText}>Loading preferences...</Text>

@@ -8,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { ResizeMode, Video } from "expo-av";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import React, { useState } from "react";
+import React, { memo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -23,7 +23,7 @@ import {
 
 const screenWidth = Dimensions.get("window").width;
 
-export const InstagramFeed = () => {
+export const InstagramFeed = memo(() => {
   // State management
   const [selectedMedia, setSelectedMedia] =
     useState<ImagePicker.ImagePickerAsset | null>(null);
@@ -252,6 +252,7 @@ export const InstagramFeed = () => {
               source={{ uri: post.mediaUrl }}
               style={styles.mediaStyle}
               contentFit="cover"
+              cachePolicy="memory-disk"
             />
           )}
         </View>
@@ -315,6 +316,7 @@ export const InstagramFeed = () => {
                 source={{ uri: selectedMedia.uri }}
                 style={styles.selectedMediaPreview}
                 contentFit="cover"
+                cachePolicy="memory-disk"
               />
             )}
             <View style={styles.uploadOverlay}>
@@ -494,7 +496,7 @@ export const InstagramFeed = () => {
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

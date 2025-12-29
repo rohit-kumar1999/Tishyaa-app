@@ -6,9 +6,9 @@ import {
   GestureResponderEvent,
   Pressable,
   PressableProps,
+  TouchableOpacity as RNTouchableOpacity,
   StyleProp,
   StyleSheet,
-  TouchableOpacity as RNTouchableOpacity,
   TouchableOpacityProps,
   View,
   ViewStyle,
@@ -100,7 +100,7 @@ interface PressableButtonProps extends Omit<TouchableOpacityProps, "onPress"> {
  */
 export const PressableButton: React.FC<PressableButtonProps> = ({
   onPress,
-  debounceDelay = 500,
+  debounceDelay = 200,
   showLoadingOnAsync = false,
   loadingColor = "#fff",
   enableHaptic = false,
@@ -144,8 +144,8 @@ export const PressableButton: React.FC<PressableButtonProps> = ({
     Animated.spring(scaleAnim, {
       toValue: 0.97,
       useNativeDriver: true,
-      speed: 50,
-      bounciness: 4,
+      speed: 100, // Faster animation
+      bounciness: 2,
     }).start();
   }, [scaleAnim]);
 
@@ -153,8 +153,8 @@ export const PressableButton: React.FC<PressableButtonProps> = ({
     Animated.spring(scaleAnim, {
       toValue: 1,
       useNativeDriver: true,
-      speed: 50,
-      bounciness: 4,
+      speed: 100, // Faster animation
+      bounciness: 2,
     }).start();
   }, [scaleAnim]);
 
@@ -171,10 +171,10 @@ export const PressableButton: React.FC<PressableButtonProps> = ({
 
       lastClickTime.current = now;
 
-      // Trigger haptic feedback
-      await triggerHaptic();
+      // Trigger haptic feedback (non-blocking)
+      triggerHaptic();
 
-      // Execute the callback
+      // Execute the callback immediately
       const result = onPress(event);
 
       // Handle async operations
@@ -200,6 +200,7 @@ export const PressableButton: React.FC<PressableButtonProps> = ({
         disabled={isDisabled}
         style={[style, isDisabled && (disabledStyle || styles.disabledButton)]}
         activeOpacity={0.8}
+        delayPressIn={0}
       >
         {isLoading ? (
           <View style={styles.loadingContainer}>
@@ -225,7 +226,7 @@ interface SafePressableProps extends Omit<PressableProps, "onPress"> {
 
 export const SafePressable: React.FC<SafePressableProps> = ({
   onPress,
-  debounceDelay = 500,
+  debounceDelay = 200,
   enableHaptic = false,
   children,
   disabled,
@@ -247,12 +248,9 @@ export const SafePressable: React.FC<SafePressableProps> = ({
 
       lastClickTime.current = now;
 
+      // Non-blocking haptic feedback
       if (enableHaptic) {
-        try {
-          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        } catch (error) {
-          // Haptics not available
-        }
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       }
 
       const result = onPress(event);
@@ -274,6 +272,7 @@ export const SafePressable: React.FC<SafePressableProps> = ({
       {...props}
       onPress={handlePress}
       disabled={disabled}
+      delayPressIn={0}
       style={({ pressed }) => [
         typeof style === "function" ? style({ pressed }) : style,
         pressed && styles.pressed,

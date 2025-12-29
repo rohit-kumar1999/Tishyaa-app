@@ -8,21 +8,21 @@
 
 import React, { useRef } from "react";
 import {
+  GestureResponderEvent,
+  PressableProps,
+  Pressable as RNPressable,
   TouchableOpacity as RNTouchableOpacity,
   TouchableOpacityProps,
-  GestureResponderEvent,
-  Pressable as RNPressable,
-  PressableProps,
   View,
 } from "react-native";
 
 // Global last click timestamp to prevent rapid clicks across ALL buttons
 let globalLastClickTime = 0;
-const GLOBAL_DEBOUNCE_MS = 400;
+const GLOBAL_DEBOUNCE_MS = 150; // Reduced from 400ms for faster response
 
 interface SafeTouchableOpacityProps extends TouchableOpacityProps {
   /**
-   * Custom debounce delay in ms (default: 400ms)
+   * Custom debounce delay in ms (default: 150ms)
    */
   debounceMs?: number;
   /**
@@ -31,8 +31,20 @@ interface SafeTouchableOpacityProps extends TouchableOpacityProps {
   allowMultipleClicks?: boolean;
 }
 
-export const TouchableOpacity = React.forwardRef<View, SafeTouchableOpacityProps>(
-  ({ onPress, debounceMs = GLOBAL_DEBOUNCE_MS, allowMultipleClicks = false, ...props }, ref) => {
+export const TouchableOpacity = React.forwardRef<
+  View,
+  SafeTouchableOpacityProps
+>(
+  (
+    {
+      onPress,
+      debounceMs = 150,
+      allowMultipleClicks = false,
+      activeOpacity = 0.7,
+      ...props
+    },
+    ref
+  ) => {
     const lastClickRef = useRef<number>(0);
 
     const handlePress = (event: GestureResponderEvent) => {
@@ -58,7 +70,15 @@ export const TouchableOpacity = React.forwardRef<View, SafeTouchableOpacityProps
       onPress(event);
     };
 
-    return <RNTouchableOpacity ref={ref} {...props} onPress={handlePress} />;
+    return (
+      <RNTouchableOpacity
+        ref={ref}
+        {...props}
+        activeOpacity={activeOpacity}
+        onPress={handlePress}
+        delayPressIn={0}
+      />
+    );
   }
 );
 
@@ -70,7 +90,15 @@ interface SafePressableProps extends PressableProps {
 }
 
 export const Pressable = React.forwardRef<View, SafePressableProps>(
-  ({ onPress, debounceMs = GLOBAL_DEBOUNCE_MS, allowMultipleClicks = false, ...props }, ref) => {
+  (
+    {
+      onPress,
+      debounceMs = GLOBAL_DEBOUNCE_MS,
+      allowMultipleClicks = false,
+      ...props
+    },
+    ref
+  ) => {
     const lastClickRef = useRef<number>(0);
 
     const handlePress = (event: GestureResponderEvent) => {
@@ -102,7 +130,9 @@ export const Pressable = React.forwardRef<View, SafePressableProps>(
 Pressable.displayName = "SafePressable";
 
 // Export original components if needed
-export { RNTouchableOpacity as OriginalTouchableOpacity };
-export { RNPressable as OriginalPressable };
+export {
+  RNPressable as OriginalPressable,
+  RNTouchableOpacity as OriginalTouchableOpacity,
+};
 
 export default TouchableOpacity;

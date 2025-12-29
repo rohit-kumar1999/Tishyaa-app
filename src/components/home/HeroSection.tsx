@@ -1,12 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { memo, useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
+  FlatList,
   Image,
-  PanResponder,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -17,6 +19,7 @@ const { width: screenWidth } = Dimensions.get("window");
 
 const slides = [
   {
+    id: "1",
     title: "Discover Your",
     highlight: "Perfect Sparkle",
     subtitle:
@@ -27,6 +30,7 @@ const slides = [
     image: "https://via.placeholder.com/400x400/f3f4f6/e11d48?text=Jewelry+1",
   },
   {
+    id: "2",
     title: "Unveil the Magic of",
     highlight: "Timeless Elegance",
     subtitle:
@@ -37,6 +41,7 @@ const slides = [
     image: "https://via.placeholder.com/400x400/f3f4f6/e11d48?text=Jewelry+2",
   },
   {
+    id: "3",
     title: "Celebrate Every",
     highlight: "Shining Moment",
     subtitle:
@@ -48,21 +53,22 @@ const slides = [
   },
 ];
 
-export const HeroSection = () => {
-  const [index, setIndex] = useState(0);
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const slideAnim = useRef(new Animated.Value(0)).current;
+export const HeroSection = memo(() => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const flatListRef = useRef<FlatList>(null);
   const sparkleAnim = useRef(new Animated.Value(0)).current;
-
-  const minSwipeDistance = 50;
 
   // Auto-slide effect
   useEffect(() => {
     const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % slides.length);
-    }, 5000);
+      const nextIndex = (currentIndex + 1) % slides.length;
+      flatListRef.current?.scrollToOffset({
+        offset: nextIndex * screenWidth,
+        animated: true,
+      });
+    }, 6000);
     return () => clearInterval(interval);
-  }, []);
+  }, [currentIndex]);
 
   // Sparkle bounce animation
   useEffect(() => {
@@ -70,12 +76,12 @@ export const HeroSection = () => {
       Animated.sequence([
         Animated.timing(sparkleAnim, {
           toValue: 1,
-          duration: 600,
+          duration: 1000,
           useNativeDriver: true,
         }),
         Animated.timing(sparkleAnim, {
           toValue: 0,
-          duration: 600,
+          duration: 1000,
           useNativeDriver: true,
         }),
       ]).start(() => sparkleLoop());
@@ -83,181 +89,164 @@ export const HeroSection = () => {
     sparkleLoop();
   }, [sparkleAnim]);
 
-  // Slide change animation
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: -50,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-      ]).start();
+  // Handle scroll to update current index
+  const onScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const slideIndex = Math.round(
+        event.nativeEvent.contentOffset.x / screenWidth
+      );
+      if (
+        slideIndex !== currentIndex &&
+        slideIndex >= 0 &&
+        slideIndex < slides.length
+      ) {
+        setCurrentIndex(slideIndex);
+      }
+    },
+    [currentIndex]
+  );
+
+  // Scroll to specific slide
+  const scrollToSlide = useCallback((index: number) => {
+    flatListRef.current?.scrollToOffset({
+      offset: index * screenWidth,
+      animated: true,
     });
-  }, [index]);
+  }, []);
 
-  // Pan responder for swipe gestures
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 10;
-      },
-      onPanResponderMove: () => {},
-      onPanResponderRelease: (_, gestureState) => {
-        const { dx } = gestureState;
-        if (Math.abs(dx) > minSwipeDistance) {
-          if (dx > 0) {
-            setIndex((prev) => (prev - 1 + slides.length) % slides.length);
-          } else {
-            setIndex((prev) => (prev + 1) % slides.length);
-          }
-        }
-      },
-    })
-  ).current;
-
-  const current = slides[index];
-
-  return (
-    <View style={styles.container}>
+  // Render each slide
+  const renderSlide = useCallback(
+    ({ item }: { item: (typeof slides)[0] }) => (
       <LinearGradient
-        colors={current.bg}
+        colors={item.bg}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.gradient}
+        style={styles.slideGradient}
       >
-        <View style={styles.innerContainer}>
-          <View style={styles.content} {...panResponder.panHandlers}>
-            <Animated.View
-              style={[
-                styles.slideContainer,
-                {
-                  opacity: fadeAnim,
-                  transform: [{ translateX: slideAnim }],
-                },
-              ]}
-            >
-              {/* Text Content */}
-              <View style={styles.textSection}>
-                {/* Badge */}
-                <View style={styles.badge}>
-                  <Animated.View
-                    style={[
-                      styles.sparkleIcon,
-                      {
-                        transform: [
-                          {
-                            translateY: sparkleAnim.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [0, -3],
-                            }),
-                          },
-                        ],
-                      },
-                    ]}
-                  >
-                    <Ionicons name="sparkles" size={14} color="#e11d48" />
-                  </Animated.View>
-                  <Text style={styles.badgeText}>New Collection Launched</Text>
-                </View>
-
-                {/* Title */}
-                <View style={styles.titleContainer}>
-                  <Text style={styles.title}>{current.title}</Text>
-                  <Text style={styles.highlight}>{current.highlight}</Text>
-                </View>
-
-                {/* Subtitle */}
-                <Text style={styles.subtitle}>{current.subtitle}</Text>
-
-                {/* CTA Button */}
-                <TouchableOpacity
-                  style={styles.ctaButton}
-                  onPress={() => router.push(current.href)}
-                  activeOpacity={0.8}
-                >
-                  <LinearGradient
-                    colors={["#e11d48", "#ec4899"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.ctaGradient}
-                  >
-                    <Text style={styles.ctaText}>{current.cta}</Text>
-                    <Ionicons name="arrow-forward" size={16} color="white" />
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
-
-              {/* Image Section */}
-              <View style={styles.imageSection}>
-                <Image
-                  source={{ uri: current.image }}
-                  style={styles.image}
-                  resizeMode="contain"
-                />
-              </View>
-            </Animated.View>
-          </View>
-
-          {/* Dots Indicator */}
-          <View style={styles.dotsContainer}>
-            {slides.map((_, i) => (
-              <TouchableOpacity
-                key={i}
-                onPress={() => setIndex(i)}
+        <View style={styles.slideContent}>
+          {/* Text Content */}
+          <View style={styles.textSection}>
+            {/* Badge */}
+            <View style={styles.badge}>
+              <Animated.View
                 style={[
-                  styles.dot,
+                  styles.sparkleIcon,
                   {
-                    backgroundColor: i === index ? "#e11d48" : "#fda4af",
-                    width: i === index ? 20 : 12,
+                    transform: [
+                      {
+                        translateY: sparkleAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0, -3],
+                        }),
+                      },
+                    ],
                   },
                 ]}
-              />
-            ))}
+              >
+                <Ionicons name="sparkles" size={14} color="#e11d48" />
+              </Animated.View>
+              <Text style={styles.badgeText}>New Collection Launched</Text>
+            </View>
+
+            {/* Title */}
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.highlight}>{item.highlight}</Text>
+            </View>
+
+            {/* Subtitle */}
+            <Text style={styles.subtitle}>{item.subtitle}</Text>
+
+            {/* CTA Button */}
+            <TouchableOpacity
+              style={styles.ctaButton}
+              onPress={() => router.push(item.href)}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={["#e11d48", "#ec4899"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.ctaGradient}
+              >
+                <Text style={styles.ctaText}>{item.cta}</Text>
+                <Ionicons name="arrow-forward" size={16} color="white" />
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
+          {/* Image Section */}
+          <View style={styles.imageSection}>
+            <Image
+              source={{ uri: item.image }}
+              style={styles.image}
+              resizeMode="contain"
+            />
           </View>
         </View>
       </LinearGradient>
+    ),
+    [sparkleAnim]
+  );
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        ref={flatListRef}
+        data={slides}
+        renderItem={renderSlide}
+        keyExtractor={(item) => item.id}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        bounces={true}
+        decelerationRate={0.9}
+        snapToInterval={screenWidth}
+        snapToAlignment="center"
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        getItemLayout={(_, index) => ({
+          length: screenWidth,
+          offset: screenWidth * index,
+          index,
+        })}
+      />
+
+      {/* Dots Indicator */}
+      <View style={styles.dotsContainer}>
+        {slides.map((_, i) => (
+          <TouchableOpacity
+            key={i}
+            onPress={() => scrollToSlide(i)}
+            style={[
+              styles.dot,
+              {
+                backgroundColor: i === currentIndex ? "#e11d48" : "#fda4af",
+                width: i === currentIndex ? 20 : 12,
+              },
+            ]}
+          />
+        ))}
+      </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
     position: "relative",
     overflow: "hidden",
-  },
-  gradient: {
     height: 450,
   },
-  innerContainer: {
+  slideGradient: {
+    width: screenWidth,
+    height: 450,
+  },
+  slideContent: {
     flex: 1,
     paddingHorizontal: 16,
     paddingTop: 40,
-    paddingBottom: 16,
-  },
-  content: {
-    flex: 1,
-    height: 350,
-    overflow: "hidden",
-  },
-  slideContainer: {
-    height: 350,
+    paddingBottom: 60,
     flexDirection: screenWidth >= 768 ? "row" : "column-reverse",
     alignItems: "center",
     gap: screenWidth >= 768 ? 48 : 24,
@@ -347,11 +336,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   dotsContainer: {
+    position: "absolute",
+    bottom: 16,
+    left: 0,
+    right: 0,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     gap: 8,
-    marginTop: 16,
   },
   dot: {
     height: 12,

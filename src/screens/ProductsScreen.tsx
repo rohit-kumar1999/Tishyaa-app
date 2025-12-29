@@ -12,7 +12,6 @@ import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
@@ -279,6 +278,7 @@ export default function ProductsScreen() {
     occasions,
     pagination,
     isLoading,
+    isFetching,
     error,
     refetch,
     resetCircuitBreaker,
@@ -549,7 +549,7 @@ export default function ProductsScreen() {
     const isCircuitBreakerError = error.includes("Too many requests");
 
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <TopHeader />
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle" size={64} color="#EF4444" />
@@ -578,12 +578,12 @@ export default function ProductsScreen() {
           </TouchableOpacity>
         </View>
         <BottomNavigation currentRoute="/products" />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <TopHeader />
 
       <FlatList
@@ -614,7 +614,7 @@ export default function ProductsScreen() {
           </View>
         }
         ListEmptyComponent={
-          isLoading ? (
+          isLoading && products.length === 0 ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#C9A961" />
               <Text style={styles.loadingText}>Loading products...</Text>
@@ -652,7 +652,7 @@ export default function ProductsScreen() {
       />
 
       <BottomNavigation currentRoute="/products" />
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import React, { memo, useState } from "react";
 import {
   Dimensions,
   StyleSheet,
@@ -12,7 +12,7 @@ import {
 
 const screenWidth = Dimensions.get("window").width;
 
-export const Newsletter = () => {
+export const Newsletter = memo(() => {
   const [email, setEmail] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
 
@@ -109,7 +109,7 @@ export const Newsletter = () => {
       </View>
     </LinearGradient>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

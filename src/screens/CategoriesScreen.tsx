@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useRef } from "react";
@@ -6,7 +7,6 @@ import {
   Animated,
   Dimensions,
   FlatList,
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -138,7 +138,13 @@ export default function CategoriesScreen() {
         activeOpacity={0.8}
       >
         <View style={styles.categoryImageContainer}>
-          <Image source={{ uri: item.image }} style={styles.categoryImage} />
+          <Image
+            source={{ uri: item.image }}
+            style={styles.categoryImage}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            recyclingKey={item.id}
+          />
           <LinearGradient
             colors={["transparent", item.color]}
             style={styles.categoryOverlay}

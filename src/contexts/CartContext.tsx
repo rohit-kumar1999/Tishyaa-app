@@ -2,8 +2,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useReducer,
 } from "react";
 import { Alert } from "react-native";
@@ -332,38 +334,41 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [state.items, state.tax, state.shipping, state.discount, state.isLoading]);
 
-  // Enhanced cart operations
-  const addItem = (product: Product, quantity: number = 1) => {
+  // Enhanced cart operations with useCallback for memoization
+  const addItem = useCallback((product: Product, quantity: number = 1) => {
     dispatch({ type: "ADD_ITEM", payload: { ...product, quantity } });
-  };
+  }, []);
 
-  const removeItem = (id: string, showConfirmation: boolean = true) => {
-    if (showConfirmation) {
-      Alert.alert(
-        "Remove Item",
-        "Are you sure you want to remove this item from your cart?",
-        [
-          {
-            text: "Cancel",
-            style: "cancel",
-          },
-          {
-            text: "Remove",
-            style: "destructive",
-            onPress: () => dispatch({ type: "REMOVE_ITEM", payload: id }),
-          },
-        ]
-      );
-    } else {
-      dispatch({ type: "REMOVE_ITEM", payload: id });
-    }
-  };
+  const removeItem = useCallback(
+    (id: string, showConfirmation: boolean = true) => {
+      if (showConfirmation) {
+        Alert.alert(
+          "Remove Item",
+          "Are you sure you want to remove this item from your cart?",
+          [
+            {
+              text: "Cancel",
+              style: "cancel",
+            },
+            {
+              text: "Remove",
+              style: "destructive",
+              onPress: () => dispatch({ type: "REMOVE_ITEM", payload: id }),
+            },
+          ]
+        );
+      } else {
+        dispatch({ type: "REMOVE_ITEM", payload: id });
+      }
+    },
+    []
+  );
 
-  const updateQuantity = (id: string, quantity: number) => {
+  const updateQuantity = useCallback((id: string, quantity: number) => {
     dispatch({ type: "UPDATE_QUANTITY", payload: { id, quantity } });
-  };
+  }, []);
 
-  const clearCart = (showConfirmation: boolean = true) => {
+  const clearCart = useCallback((showConfirmation: boolean = true) => {
     if (showConfirmation) {
       Alert.alert(
         "Clear Cart",
@@ -383,52 +388,75 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     } else {
       dispatch({ type: "CLEAR_CART" });
     }
-  };
+  }, []);
 
-  const applyDiscount = (amount: number) => {
+  const applyDiscount = useCallback((amount: number) => {
     dispatch({ type: "APPLY_DISCOUNT", payload: amount });
-  };
+  }, []);
 
-  const setShipping = (amount: number) => {
+  const setShipping = useCallback((amount: number) => {
     dispatch({ type: "SET_SHIPPING", payload: amount });
-  };
+  }, []);
 
-  const setTax = (amount: number) => {
+  const setTax = useCallback((amount: number) => {
     dispatch({ type: "SET_TAX", payload: amount });
-  };
+  }, []);
 
-  // Utility functions
-  const getItemById = (id: string): CartItem | undefined => {
-    return state.items.find((item) => item.id === id);
-  };
+  // Utility functions with useCallback
+  const getItemById = useCallback(
+    (id: string): CartItem | undefined => {
+      return state.items.find((item) => item.id === id);
+    },
+    [state.items]
+  );
 
-  const isItemInCart = (id: string): boolean => {
-    return state.items.some((item) => item.id === id);
-  };
+  const isItemInCart = useCallback(
+    (id: string): boolean => {
+      return state.items.some((item) => item.id === id);
+    },
+    [state.items]
+  );
 
-  const getItemQuantity = (id: string): number => {
-    const item = getItemById(id);
-    return item ? item.quantity : 0;
-  };
+  const getItemQuantity = useCallback(
+    (id: string): number => {
+      const item = state.items.find((item) => item.id === id);
+      return item ? item.quantity : 0;
+    },
+    [state.items]
+  );
+
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo<CartContextType>(
+    () => ({
+      ...state,
+      addItem,
+      removeItem,
+      updateQuantity,
+      clearCart,
+      applyDiscount,
+      setShipping,
+      setTax,
+      getItemById,
+      isItemInCart,
+      getItemQuantity,
+    }),
+    [
+      state,
+      addItem,
+      removeItem,
+      updateQuantity,
+      clearCart,
+      applyDiscount,
+      setShipping,
+      setTax,
+      getItemById,
+      isItemInCart,
+      getItemQuantity,
+    ]
+  );
 
   return (
-    <CartContext.Provider
-      value={{
-        ...state,
-        addItem,
-        removeItem,
-        updateQuantity,
-        clearCart,
-        applyDiscount,
-        setShipping,
-        setTax,
-        getItemById,
-        isItemInCart,
-        getItemQuantity,
-      }}
-    >
-      {children}
-    </CartContext.Provider>
+    <CartContext.Provider value={contextValue}>{children}</CartContext.Provider>
   );
 };
 

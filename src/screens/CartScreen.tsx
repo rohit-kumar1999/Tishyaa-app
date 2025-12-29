@@ -1,21 +1,127 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useMemo } from "react";
+import React, { memo, useCallback, useMemo } from "react";
 import {
   ActivityIndicator,
-  Image,
+  FlatList,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import { TouchableOpacity } from "../components/common/TouchableOpacity";
 import BottomNavigation from "../components/common/BottomNavigation";
 import { TopHeader } from "../components/common/TopHeader";
+import { TouchableOpacity } from "../components/common/TouchableOpacity";
 import { useApiCart } from "../contexts/ApiCartContext";
 import { calculateShipping, calculateTotal } from "../utils/cartHelpers";
+
+// Memoized cart item component
+const CartItem = memo(function CartItem({
+  item,
+  isProcessing,
+  updateItemQuantity,
+  removeItem,
+}: {
+  item: any;
+  isProcessing: Record<string, boolean>;
+  updateItemQuantity: (id: string, quantity: number) => void;
+  removeItem: (id: string) => void;
+}) {
+  const handleDecrement = useCallback(() => {
+    updateItemQuantity(item.id, item.quantity - 1);
+  }, [item.id, item.quantity, updateItemQuantity]);
+
+  const handleIncrement = useCallback(() => {
+    updateItemQuantity(item.id, item.quantity + 1);
+  }, [item.id, item.quantity, updateItemQuantity]);
+
+  const handleRemove = useCallback(() => {
+    removeItem(item.id);
+  }, [item.id, removeItem]);
+
+  const handleProductPress = useCallback(() => {
+    router.push(`/product/${item.productId}`);
+  }, [item.productId]);
+
+  return (
+    <View style={styles.cartItem}>
+      <View style={styles.imageContainer}>
+        <Image
+          source={{
+            uri:
+              (item as any).productImages?.[0] ||
+              "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=120&h=120&fit=crop&crop=center",
+          }}
+          style={styles.productImage}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          recyclingKey={item.id}
+        />
+      </View>
+      <View style={styles.itemDetails}>
+        <TouchableOpacity onPress={handleProductPress} activeOpacity={0.7}>
+          <Text style={styles.productName} numberOfLines={2}>
+            {(item as any).productName || "Unknown Product"}
+          </Text>
+        </TouchableOpacity>
+        <Text style={styles.productPrice}>
+          ₹
+          {(
+            (item as any).productDiscountPrice ||
+            (item as any).productPrice ||
+            0
+          ).toLocaleString()}
+        </Text>
+        <Text style={styles.stockStatus}>
+          {(item as any).productInStock ? "In stock" : "Out of stock"}
+        </Text>
+        <View style={styles.quantityRow}>
+          <View style={styles.quantityControls}>
+            <TouchableOpacity
+              style={[
+                styles.quantityButton,
+                item.quantity <= 1 && styles.quantityButtonDisabled,
+              ]}
+              onPress={handleDecrement}
+              disabled={isProcessing[item.id] || item.quantity <= 1}
+            >
+              <Ionicons
+                name="remove"
+                size={16}
+                color={item.quantity <= 1 ? "#9ca3af" : "#374151"}
+              />
+            </TouchableOpacity>
+            {isProcessing[item.id] ? (
+              <ActivityIndicator size="small" color="#e11d48" />
+            ) : (
+              <Text style={styles.quantityText}>{item.quantity}</Text>
+            )}
+            <TouchableOpacity
+              style={styles.quantityButton}
+              onPress={handleIncrement}
+              disabled={isProcessing[item.id]}
+            >
+              <Ionicons name="add" size={16} color="#374151" />
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={handleRemove}
+            disabled={isProcessing[item.id]}
+          >
+            {isProcessing[item.id] ? (
+              <ActivityIndicator size="small" color="#ef4444" />
+            ) : (
+              <Ionicons name="trash-outline" size={20} color="#ef4444" />
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+});
 
 export default function CartScreen() {
   const {
@@ -58,86 +164,83 @@ export default function CartScreen() {
     };
   }, [cartItems]);
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     await refetch();
-  };
+  }, [refetch]);
 
-  const renderCartItem = (item: any) => (
-    <View key={item.id} style={styles.cartItem}>
-      <View style={styles.imageContainer}>
-        <Image
-          source={{
-            uri:
-              (item as any).productImages?.[0] ||
-              "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=120&h=120&fit=crop&crop=center",
-          }}
-          style={styles.productImage}
-          resizeMode="cover"
-        />
-      </View>
-      <View style={styles.itemDetails}>
-        <TouchableOpacity
-          onPress={() => router.push(`/product/${item.productId}`)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.productName} numberOfLines={2}>
-            {(item as any).productName || "Unknown Product"}
+  // Render cart item using memoized component
+  const renderCartItem = useCallback(
+    ({ item }: { item: any }) => (
+      <CartItem
+        item={item}
+        isProcessing={isProcessing}
+        updateItemQuantity={updateItemQuantity}
+        removeItem={removeItem}
+      />
+    ),
+    [isProcessing, updateItemQuantity, removeItem]
+  );
+
+  // Key extractor for FlatList
+  const keyExtractor = useCallback((item: any) => item.id, []);
+
+  // Cart summary footer component
+  const CartSummary = useMemo(
+    () => (
+      <View style={styles.summaryContainer}>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>
+            Subtotal ({itemCount} item{itemCount !== 1 ? "s" : ""})
           </Text>
-        </TouchableOpacity>
-        <Text style={styles.productPrice}>
-          ₹
-          {(
-            (item as any).productDiscountPrice ||
-            (item as any).productPrice ||
-            0
-          ).toLocaleString()}
-        </Text>
-        <Text style={styles.stockStatus}>
-          {(item as any).productInStock ? "In stock" : "Out of stock"}
-        </Text>
-        <View style={styles.quantityRow}>
-          <View style={styles.quantityControls}>
-            <TouchableOpacity
-              style={[
-                styles.quantityButton,
-                item.quantity <= 1 && styles.quantityButtonDisabled,
-              ]}
-              onPress={() => updateItemQuantity(item.id, item.quantity - 1)}
-              disabled={isProcessing[item.id] || item.quantity <= 1}
-            >
-              <Ionicons
-                name="remove"
-                size={16}
-                color={item.quantity <= 1 ? "#9ca3af" : "#374151"}
-              />
-            </TouchableOpacity>
-            {isProcessing[item.id] ? (
-              <ActivityIndicator size="small" color="#e11d48" />
-            ) : (
-              <Text style={styles.quantityText}>{item.quantity}</Text>
-            )}
-            <TouchableOpacity
-              style={styles.quantityButton}
-              onPress={() => updateItemQuantity(item.id, item.quantity + 1)}
-              disabled={isProcessing[item.id]}
-            >
-              <Ionicons name="add" size={16} color="#374151" />
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={() => removeItem(item.id)}
-            disabled={isProcessing[item.id]}
-          >
-            {isProcessing[item.id] ? (
-              <ActivityIndicator size="small" color="#ef4444" />
-            ) : (
-              <Ionicons name="trash-outline" size={20} color="#ef4444" />
-            )}
-          </TouchableOpacity>
+          <Text style={styles.summaryValue}>₹{subtotal.toLocaleString()}</Text>
         </View>
+
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Shipping</Text>
+          <Text
+            style={[
+              styles.summaryValue,
+              shippingCharges === 0 && styles.freeShipping,
+            ]}
+          >
+            {shippingCharges === 0
+              ? "Free"
+              : `₹${shippingCharges.toLocaleString()}`}
+          </Text>
+        </View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.totalRow}>
+          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalValue}>₹{total.toLocaleString()}</Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.checkoutButton}
+          onPress={() => router.push("/checkout")}
+          activeOpacity={0.8}
+          disabled={itemCount === 0}
+        >
+          <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
+          <Ionicons name="arrow-forward" size={20} color="#fff" />
+        </TouchableOpacity>
       </View>
-    </View>
+    ),
+    [itemCount, subtotal, shippingCharges, total]
+  );
+
+  // Cart header component
+  const CartHeader = useMemo(
+    () => (
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Shopping Cart</Text>
+        <Text style={styles.itemCount}>
+          {itemCount} item{itemCount !== 1 ? "s" : ""} in your cart
+        </Text>
+      </View>
+    ),
+    [itemCount]
   );
 
   return (
@@ -198,9 +301,15 @@ export default function CartScreen() {
           </View>
         </View>
       ) : (
-        <ScrollView
+        <FlatList
           style={styles.content}
+          data={cartItems}
+          renderItem={renderCartItem}
+          keyExtractor={keyExtractor}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={CartHeader}
+          ListFooterComponent={CartSummary}
+          contentContainerStyle={styles.flatListContent}
           refreshControl={
             <RefreshControl
               refreshing={false}
@@ -209,60 +318,11 @@ export default function CartScreen() {
               tintColor="#e11d48"
             />
           }
-        >
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>Shopping Cart</Text>
-            <Text style={styles.itemCount}>
-              {itemCount} item{itemCount !== 1 ? "s" : ""} in your cart
-            </Text>
-          </View>
-
-          <View style={styles.cartItemsContainer}>
-            {cartItems.map((item) => renderCartItem(item))}
-          </View>
-
-          <View style={styles.summaryContainer}>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>
-                Subtotal ({itemCount} item{itemCount !== 1 ? "s" : ""})
-              </Text>
-              <Text style={styles.summaryValue}>
-                ₹{subtotal.toLocaleString()}
-              </Text>
-            </View>
-
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Shipping</Text>
-              <Text
-                style={[
-                  styles.summaryValue,
-                  shippingCharges === 0 && styles.freeShipping,
-                ]}
-              >
-                {shippingCharges === 0
-                  ? "Free"
-                  : `₹${shippingCharges.toLocaleString()}`}
-              </Text>
-            </View>
-
-            <View style={styles.divider} />
-
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>₹{total.toLocaleString()}</Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.checkoutButton}
-              onPress={() => router.push("/checkout")}
-              activeOpacity={0.8}
-              disabled={itemCount === 0}
-            >
-              <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
-              <Ionicons name="arrow-forward" size={20} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          initialNumToRender={5}
+        />
       )}
 
       <BottomNavigation currentRoute="/cart" />
@@ -278,6 +338,9 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     backgroundColor: "#f9fafb",
+  },
+  flatListContent: {
+    paddingBottom: 20,
   },
   cartItemsContainer: {
     marginBottom: 20,

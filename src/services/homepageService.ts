@@ -1,5 +1,6 @@
 import { api } from "@/setup/api";
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useCallback } from "react";
 import { Category } from "./categoryService";
 import { Product, ProductResponse } from "./productService";
 
@@ -145,27 +146,19 @@ const mockHomepageData: HomepageData = {
   },
 };
 
-// Centralized homepage data hook
+// Centralized homepage data hook - uses React Query for caching
 export const useHomepageData = () => {
-  const [data, setData] = useState<HomepageData>(mockHomepageData);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchHomepageData = useCallback(async () => {
-    if (USE_MOCK_DATA) {
-      setData(mockHomepageData);
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
+  const query = useQuery<HomepageData>({
+    queryKey: ["homepage-data"],
+    queryFn: async () => {
+      if (USE_MOCK_DATA) {
+        return mockHomepageData;
+      }
 
       // Single API call to get all homepage data
       const response: ProductResponse = await api.post("/product", {
         page: 1,
-        limit: 16, // Get more products for both featured and regular display
+        limit: 8, // Get more products for both featured and regular display
         sortBy: "rating",
         sortOrder: "desc",
         includeCategories: true,
@@ -181,7 +174,7 @@ export const useHomepageData = () => {
       // Split products - first 8 for featured, all for general use
       const featuredProducts = transformedProducts.slice(0, 8);
 
-      const homepageData: HomepageData = {
+      return {
         products: transformedProducts,
         featuredProducts,
         categories: transformedCategories,
@@ -190,26 +183,22 @@ export const useHomepageData = () => {
         pagination: response.pagination,
         meta: response.meta,
       };
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes - data considered fresh
+    gcTime: 30 * 60 * 1000, // 30 minutes garbage collection
+    refetchOnMount: true, // Refetch in background when mounting
+    refetchOnWindowFocus: false,
+    placeholderData: (previousData) => previousData, // Show stale data while refetching
+    retry: 3, // Retry 3 times on failure
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
+  });
 
-      setData(homepageData);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch homepage data"
-      );
-      // Fallback to mock data on error
-      setData(mockHomepageData);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchHomepageData();
-  }, [fetchHomepageData]);
+  // Use cached data or fallback to mock data (shows content immediately)
+  const data = query.data ?? mockHomepageData;
 
   const refetch = useCallback(() => {
-    fetchHomepageData();
-  }, [fetchHomepageData]);
+    query.refetch();
+  }, [query]);
 
   return {
     data,
@@ -220,8 +209,12 @@ export const useHomepageData = () => {
     occasions: data.occasions,
     pagination: data.pagination,
     meta: data.meta,
-    isLoading,
-    error,
+    // isLoading: true only when pending (no data yet and fetching)
+    isLoading: query.isPending && !query.data,
+    // isFetching: true when any fetch is happening (including background)
+    isFetching: query.isFetching,
+    // Only show error if we have no data to display (mock data counts as data)
+    error: data.categories.length > 0 ? null : query.error?.message ?? null,
     refetch,
   };
 };

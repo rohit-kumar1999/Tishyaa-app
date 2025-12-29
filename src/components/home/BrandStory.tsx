@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React from "react";
+import React, { memo } from "react";
 import {
   Dimensions,
   StyleSheet,
@@ -13,7 +13,7 @@ import {
 
 const screenWidth = Dimensions.get("window").width;
 
-export const BrandStory = () => {
+export const BrandStory = memo(() => {
   const handleLearnMore = () => {
     router.push("/about");
   };
@@ -113,6 +113,7 @@ export const BrandStory = () => {
                     }}
                     style={styles.image}
                     contentFit="cover"
+                    cachePolicy="memory-disk"
                   />
                 </View>
                 <View style={styles.tallImageContainer}>
@@ -122,6 +123,7 @@ export const BrandStory = () => {
                     }}
                     style={styles.image}
                     contentFit="cover"
+                    cachePolicy="memory-disk"
                   />
                 </View>
               </View>
@@ -137,6 +139,7 @@ export const BrandStory = () => {
                     }}
                     style={styles.image}
                     contentFit="cover"
+                    cachePolicy="memory-disk"
                   />
                 </View>
                 <View style={styles.squareImageContainer}>
@@ -146,6 +149,7 @@ export const BrandStory = () => {
                     }}
                     style={styles.image}
                     contentFit="cover"
+                    cachePolicy="memory-disk"
                   />
                 </View>
               </View>
@@ -165,7 +169,7 @@ export const BrandStory = () => {
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

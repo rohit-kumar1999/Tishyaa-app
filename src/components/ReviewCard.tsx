@@ -97,6 +97,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
               source={{ uri: review.userAvatar }}
               style={styles.avatar}
               contentFit="cover"
+              cachePolicy="memory-disk"
             />
           ) : (
             <View style={styles.avatarPlaceholder}>

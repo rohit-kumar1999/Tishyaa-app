@@ -1,12 +1,12 @@
-import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { memo, useCallback, useEffect, useRef } from "react";
 import {
   ActivityIndicator,
-  Animated,
   Dimensions,
-  ScrollView,
+  FlatList,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -15,109 +15,171 @@ import {
 import { useHomepageDataContext } from "../../contexts/HomepageDataContext";
 
 const screenWidth = Dimensions.get("window").width;
+const VISIBLE_ITEMS = 4; // Show 4 items on screen at once
+const HORIZONTAL_PADDING = 16;
+const ITEM_GAP = 12;
+// Calculate item width to fit exactly 4 items on screen
+const ITEM_WIDTH =
+  (screenWidth - HORIZONTAL_PADDING * 2 - ITEM_GAP * (VISIBLE_ITEMS - 1)) /
+  VISIBLE_ITEMS;
+const SCROLL_INTERVAL = ITEM_WIDTH + ITEM_GAP; // Scroll by one item at a time
 
-export const CategorySection = () => {
-  const [index, setIndex] = useState(0);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  const fadeAnim = new Animated.Value(1);
+interface Category {
+  id: string;
+  name: string;
+  imageUrl: string;
+}
+
+interface InfiniteCategory extends Category {
+  uniqueKey: string;
+}
+
+export const CategorySection = memo(() => {
+  const flatListRef = useRef<FlatList>(null);
+  const currentIndexRef = useRef(0);
+  const isJumpingRef = useRef(false);
 
   // Fetch categories from context
   const { categories, isLoading, error, refetch } = useHomepageDataContext();
   const isError = !!error;
 
-  const minSwipeDistance = 50;
-
-  const visible = categories
-    ? Array.from({ length: Math.min(5, categories.length) }, (_, i) => {
-        return categories[(index + i) % categories.length];
-      }).filter(Boolean)
-    : [];
-
-  const slideLeft = () => {
-    if (!categories || categories.length === 0) return;
-    setIndex((prev) => (prev === 0 ? categories.length - 1 : prev - 1));
-  };
-
-  const slideRight = () => {
-    if (!categories || categories.length === 0) return;
-    setIndex((prev) => (prev + 1) % categories.length);
-  };
-
-  // Touch/swipe handlers
-  const onTouchStart = (event: any) => {
-    setTouchEnd(null);
-    setTouchStart(event.nativeEvent.pageX);
-  };
-
-  const onTouchMove = (event: any) => {
-    setTouchEnd(event.nativeEvent.pageX);
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-
-    if (isLeftSwipe) {
-      slideRight();
-    } else if (isRightSwipe) {
-      slideLeft();
+  // Create infinite loop data by tripling the categories
+  // [original] -> [original, original, original]
+  // Start from the middle set so we can scroll both directions
+  const infiniteData: InfiniteCategory[] = React.useMemo(() => {
+    if (!categories || categories.length === 0) return [];
+    const result: InfiniteCategory[] = [];
+    // Triple the data for seamless infinite scroll
+    for (let i = 0; i < 3; i++) {
+      categories.forEach((cat, idx) => {
+        result.push({
+          ...cat,
+          uniqueKey: `${i}-${cat.id}-${idx}`,
+        });
+      });
     }
-  };
+    return result;
+  }, [categories]);
 
-  // Auto rotate every 2 seconds
+  const originalLength = categories?.length || 0;
+  const startOffset = originalLength * SCROLL_INTERVAL; // Start from middle set
+
+  // Initialize scroll position to middle set
   useEffect(() => {
-    if (!categories || categories.length === 0) return;
+    if (infiniteData.length > 0 && flatListRef.current) {
+      // Small delay to ensure FlatList is mounted
+      setTimeout(() => {
+        flatListRef.current?.scrollToOffset({
+          offset: startOffset,
+          animated: false,
+        });
+        currentIndexRef.current = originalLength;
+      }, 100);
+    }
+  }, [infiniteData.length, startOffset, originalLength]);
+
+  // Auto-slide effect - slide one item at a time infinitely
+  useEffect(() => {
+    if (!categories || categories.length <= VISIBLE_ITEMS) return;
 
     const interval = setInterval(() => {
-      Animated.sequence([
-        Animated.timing(fadeAnim, {
-          toValue: 0.8,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      if (isJumpingRef.current) return;
 
-      slideRight();
-    }, 2000);
+      const nextIndex = currentIndexRef.current + 1;
+      flatListRef.current?.scrollToOffset({
+        offset: nextIndex * SCROLL_INTERVAL,
+        animated: true,
+      });
+      currentIndexRef.current = nextIndex;
 
+      // Check if we need to jump back to middle set (seamlessly)
+      // When we reach the end of the third set, jump to the same position in middle set
+      if (nextIndex >= originalLength * 2 + originalLength - VISIBLE_ITEMS) {
+        isJumpingRef.current = true;
+        setTimeout(() => {
+          const jumpToIndex = originalLength + (nextIndex % originalLength);
+          flatListRef.current?.scrollToOffset({
+            offset: jumpToIndex * SCROLL_INTERVAL,
+            animated: false,
+          });
+          currentIndexRef.current = jumpToIndex;
+          isJumpingRef.current = false;
+        }, 350); // Wait for animation to complete
+      }
+    }, 3000);
     return () => clearInterval(interval);
-  }, [categories.length, fadeAnim]);
+  }, [originalLength, categories?.length]);
+
+  // Handle manual scroll
+  const onScrollEnd = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (isJumpingRef.current) return;
+
+      const scrollX = event.nativeEvent.contentOffset.x;
+      const index = Math.round(scrollX / SCROLL_INTERVAL);
+      currentIndexRef.current = index;
+
+      // If scrolled to first set, jump to middle set
+      if (index < originalLength) {
+        isJumpingRef.current = true;
+        setTimeout(() => {
+          const jumpToIndex = index + originalLength;
+          flatListRef.current?.scrollToOffset({
+            offset: jumpToIndex * SCROLL_INTERVAL,
+            animated: false,
+          });
+          currentIndexRef.current = jumpToIndex;
+          isJumpingRef.current = false;
+        }, 50);
+      }
+      // If scrolled to third set, jump to middle set
+      else if (index >= originalLength * 2) {
+        isJumpingRef.current = true;
+        setTimeout(() => {
+          const jumpToIndex = index - originalLength;
+          flatListRef.current?.scrollToOffset({
+            offset: jumpToIndex * SCROLL_INTERVAL,
+            animated: false,
+          });
+          currentIndexRef.current = jumpToIndex;
+          isJumpingRef.current = false;
+        }, 50);
+      }
+    },
+    [originalLength]
+  );
 
   const handleCategoryPress = (categoryId: string) => {
     router.push(`/products?category=${categoryId}`);
   };
 
-  const renderCategory = (category: (typeof categories)[0]) => (
-    <Animated.View
-      key={category.id}
-      style={[styles.categoryItem, { opacity: fadeAnim }]}
-    >
+  // Render individual category item
+  const renderItem = useCallback(
+    ({ item, index }: { item: InfiniteCategory; index: number }) => (
       <TouchableOpacity
-        onPress={() => handleCategoryPress(category.id)}
-        style={styles.categoryButton}
+        onPress={() => handleCategoryPress(item.id)}
+        style={[
+          styles.categoryButton,
+          { marginRight: index < infiniteData.length - 1 ? ITEM_GAP : 0 },
+        ]}
         activeOpacity={0.8}
       >
         <View style={styles.categoryImageContainer}>
           <Image
-            source={{ uri: category.imageUrl }}
+            source={{ uri: item.imageUrl }}
             style={styles.categoryImage}
             contentFit="cover"
+            cachePolicy="memory-disk"
           />
         </View>
         <View style={styles.categoryTextContainer}>
-          <Text style={styles.categoryName}>{category.name}</Text>
+          <Text style={styles.categoryName} numberOfLines={2}>
+            {item.name}
+          </Text>
         </View>
       </TouchableOpacity>
-    </Animated.View>
+    ),
+    [infiniteData.length]
   );
 
   return (
@@ -125,16 +187,16 @@ export const CategorySection = () => {
       <View style={styles.contentContainer}>
         <Text style={styles.sectionTitle}>Everyday Demi fine Jewellery</Text>
 
-        {/* Loading State */}
-        {isLoading && (
+        {/* Loading State - only show when no cached data */}
+        {isLoading && (!categories || categories.length === 0) && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#e11d48" />
             <Text style={styles.loadingText}>Loading categories...</Text>
           </View>
         )}
 
-        {/* Error State */}
-        {isError && (
+        {/* Error State - only show when no data */}
+        {isError && (!categories || categories.length === 0) && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>Unable to load categories</Text>
             <TouchableOpacity
@@ -146,48 +208,31 @@ export const CategorySection = () => {
           </View>
         )}
 
-        {/* Categories Display */}
-        {!isLoading && !isError && categories && categories.length > 0 && (
-          <View style={styles.categoriesWrapper}>
-            {/* Left arrow - hidden on mobile screens */}
-            {screenWidth > 640 && (
-              <TouchableOpacity
-                onPress={slideLeft}
-                style={[styles.arrowButton, styles.leftArrow]}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="chevron-back" size={24} color="#374151" />
-              </TouchableOpacity>
-            )}
-
-            {/* Categories container with touch support */}
-            <View
-              style={styles.categoriesContainer}
-              onTouchStart={onTouchStart}
-              onTouchMove={onTouchMove}
-              onTouchEnd={onTouchEnd}
-            >
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.categoriesScrollContent}
-                scrollEventThrottle={16}
-              >
-                {visible.map(renderCategory)}
-              </ScrollView>
-            </View>
-
-            {/* Right arrow - hidden on mobile screens */}
-            {screenWidth > 640 && (
-              <TouchableOpacity
-                onPress={slideRight}
-                style={[styles.arrowButton, styles.rightArrow]}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="chevron-forward" size={24} color="#374151" />
-              </TouchableOpacity>
-            )}
-          </View>
+        {/* Categories Carousel */}
+        {categories && categories.length > 0 && (
+          <FlatList
+            ref={flatListRef}
+            data={infiniteData}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.uniqueKey}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            bounces={false}
+            decelerationRate={0.9}
+            snapToInterval={SCROLL_INTERVAL}
+            snapToAlignment="start"
+            onMomentumScrollEnd={onScrollEnd}
+            scrollEventThrottle={16}
+            contentContainerStyle={styles.flatListContent}
+            getItemLayout={(_, index) => ({
+              length: ITEM_WIDTH + ITEM_GAP,
+              offset: (ITEM_WIDTH + ITEM_GAP) * index,
+              index,
+            })}
+            initialNumToRender={originalLength * 3}
+            maxToRenderPerBatch={originalLength * 3}
+            windowSize={5}
+          />
         )}
 
         {/* Empty State */}
@@ -199,7 +244,7 @@ export const CategorySection = () => {
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -207,7 +252,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
   },
   contentContainer: {
-    paddingHorizontal: 16,
     alignItems: "center",
   },
   sectionTitle: {
@@ -216,6 +260,7 @@ const styles = StyleSheet.create({
     color: "#111827",
     textAlign: "center",
     marginBottom: screenWidth > 1024 ? 64 : screenWidth > 640 ? 48 : 32,
+    paddingHorizontal: 16,
   },
   loadingContainer: {
     flexDirection: "row",
@@ -245,57 +290,18 @@ const styles = StyleSheet.create({
     color: "#e11d48",
     fontSize: 16,
   },
-  categoriesWrapper: {
-    position: "relative",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-  },
-  arrowButton: {
-    backgroundColor: "#ffffff",
-    padding: screenWidth > 640 ? 8 : 6,
-    borderRadius: 20,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-    position: "absolute",
-    zIndex: 10,
-  },
-  leftArrow: {
-    left: screenWidth > 1024 ? 16 : 8,
-  },
-  rightArrow: {
-    right: screenWidth > 1024 ? 16 : 8,
-  },
-  categoriesContainer: {
-    flex: 1,
-    overflow: "hidden",
-    width: "100%",
-  },
-  categoriesScrollContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: screenWidth > 1024 ? 40 : screenWidth > 640 ? 24 : 16,
-    paddingHorizontal: screenWidth > 640 ? 40 : 16,
-  },
-  categoryItem: {
-    alignItems: "center",
-    width: screenWidth > 1024 ? 192 : screenWidth > 640 ? 128 : 96,
-    flexShrink: 0,
+  flatListContent: {
+    paddingHorizontal: HORIZONTAL_PADDING,
   },
   categoryButton: {
     alignItems: "center",
-    width: "100%",
+    width: ITEM_WIDTH,
   },
   categoryImageContainer: {
     backgroundColor: "#fdfaf6",
-    width: screenWidth > 1024 ? 192 : screenWidth > 640 ? 128 : 96,
-    height: screenWidth > 1024 ? 192 : screenWidth > 640 ? 128 : 96,
-    borderRadius: screenWidth > 1024 ? 96 : screenWidth > 640 ? 64 : 48,
+    width: ITEM_WIDTH,
+    height: ITEM_WIDTH,
+    borderRadius: ITEM_WIDTH / 2,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000000",
@@ -304,22 +310,23 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
     overflow: "hidden",
-    marginBottom: screenWidth > 1024 ? 16 : screenWidth > 640 ? 12 : 8,
+    marginBottom: 8,
   },
   categoryImage: {
     width: "100%",
     height: "100%",
-    borderRadius: screenWidth > 1024 ? 96 : screenWidth > 640 ? 64 : 48,
+    borderRadius: ITEM_WIDTH / 2,
   },
   categoryTextContainer: {
     alignItems: "center",
+    width: ITEM_WIDTH,
   },
   categoryName: {
-    fontSize: screenWidth > 1024 ? 18 : screenWidth > 640 ? 14 : 12,
+    fontSize: 11,
     fontWeight: "500",
     color: "#000000",
     textAlign: "center",
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   emptyContainer: {
     alignItems: "center",

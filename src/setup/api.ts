@@ -173,7 +173,7 @@ class ApiClient {
 // Create API instance with environment-aware configuration
 export const api = new ApiClient({
   baseURL: getBaseURL(),
-  timeout: 10000, // 10 seconds timeout
+  timeout: 30000, // 30 seconds timeout for slower network/emulator connections
 });
 
 // Export the base URL for debugging
@@ -211,26 +211,19 @@ export const testApiConnection = async (): Promise<boolean> => {
 
 export default api;
 
-// Simple query client implementation with active query tracking
-class SimpleQueryClient {
-  private activeQueries = new Map<string, () => void>();
+// Re-export QueryClient from React Query
+// The actual QueryClient instance is created in _layout.tsx and accessed via useQueryClient hook
+import { QueryClient } from "@tanstack/react-query";
 
-  registerQuery(key: string, refetchFn: () => void) {
-    this.activeQueries.set(key, refetchFn);
-  }
-
-  unregisterQuery(key: string) {
-    this.activeQueries.delete(key);
-  }
-
-  invalidateQueries(options: { queryKey: string[] }) {
-    options.queryKey.forEach((key) => {
-      const refetchFn = this.activeQueries.get(key);
-      if (refetchFn) {
-        refetchFn();
-      }
-    });
-  }
-}
-
-export const queryClient = new SimpleQueryClient();
+// Create a singleton QueryClient for use in mutations and invalidation
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 30 * 60 * 1000, // 30 minutes (formerly cacheTime)
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      retry: 2,
+    },
+  },
+});

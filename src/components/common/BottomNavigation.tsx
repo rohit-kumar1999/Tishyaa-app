@@ -1,19 +1,49 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, usePathname } from "expo-router";
-import React, { useCallback } from "react";
-import { SafeAreaView, StyleSheet, Text } from "react-native";
+import React, { memo, useCallback, useMemo } from "react";
+import { StyleSheet, Text } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { TouchableOpacity } from "./TouchableOpacity";
 
 interface BottomNavigationProps {
   currentRoute?: string;
 }
 
-export default function BottomNavigation({
-  currentRoute,
-}: BottomNavigationProps) {
+const tabs = [
+  { key: "home", route: "/home", icon: "home", label: "Home" },
+  {
+    key: "collection",
+    route: "/products",
+    icon: "diamond-outline",
+    label: "Collection",
+  },
+  {
+    key: "category",
+    route: "/categories",
+    icon: "grid-outline",
+    label: "Category",
+  },
+  {
+    key: "new-arrivals",
+    route: "/products?newArrivals=true&sortBy=createdAt&sortOrder=desc",
+    icon: "sparkles-outline",
+    label: "New",
+  },
+  {
+    key: "gifting",
+    route: "/gifting",
+    icon: "gift-outline",
+    label: "Gifting",
+  },
+];
+
+function BottomNavigationComponent({ currentRoute }: BottomNavigationProps) {
   const pathname = usePathname();
-  const activeRoute = currentRoute || pathname;
+  const activeRoute = useMemo(
+    () => currentRoute || pathname,
+    [currentRoute, pathname]
+  );
 
   // Only navigate if not already on the target route
   const navigateTo = useCallback(
@@ -36,36 +66,8 @@ export default function BottomNavigation({
     [pathname]
   );
 
-  const tabs = [
-    { key: "home", route: "/home", icon: "home", label: "Home" },
-    {
-      key: "collection",
-      route: "/products",
-      icon: "diamond-outline",
-      label: "Collection",
-    },
-    {
-      key: "category",
-      route: "/categories",
-      icon: "grid-outline",
-      label: "Category",
-    },
-    {
-      key: "new-arrivals",
-      route: "/products?newArrivals=true&sortBy=createdAt&sortOrder=desc",
-      icon: "sparkles-outline",
-      label: "New",
-    },
-    {
-      key: "gifting",
-      route: "/gifting",
-      icon: "gift-outline",
-      label: "Gifting",
-    },
-  ];
-
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["bottom"]}>
       <LinearGradient
         colors={["rgba(255, 255, 255, 0.95)", "rgba(255, 255, 255, 1)"]}
         style={styles.bottomTab}
@@ -131,3 +133,5 @@ const styles = StyleSheet.create({
     color: "#6366f1",
   },
 });
+
+export default memo(BottomNavigationComponent);

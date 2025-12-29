@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useEffect, useRef } from "react";
+import React, { memo, useEffect, useRef } from "react";
 import {
   Animated,
   Dimensions,
@@ -13,7 +13,7 @@ import {
 
 const screenWidth = Dimensions.get("window").width;
 
-export const PromoBanner = () => {
+export const PromoBanner = memo(() => {
   // Animated values for floating icons
   const sparklesAnim = useRef(new Animated.Value(0)).current;
   const crownAnim = useRef(new Animated.Value(0)).current;
@@ -156,7 +156,7 @@ export const PromoBanner = () => {
       </View>
     </LinearGradient>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

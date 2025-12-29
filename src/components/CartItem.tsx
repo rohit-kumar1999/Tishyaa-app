@@ -2,8 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { TouchableOpacity } from "./common/TouchableOpacity";
 import { CartItem as CartItemType } from "../types";
+import { TouchableOpacity } from "./common/TouchableOpacity";
 
 interface CartItemProps {
   item: CartItemType;
@@ -43,6 +43,7 @@ const CartItem: React.FC<CartItemProps> = ({
         }}
         style={styles.image}
         contentFit="cover"
+        cachePolicy="memory-disk"
       />
 
       <View style={styles.details}>

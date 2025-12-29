@@ -1,15 +1,8 @@
 import { api } from "@/setup/api";
 import { useAuth, useUser } from "@clerk/clerk-expo";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useCallback, useMemo } from "react";
 import { useApiMutation, useApiQuery } from "../hooks/useApiQuery";
-
-// Global request tracker to prevent infinite loops across all instances
-let globalRequestCount = 0;
-let globalResetTimeout: NodeJS.Timeout | null = null;
-
-const resetGlobalCounter = () => {
-  globalRequestCount = 0;
-};
 
 export interface Product {
   id: string;
@@ -121,18 +114,11 @@ const transformApiProducts = (apiProducts: any[]): Product[] => {
   }));
 };
 
-// Hook for fetching featured products (trending/bestsellers)
+// Hook for fetching featured products (trending/bestsellers) - uses React Query
 export const useFeaturedProducts = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchFeaturedProducts = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Fetch products with filters for featured items (trending/bestsellers)
+  const query = useQuery<ProductResponse>({
+    queryKey: ["featured-products"],
+    queryFn: async () => {
       const response: ProductResponse = await api.post("/product", {
         page: 1,
         limit: 8,
@@ -144,30 +130,32 @@ export const useFeaturedProducts = () => {
         includeOccasions: false,
         inStock: true,
       });
+      return response;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    placeholderData: (previousData) => previousData,
+    retry: 3, // Retry 3 times on failure
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+  });
 
-      const transformedProducts = transformApiProducts(response.products);
-      setProducts(transformedProducts);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch featured products"
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchFeaturedProducts();
-  }, [fetchFeaturedProducts]);
+  const products = useMemo(
+    () => (query.data ? transformApiProducts(query.data.products) : []),
+    [query.data]
+  );
 
   const refetch = useCallback(() => {
-    fetchFeaturedProducts();
-  }, [fetchFeaturedProducts]);
+    query.refetch();
+  }, [query]);
 
   return {
     products,
-    isLoading,
-    error,
+    isLoading: query.isPending && !query.data,
+    isFetching: query.isFetching,
+    // Only show error if we have no products to display
+    error: products.length > 0 ? null : query.error?.message ?? null,
     refetch,
   };
 };
@@ -195,7 +183,7 @@ export const useGetProducts = () => {
   };
 };
 
-// Hook for fetching all products with pagination and filters
+// Hook for fetching all products with pagination and filters - uses React Query
 export const useProducts = (params?: {
   page?: number;
   limit?: number;
@@ -213,38 +201,41 @@ export const useProducts = (params?: {
   priceRange?: [number, number];
   inStock?: boolean;
 }) => {
-  const [data, setData] = useState<ProductResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const requestCountRef = useRef(0);
+  // Create stable serialized strings for query key
+  const queryKeyParams = useMemo(
+    () => ({
+      page: params?.page || 1,
+      limit: params?.limit || 20,
+      sortBy: params?.sortBy || "createdAt",
+      sortOrder: params?.sortOrder || "desc",
+      category: params?.category,
+      categories: params?.categories?.sort().join(",") || "",
+      materials: params?.materials?.sort().join(",") || "",
+      occasions: params?.occasions?.sort().join(",") || "",
+      discounts: params?.discounts?.sort().join(",") || "",
+      ratings: params?.ratings?.sort().join(",") || "",
+      search: params?.search || "",
+      priceRange: params?.priceRange?.join(",") || "",
+      inStock: params?.inStock,
+    }),
+    [
+      params?.page,
+      params?.limit,
+      params?.sortBy,
+      params?.sortOrder,
+      params?.category,
+      params?.categories,
+      params?.materials,
+      params?.occasions,
+      params?.discounts,
+      params?.ratings,
+      params?.search,
+      params?.priceRange,
+      params?.inStock,
+    ]
+  );
 
-  // Create stable serialized strings for array dependencies
-  const categoriesString = useMemo(
-    () => params?.categories?.join(",") || "",
-    [params?.categories]
-  );
-  const materialsString = useMemo(
-    () => params?.materials?.join(",") || "",
-    [params?.materials]
-  );
-  const occasionsString = useMemo(
-    () => params?.occasions?.join(",") || "",
-    [params?.occasions]
-  );
-  const discountsString = useMemo(
-    () => params?.discounts?.join(",") || "",
-    [params?.discounts]
-  );
-  const ratingsString = useMemo(
-    () => params?.ratings?.join(",") || "",
-    [params?.ratings]
-  );
-  const priceRangeString = useMemo(
-    () => params?.priceRange?.join(",") || "",
-    [params?.priceRange]
-  );
-
-  // Memoize the request body to prevent unnecessary re-renders
+  // Build request body
   const requestBody = useMemo(
     () => ({
       page: params?.page || 1,
@@ -272,118 +263,53 @@ export const useProducts = (params?: {
         maxPrice: params.priceRange[1],
       }),
     }),
-    [
-      params?.page,
-      params?.limit,
-      params?.sortBy,
-      params?.sortOrder,
-      params?.category,
-      categoriesString,
-      materialsString,
-      occasionsString,
-      discountsString,
-      ratingsString,
-      params?.search,
-      params?.minPrice,
-      params?.maxPrice,
-      priceRangeString,
-      params?.inStock,
-    ]
+    [queryKeyParams]
   );
 
-  // Add a simple reset function for the circuit breaker
-  const resetCircuitBreaker = useCallback(() => {
-    requestCountRef.current = 0;
-    setError(null);
-  }, []);
-
-  const fetchProducts = useCallback(async () => {
-    // Global circuit breaker to prevent infinite loops across all instances
-    globalRequestCount += 1;
-    requestCountRef.current += 1;
-
-    if (globalRequestCount > 3) {
-      // Clear any existing reset timeout
-      if (globalResetTimeout) {
-        clearTimeout(globalResetTimeout);
-      }
-
-      // Force a longer cooldown period
-      globalResetTimeout = setTimeout(resetGlobalCounter, 5000);
-
-      setError(
-        "System overload detected. Please wait 5 seconds before trying again."
-      );
-      setIsLoading(false);
-      return;
-    }
-
-    if (requestCountRef.current > 2) {
-      requestCountRef.current = 0;
-      setError("Multiple rapid requests detected. System reset automatically.");
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
+  const query = useQuery<ProductResponse>({
+    queryKey: ["products", queryKeyParams],
+    queryFn: async () => {
       const response: ProductResponse = await api.post("/product", requestBody);
-      setData(response);
+      return response;
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes for product lists (shorter since filters change)
+    gcTime: 15 * 60 * 1000, // 15 minutes
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    placeholderData: (previousData) => previousData, // Show stale data while refetching
+    retry: 3, // Retry 3 times on failure
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+  });
 
-      // Reset counters on successful request
-      requestCountRef.current = 0;
-
-      // Reset global counter gradually
-      if (globalResetTimeout) {
-        clearTimeout(globalResetTimeout);
-      }
-      globalResetTimeout = setTimeout(resetGlobalCounter, 2000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch products");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [requestBody]);
-
-  // Add throttling to prevent rapid successive calls
-  const throttleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    // Clear any existing timeout
-    if (throttleTimeoutRef.current) {
-      clearTimeout(throttleTimeoutRef.current);
-    }
-
-    // Throttle the API call to prevent rapid successive requests
-    throttleTimeoutRef.current = setTimeout(() => {
-      fetchProducts();
-    }, 300); // 300ms throttle
-
-    // Cleanup timeout on unmount
-    return () => {
-      if (throttleTimeoutRef.current) {
-        clearTimeout(throttleTimeoutRef.current);
-      }
-    };
-  }, [fetchProducts]);
+  const products = useMemo(
+    () => (query.data ? transformApiProducts(query.data.products) : []),
+    [query.data]
+  );
 
   const refetch = useCallback(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    query.refetch();
+  }, [query]);
+
+  // Reset function (no longer needed with React Query, but kept for compatibility)
+  const resetCircuitBreaker = useCallback(() => {
+    // No-op - React Query handles this
+  }, []);
 
   return {
-    data,
-    products: data?.products || [],
-    pagination: data?.pagination,
-    categories: data?.categories || [],
-    materials: data?.materials || [],
-    occasions: data?.occasions || [],
-    meta: data?.meta,
-    isLoading,
-    error,
+    data: query.data ?? null,
+    products,
+    pagination: query.data?.pagination,
+    categories: query.data?.categories || [],
+    materials: query.data?.materials || [],
+    occasions: query.data?.occasions || [],
+    meta: query.data?.meta,
+    // isLoading: true only when pending (no data yet and fetching)
+    isLoading: query.isPending && !query.data,
+    isFetching: query.isFetching,
+    // Only show error if we have no products to display
+    error: products.length > 0 ? null : query.error?.message ?? null,
     refetch,
-    resetCircuitBreaker, // Expose reset function
+    resetCircuitBreaker,
   };
 };
 

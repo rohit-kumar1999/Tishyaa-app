@@ -8,13 +8,13 @@ import {
   FlatList,
   Modal,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import BottomNavigation from "../../components/common/BottomNavigation";
 import { TouchableOpacity } from "../../components/common/TouchableOpacity";
 import { useAddressManager } from "../../hooks/useAddressManager";
@@ -489,7 +489,7 @@ export default function AddressesScreen() {
         </View>
 
         {/* Address List */}
-        {isLoading ? (
+        {isLoading && addresses.length === 0 ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#e11d48" />
             <Text style={styles.loadingText}>Loading addresses...</Text>

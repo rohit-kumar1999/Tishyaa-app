@@ -3,8 +3,10 @@ import { router } from "expo-router";
 import React, {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { toast } from "../hooks/use-toast";
@@ -66,81 +68,142 @@ export const ApiCartProvider: React.FC<{ children: ReactNode }> = ({
   const cartCount = localCartCount;
 
   // Add product to cart
-  const addItemToCart = (
-    productId: string,
-    quantity: number = 1,
-    navigateToCart: boolean = true
-  ) => {
-    if (!isSignedIn) {
-      toast({
-        description: "Please sign in to add items to your cart",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Optimistically update cart count immediately
-    setLocalCartCount((prev) => prev + quantity);
-
-    setIsProcessing((prev) => ({ ...prev, [productId]: true }));
-
-    addToCart(
-      { productId, quantity },
-      {
-        onSuccess: async () => {
-          setIsProcessing((prev) => ({ ...prev, [productId]: false }));
-
-          // Refetch cart data to sync with server
-          await refetch();
-
-          // Show success toast
-          toast({
-            title: "Added to Cart",
-            description: navigateToCart
-              ? "Redirecting to cart..."
-              : "Product added to your cart",
-            variant: "success",
-          });
-
-          // Navigate to cart page if requested
-          if (navigateToCart) {
-            setTimeout(() => {
-              router.push("/cart");
-            }, 500);
-          }
-        },
-        onError: () => {
-          // Revert optimistic update on error
-          setLocalCartCount((prev) => prev - quantity);
-          setIsProcessing((prev) => ({ ...prev, [productId]: false }));
-          toast({
-            title: "Error",
-            description: "Failed to add item to cart",
-            variant: "destructive",
-          });
-        },
+  const addItemToCart = useCallback(
+    (
+      productId: string,
+      quantity: number = 1,
+      navigateToCart: boolean = true
+    ) => {
+      if (!isSignedIn) {
+        toast({
+          description: "Please sign in to add items to your cart",
+          variant: "destructive",
+        });
+        return;
       }
-    );
-  };
+
+      // Optimistically update cart count immediately
+      setLocalCartCount((prev) => prev + quantity);
+
+      setIsProcessing((prev) => ({ ...prev, [productId]: true }));
+
+      addToCart(
+        { productId, quantity },
+        {
+          onSuccess: async () => {
+            setIsProcessing((prev) => ({ ...prev, [productId]: false }));
+
+            // Refetch cart data to sync with server
+            await refetch();
+
+            // Show success toast
+            toast({
+              title: "Added to Cart",
+              description: navigateToCart
+                ? "Redirecting to cart..."
+                : "Product added to your cart",
+              variant: "success",
+            });
+
+            // Navigate to cart page if requested
+            if (navigateToCart) {
+              setTimeout(() => {
+                router.push("/cart");
+              }, 500);
+            }
+          },
+          onError: () => {
+            // Revert optimistic update on error
+            setLocalCartCount((prev) => prev - quantity);
+            setIsProcessing((prev) => ({ ...prev, [productId]: false }));
+            toast({
+              title: "Error",
+              description: "Failed to add item to cart",
+              variant: "destructive",
+            });
+          },
+        }
+      );
+    },
+    [isSignedIn, addToCart, refetch]
+  );
 
   // Update cart item quantity or remove if quantity is 0
-  const updateItemQuantity = (id: string, quantity: number) => {
-    // Find current item to calculate difference for optimistic update
-    const currentItem = cartItems?.find((item) => item.id === id);
-    const previousQuantity = currentItem?.quantity || 0;
-    const quantityDiff = quantity - previousQuantity;
+  const updateItemQuantity = useCallback(
+    (id: string, quantity: number) => {
+      // Find current item to calculate difference for optimistic update
+      const currentItem = cartItems?.find((item) => item.id === id);
+      const previousQuantity = currentItem?.quantity || 0;
+      const quantityDiff = quantity - previousQuantity;
 
-    // Optimistically update cart count
-    if (quantity <= 0) {
+      // Optimistically update cart count
+      if (quantity <= 0) {
+        setLocalCartCount((prev) => Math.max(0, prev - previousQuantity));
+      } else {
+        setLocalCartCount((prev) => Math.max(0, prev + quantityDiff));
+      }
+
+      setIsProcessing((prev) => ({ ...prev, [id]: true }));
+
+      if (quantity <= 0) {
+        // Remove item from cart
+        removeFromCart(
+          { cartId: id },
+          {
+            onSuccess: async () => {
+              setIsProcessing((prev) => ({ ...prev, [id]: false }));
+              await refetch();
+            },
+            onError: () => {
+              // Revert optimistic update
+              setLocalCartCount((prev) => prev + previousQuantity);
+              setIsProcessing((prev) => ({ ...prev, [id]: false }));
+              toast({
+                title: "Error",
+                description: "Failed to remove item from cart",
+                variant: "destructive",
+              });
+            },
+          }
+        );
+      } else {
+        // Update item quantity
+        updateCart(
+          { cartId: id, quantity },
+          {
+            onSuccess: async () => {
+              setIsProcessing((prev) => ({ ...prev, [id]: false }));
+              await refetch();
+            },
+            onError: () => {
+              // Revert optimistic update
+              setLocalCartCount((prev) => prev - quantityDiff);
+              setIsProcessing((prev) => ({ ...prev, [id]: false }));
+              toast({
+                title: "Error",
+                description: "Failed to update cart item",
+                variant: "destructive",
+              });
+            },
+          }
+        );
+      }
+    },
+    [cartItems, removeFromCart, updateCart, refetch]
+  );
+
+  // Remove item from cart
+  const removeItem = useCallback(
+    (id: string) => {
+      // Find current item for optimistic update
+      const currentItem = cartItems?.find((item) => item.id === id);
+      const previousQuantity = currentItem?.quantity || 0;
+
+      // Optimistically update cart count
       setLocalCartCount((prev) => Math.max(0, prev - previousQuantity));
-    } else {
-      setLocalCartCount((prev) => Math.max(0, prev + quantityDiff));
-    }
 
-    setIsProcessing((prev) => ({ ...prev, [id]: true }));
+      setIsProcessing((prev) => ({ ...prev, [id]: true }));
 
-    if (quantity <= 0) {
-      // Remove item from cart
       removeFromCart(
         { cartId: id },
         {
@@ -153,82 +216,44 @@ export const ApiCartProvider: React.FC<{ children: ReactNode }> = ({
             setLocalCartCount((prev) => prev + previousQuantity);
             setIsProcessing((prev) => ({ ...prev, [id]: false }));
             toast({
-              title: "Error",
               description: "Failed to remove item from cart",
               variant: "destructive",
             });
           },
         }
       );
-    } else {
-      // Update item quantity
-      updateCart(
-        { cartId: id, quantity },
-        {
-          onSuccess: async () => {
-            setIsProcessing((prev) => ({ ...prev, [id]: false }));
-            await refetch();
-          },
-          onError: () => {
-            // Revert optimistic update
-            setLocalCartCount((prev) => prev - quantityDiff);
-            setIsProcessing((prev) => ({ ...prev, [id]: false }));
-            toast({
-              title: "Error",
-              description: "Failed to update cart item",
-              variant: "destructive",
-            });
-          },
-        }
-      );
-    }
-  };
+    },
+    [cartItems, removeFromCart, refetch]
+  );
 
-  // Remove item from cart
-  const removeItem = (id: string) => {
-    // Find current item for optimistic update
-    const currentItem = cartItems?.find((item) => item.id === id);
-    const previousQuantity = currentItem?.quantity || 0;
-
-    // Optimistically update cart count
-    setLocalCartCount((prev) => Math.max(0, prev - previousQuantity));
-
-    setIsProcessing((prev) => ({ ...prev, [id]: true }));
-
-    removeFromCart(
-      { cartId: id },
-      {
-        onSuccess: async () => {
-          setIsProcessing((prev) => ({ ...prev, [id]: false }));
-          await refetch();
-        },
-        onError: () => {
-          // Revert optimistic update
-          setLocalCartCount((prev) => prev + previousQuantity);
-          setIsProcessing((prev) => ({ ...prev, [id]: false }));
-          toast({
-            description: "Failed to remove item from cart",
-            variant: "destructive",
-          });
-        },
-      }
-    );
-  };
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo<ApiCartContextType>(
+    () => ({
+      cartItems: cartItems || undefined,
+      cartCount,
+      isInitialLoading,
+      error,
+      isProcessing,
+      addItemToCart,
+      updateItemQuantity,
+      removeItem,
+      refetch,
+    }),
+    [
+      cartItems,
+      cartCount,
+      isInitialLoading,
+      error,
+      isProcessing,
+      addItemToCart,
+      updateItemQuantity,
+      removeItem,
+      refetch,
+    ]
+  );
 
   return (
-    <ApiCartContext.Provider
-      value={{
-        cartItems: cartItems || undefined,
-        cartCount,
-        isInitialLoading,
-        error,
-        isProcessing,
-        addItemToCart,
-        updateItemQuantity,
-        removeItem,
-        refetch,
-      }}
-    >
+    <ApiCartContext.Provider value={contextValue}>
       {children}
     </ApiCartContext.Provider>
   );

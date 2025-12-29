@@ -1,18 +1,18 @@
 import { SignedIn, SignedOut, useAuth, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, router } from "expo-router";
 import React from "react";
 import {
   ActivityIndicator,
-  Image,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import BottomNavigation from "../components/common/BottomNavigation";
 import { formatDate } from "../utils";
 
@@ -116,6 +116,8 @@ export default function ProfileScreen() {
                     <Image
                       source={{ uri: user.imageUrl }}
                       style={styles.avatar}
+                      cachePolicy="memory-disk"
+                      transition={200}
                     />
                   ) : (
                     <View style={styles.avatarPlaceholder}>

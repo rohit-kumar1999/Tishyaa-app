@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
-import api, { queryClient } from "../setup/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
+import api from "../setup/api";
 import { toast } from "./use-toast";
 
 // Common options for API query hooks
@@ -13,83 +14,63 @@ interface ApiQueryOptions {
 // Simple query state interface
 interface QueryState<T> {
   data: T | null;
-  isLoading: boolean;
+  isLoading: boolean; // True only on initial load with no cached data
+  isFetching: boolean; // True when fetching (including background)
   error: Error | null;
   refetch: () => Promise<void>;
 }
 
-// Hook to wrap API GET requests
+// Hook to wrap API GET requests with TanStack Query caching
+// Uses stale-while-revalidate: shows cached data immediately, fetches in background
 export const useApiQuery = <T = unknown>(
   url: string,
   options?: Omit<ApiQueryOptions, "invalidateQueries"> & {
     enabled?: boolean;
     dependencies?: any[];
+    staleTime?: number;
+    gcTime?: number;
+    refetchOnMount?: boolean | "always";
+    refetchOnWindowFocus?: boolean;
   }
 ): QueryState<T> => {
   const {
-    successMessage,
-    errorMessage,
     enabled = true,
-    dependencies = [],
+    staleTime = 5 * 60 * 1000, // 5 minutes - data considered fresh
+    gcTime = 30 * 60 * 1000, // 30 minutes garbage collection
+    refetchOnMount = true, // Refetch in background when mounting
+    refetchOnWindowFocus = false,
   } = options || {};
 
-  const [state, setState] = useState<{
-    data: T | null;
-    isLoading: boolean;
-    error: Error | null;
-  }>({
-    data: null,
-    isLoading: enabled,
-    error: null,
+  const query = useQuery<T, Error>({
+    queryKey: [url],
+    queryFn: async () => {
+      const response = await api.get(url);
+      return response as T;
+    },
+    enabled,
+    staleTime,
+    gcTime,
+    refetchOnMount,
+    refetchOnWindowFocus,
+    retry: 3, // Retry 3 times on failure
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
+    // Key for stale-while-revalidate: keep showing previous data while fetching
+    placeholderData: (previousData) => previousData,
   });
 
-  const fetchData = useCallback(async () => {
-    if (!enabled) return;
-
-    setState((prev) => ({ ...prev, isLoading: true, error: null }));
-
-    try {
-      const response = await api.get(url);
-      setState({
-        data: response as T,
-        isLoading: false,
-        error: null,
-      });
-      if (successMessage) {
-        toast({ description: successMessage });
-      }
-    } catch (error) {
-      const err =
-        error instanceof Error ? error : new Error("An error occurred");
-      setState({
-        data: null,
-        isLoading: false,
-        error: err,
-      });
-      if (errorMessage) {
-        toast({
-          description: errorMessage,
-          variant: "destructive",
-        });
-      }
-    }
-  }, [url, enabled, successMessage, errorMessage, ...dependencies]);
-
-  useEffect(() => {
-    fetchData();
-
-    // Register query for invalidation
-    queryClient.registerQuery(url, fetchData);
-
-    // Cleanup on unmount
-    return () => {
-      queryClient.unregisterQuery(url);
-    };
-  }, [fetchData, url]);
+  const refetch = useCallback(async () => {
+    await query.refetch();
+  }, [query]);
 
   return {
-    ...state,
-    refetch: fetchData,
+    data: query.data ?? null,
+    // isLoading: true only when pending (no data yet and fetching)
+    isLoading: query.isPending && !query.data,
+    // isFetching: true when any fetch is happening (including background)
+    isFetching: query.isFetching,
+    // Only show error if we have no data to display
+    error: query.data ? null : query.error ?? null,
+    refetch,
   };
 };
 
@@ -106,7 +87,7 @@ interface MutationCallbacks<T> {
   onSettled?: () => void;
 }
 
-// Hook to wrap API POST requests
+// Hook to wrap API POST requests with React Query
 export const useApiMutation = <T = unknown, D = unknown>(
   url: string,
   options?: ApiQueryOptions & {
@@ -121,101 +102,76 @@ export const useApiMutation = <T = unknown, D = unknown>(
     method = "POST",
   } = options || {};
 
-  const [state, setState] = useState<{
-    isLoading: boolean;
-    error: Error | null;
-  }>({
-    isLoading: false,
-    error: null,
+  const queryClientInstance = useQueryClient();
+
+  const mutation = useMutation<T, Error, D>({
+    mutationFn: async (data?: D) => {
+      const transformedData = transformRequest ? transformRequest(data) : data;
+      let response: T;
+
+      switch (method) {
+        case "POST":
+          response = await api.post(url, transformedData);
+          break;
+        case "PUT":
+          response = await api.put(url, transformedData);
+          break;
+        case "PATCH":
+          response = await api.put(url, transformedData);
+          break;
+        default:
+          response = await api.post(url, transformedData);
+      }
+
+      return response;
+    },
+    onSuccess: () => {
+      // Handle query invalidation
+      if (invalidateQueries) {
+        if (Array.isArray(invalidateQueries)) {
+          invalidateQueries.forEach((query) => {
+            queryClientInstance.invalidateQueries({ queryKey: [query] });
+          });
+        } else {
+          queryClientInstance.invalidateQueries({
+            queryKey: [invalidateQueries],
+          });
+        }
+      }
+
+      if (successMessage) {
+        toast({ description: successMessage });
+      }
+    },
+    onError: (error) => {
+      const message = errorMessage || error.message || "An error occurred";
+      toast({ description: message, variant: "destructive" });
+    },
   });
 
+  // Wrapper to support callbacks pattern
   const mutate = useCallback(
     async (data?: D, callbacks?: MutationCallbacks<T>): Promise<T | null> => {
-      setState({ isLoading: true, error: null });
-
       try {
-        const transformedData = transformRequest
-          ? transformRequest(data)
-          : data;
-        let response: T;
-
-        switch (method) {
-          case "POST":
-            response = await api.post(url, transformedData);
-            break;
-          case "PUT":
-            response = await api.put(url, transformedData);
-            break;
-          case "PATCH":
-            response = await api.put(url, transformedData); // Using PUT for PATCH
-            break;
-          default:
-            response = await api.post(url, transformedData);
-        }
-
-        setState({ isLoading: false, error: null });
-
-        // Handle query invalidation
-        if (invalidateQueries) {
-          if (Array.isArray(invalidateQueries)) {
-            invalidateQueries.forEach((query) => {
-              queryClient.invalidateQueries({ queryKey: [query] });
-            });
-          } else {
-            queryClient.invalidateQueries({ queryKey: [invalidateQueries] });
-          }
-        }
-
-        // Call success callback
-        if (callbacks?.onSuccess) {
-          callbacks.onSuccess(response);
-        }
-
-        if (successMessage) {
-          toast({ description: successMessage });
-        }
-
-        // Call settled callback
-        if (callbacks?.onSettled) {
-          callbacks.onSettled();
-        }
-
-        return response;
+        const result = await mutation.mutateAsync(data as D);
+        callbacks?.onSuccess?.(result);
+        callbacks?.onSettled?.();
+        return result;
       } catch (error) {
         const err =
           error instanceof Error ? error : new Error("An error occurred");
-        setState({ isLoading: false, error: err });
-
-        // Call error callback
-        if (callbacks?.onError) {
-          callbacks.onError(err);
-        }
-
-        const message = errorMessage || "An error occurred";
-        toast({ description: message, variant: "destructive" });
-
-        // Call settled callback
-        if (callbacks?.onSettled) {
-          callbacks.onSettled();
-        }
-
+        callbacks?.onError?.(err);
+        callbacks?.onSettled?.();
         return null;
       }
     },
-    [
-      url,
-      method,
-      invalidateQueries,
-      successMessage,
-      errorMessage,
-      transformRequest,
-    ]
+    [mutation]
   );
 
   return {
     mutate,
-    isLoading: state.isLoading,
-    error: state.error,
+    isLoading: mutation.isPending,
+    error: mutation.error,
   };
 };
 
@@ -227,7 +183,7 @@ export const useApiPutMutation = <T = unknown, D = unknown>(
   return useApiMutation<T, D>(url, { ...options, method: "PUT" });
 };
 
-// Hook to wrap API DELETE requests
+// Hook to wrap API DELETE requests with React Query
 export const useApiDeleteMutation = <T = unknown>(
   url: string,
   options?: ApiQueryOptions
@@ -235,103 +191,83 @@ export const useApiDeleteMutation = <T = unknown>(
   const { invalidateQueries, successMessage, errorMessage, transformRequest } =
     options || {};
 
-  const [state, setState] = useState<{
-    isLoading: boolean;
-    error: Error | null;
-  }>({
-    isLoading: false,
-    error: null,
+  const queryClientInstance = useQueryClient();
+
+  const mutation = useMutation<T, Error, any>({
+    mutationFn: async (data: any) => {
+      const transformedData = transformRequest ? transformRequest(data) : data;
+      let response: T;
+      let deleteUrl = url;
+
+      if (transformedData && typeof transformedData === "object") {
+        if (transformedData.params) {
+          // Handle query parameters for DELETE requests
+          const params = new URLSearchParams(transformedData.params).toString();
+          deleteUrl = `${url}?${params}`;
+          response = await api.delete(deleteUrl);
+        } else {
+          // Use object as request body
+          response = await api.delete(url, {
+            body: JSON.stringify(transformedData),
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+      } else if (transformedData) {
+        // If we just have an ID, add it to the URL
+        response = await api.delete(`${url}/${transformedData}`);
+      } else {
+        // Simple DELETE request
+        response = await api.delete(url);
+      }
+
+      return response;
+    },
+    onSuccess: () => {
+      // Handle query invalidation
+      if (invalidateQueries) {
+        if (Array.isArray(invalidateQueries)) {
+          invalidateQueries.forEach((query) => {
+            queryClientInstance.invalidateQueries({ queryKey: [query] });
+          });
+        } else {
+          queryClientInstance.invalidateQueries({
+            queryKey: [invalidateQueries],
+          });
+        }
+      }
+
+      if (successMessage) {
+        toast({ description: successMessage });
+      }
+    },
+    onError: (error) => {
+      const message = errorMessage || error.message || "An error occurred";
+      toast({ description: message, variant: "destructive" });
+    },
   });
 
+  // Wrapper to support callbacks pattern
   const mutate = useCallback(
-    async (data: any, callbacks?: MutationCallbacks<T>): Promise<T | null> => {
-      setState({ isLoading: true, error: null });
-
+    async (data?: any, callbacks?: MutationCallbacks<T>): Promise<T | null> => {
       try {
-        const transformedData = transformRequest
-          ? transformRequest(data)
-          : data;
-        let response: T;
-        let deleteUrl = url;
-
-        if (transformedData && typeof transformedData === "object") {
-          if (transformedData.params) {
-            // Handle query parameters for DELETE requests
-            const params = new URLSearchParams(
-              transformedData.params
-            ).toString();
-            deleteUrl = `${url}?${params}`;
-            response = await api.delete(deleteUrl);
-          } else {
-            // Use object as request body
-            response = await api.delete(url, {
-              body: JSON.stringify(transformedData),
-              headers: { "Content-Type": "application/json" },
-            });
-          }
-        } else if (transformedData) {
-          // If we just have an ID, add it to the URL
-          response = await api.delete(`${url}/${transformedData}`);
-        } else {
-          // Simple DELETE request
-          response = await api.delete(url);
-        }
-
-        setState({ isLoading: false, error: null });
-
-        // Handle query invalidation
-        if (invalidateQueries) {
-          if (Array.isArray(invalidateQueries)) {
-            invalidateQueries.forEach((query) => {
-              queryClient.invalidateQueries({ queryKey: [query] });
-            });
-          } else {
-            queryClient.invalidateQueries({ queryKey: [invalidateQueries] });
-          }
-        }
-
-        // Call success callback
-        if (callbacks?.onSuccess) {
-          callbacks.onSuccess(response);
-        }
-
-        if (successMessage) {
-          toast({ description: successMessage });
-        }
-
-        // Call settled callback
-        if (callbacks?.onSettled) {
-          callbacks.onSettled();
-        }
-
-        return response;
+        const result = await mutation.mutateAsync(data);
+        callbacks?.onSuccess?.(result);
+        callbacks?.onSettled?.();
+        return result;
       } catch (error) {
         const err =
           error instanceof Error ? error : new Error("An error occurred");
-        setState({ isLoading: false, error: err });
-
-        // Call error callback
-        if (callbacks?.onError) {
-          callbacks.onError(err);
-        }
-
-        const message = errorMessage || "An error occurred";
-        toast({ description: message, variant: "destructive" });
-
-        // Call settled callback
-        if (callbacks?.onSettled) {
-          callbacks.onSettled();
-        }
-
+        callbacks?.onError?.(err);
+        callbacks?.onSettled?.();
         return null;
       }
     },
-    [url, invalidateQueries, successMessage, errorMessage, transformRequest]
+    [mutation]
   );
 
   return {
     mutate,
-    isLoading: state.isLoading,
-    error: state.error,
+    isLoading: mutation.isPending,
+    error: mutation.error,
   };
 };

@@ -1,10 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
 import {
   Dimensions,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -203,24 +203,32 @@ export default function AboutScreen() {
               <Image
                 source={{ uri: storyImages[0] }}
                 style={styles.imageSquare}
-                resizeMode="cover"
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                transition={200}
               />
               <Image
                 source={{ uri: storyImages[1] }}
                 style={styles.imagePortrait}
-                resizeMode="cover"
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                transition={200}
               />
             </View>
             <View style={[styles.imageColumn, styles.imageColumnOffset]}>
               <Image
                 source={{ uri: storyImages[2] }}
                 style={styles.imagePortrait}
-                resizeMode="cover"
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                transition={200}
               />
               <Image
                 source={{ uri: storyImages[3] }}
                 style={styles.imageSquare}
-                resizeMode="cover"
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                transition={200}
               />
             </View>
           </View>
@@ -273,7 +281,9 @@ export default function AboutScreen() {
                   <Image
                     source={{ uri: member.image }}
                     style={styles.teamImage}
-                    resizeMode="cover"
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                    transition={200}
                   />
                   <View style={styles.teamStarBadge}>
                     <Ionicons name="star" size={12} color="#fff" />
