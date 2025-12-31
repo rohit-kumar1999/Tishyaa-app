@@ -21,7 +21,6 @@ export * from "./ui";
 
 // Common Components
 export { CartItem } from "./CartItem";
-export { CategoryImage } from "./CategoryImage";
 export { ImageUpload } from "./ImageUpload";
 export { OrderJourney } from "./OrderJourney";
 export { ProtectedRoute } from "./ProtectedRoute";

@@ -2,14 +2,14 @@ import React, { createContext, ReactNode, useContext } from "react";
 import { HomepageData, useHomepageData } from "../services/homepageService";
 
 interface HomepageDataContextType {
-  data: HomepageData;
-  products: HomepageData["products"];
-  featuredProducts: HomepageData["featuredProducts"];
-  categories: HomepageData["categories"];
-  materials: HomepageData["materials"];
-  occasions: HomepageData["occasions"];
-  pagination: HomepageData["pagination"];
-  meta: HomepageData["meta"];
+  data: HomepageData | undefined;
+  products: HomepageData["products"] | undefined;
+  featuredProducts: HomepageData["featuredProducts"] | undefined;
+  categories: HomepageData["categories"] | undefined;
+  materials: HomepageData["materials"] | undefined;
+  occasions: HomepageData["occasions"] | undefined;
+  pagination: HomepageData["pagination"] | undefined;
+  meta: HomepageData["meta"] | undefined;
   isLoading: boolean; // True only on initial load with no cached data
   isFetching: boolean; // True when fetching (including background)
   error: string | null;

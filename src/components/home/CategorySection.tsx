@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Dimensions,
   FlatList,
+  ImageSourcePropType,
   NativeScrollEvent,
   NativeSyntheticEvent,
   StyleSheet,
@@ -24,6 +25,36 @@ const ITEM_WIDTH =
   VISIBLE_ITEMS;
 const SCROLL_INTERVAL = ITEM_WIDTH + ITEM_GAP; // Scroll by one item at a time
 
+// Local category images mapping
+const categoryImages: Record<string, ImageSourcePropType> = {
+  rings: require("../../../assets/images/category/ring.png"),
+  // ring: require("../../../assets/images/category/ring.png"),
+  earrings: require("../../../assets/images/category/earrings.png"),
+  // earring: require("../../../assets/images/category/earrings.png"),
+  bracelets: require("../../../assets/images/category/bracelet.png"),
+  // bracelet: require("../../../assets/images/category/bracelet.png"),
+  bangles: require("../../../assets/images/category/bangles.png"),
+  // bangle: require("../../../assets/images/category/bangles.png"),
+  chains: require("../../../assets/images/category/chain.png"),
+  // chain: require("../../../assets/images/category/chain.png"),
+  pendants: require("../../../assets/images/category/pendant.png"),
+  // pendant: require("../../../assets/images/category/pendant.png"),
+  // necklace: require("../../../assets/images/category/necklace.jpeg"),
+  necklaces: require("../../../assets/images/category/necklace.jpeg"),
+  "nose-pins": require("../../../assets/images/category/noseRing.jpeg"),
+  // anklet: require("../../../assets/images/category/anklet.png"),
+  anklets: require("../../../assets/images/category/anklet.png"),
+};
+
+// Default fallback image
+const defaultCategoryImage = require("../../../assets/images/category/ring.png");
+
+// Get local image for category
+const getCategoryLocalImage = (categoryName: string): ImageSourcePropType => {
+  const name = categoryName.toLowerCase().trim();
+  return categoryImages[name] || defaultCategoryImage;
+};
+
 interface Category {
   id: string;
   name: string;
@@ -32,6 +63,7 @@ interface Category {
 
 interface InfiniteCategory extends Category {
   uniqueKey: string;
+  localImage: ImageSourcePropType;
 }
 
 export const CategorySection = memo(() => {
@@ -55,6 +87,7 @@ export const CategorySection = memo(() => {
         result.push({
           ...cat,
           uniqueKey: `${i}-${cat.id}-${idx}`,
+          localImage: getCategoryLocalImage(cat.name),
         });
       });
     }
@@ -166,7 +199,7 @@ export const CategorySection = memo(() => {
       >
         <View style={styles.categoryImageContainer}>
           <Image
-            source={{ uri: item.imageUrl }}
+            source={item.localImage}
             style={styles.categoryImage}
             contentFit="cover"
             cachePolicy="memory-disk"

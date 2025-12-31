@@ -26,7 +26,7 @@ const transformApiCategories = (
     id: category.name,
     name: category.name.charAt(0).toUpperCase() + category.name.slice(1),
     description: `Beautiful ${category.name} collection`,
-    imageUrl: getCategoryImageUrl(category.name),
+    imageUrl: "", // Local images are used in CategorySection.tsx
     count: category.count,
     isActive: true,
     order: index + 1,
@@ -35,35 +35,30 @@ const transformApiCategories = (
   }));
 };
 
-// Get category image URL based on category name
-const getCategoryImageUrl = (categoryName: string): string => {
-  const categoryImages: Record<string, string> = {
-    rings:
-      "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=300&h=300&fit=crop",
-    necklaces:
-      "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=300&h=300&fit=crop",
-    earrings:
-      "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=300&h=300&fit=crop",
-    bracelets:
-      "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=300&h=300&fit=crop",
-    bangles:
-      "https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=300&h=300&fit=crop",
-    chains:
-      "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=300&h=300&fit=crop",
-    pendants:
-      "https://images.unsplash.com/photo-1588444731373-9b93f29657f8?w=300&h=300&fit=crop",
-    anklets:
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&h=300&fit=crop",
-    "nose-pins":
-      "https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=300&h=300&fit=crop",
-    "toe-rings":
-      "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=300&h=300&fit=crop",
-  };
+// Note: Category images are now handled locally in CategorySection.tsx
+// imageUrl field is kept for API compatibility but uses empty string as fallback
 
-  return (
-    categoryImages[categoryName] ||
-    "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=300&h=300&fit=crop"
-  );
+// Mock data for development (kept minimal since USE_MOCK_DATA = false)
+const mockHomepageData: HomepageData = {
+  products: [],
+  featuredProducts: [],
+  categories: [],
+  materials: [],
+  occasions: [],
+  pagination: {
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 8,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  },
+  meta: {
+    resultsCount: 0,
+    processingTime: "0ms",
+    cached: false,
+    timestamp: new Date().toISOString(),
+  },
 };
 
 // Transform API products to Product interface
@@ -98,52 +93,6 @@ const transformApiProducts = (apiProducts: any[]): Product[] => {
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
   }));
-};
-
-// Mock data for development
-const mockHomepageData: HomepageData = {
-  products: [],
-  featuredProducts: [],
-  categories: [
-    {
-      id: "rings",
-      name: "Rings",
-      description: "Beautiful rings collection",
-      imageUrl: getCategoryImageUrl("rings"),
-      count: 25,
-      isActive: true,
-      order: 1,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: "necklaces",
-      name: "Necklaces",
-      description: "Elegant necklaces collection",
-      imageUrl: getCategoryImageUrl("necklaces"),
-      count: 18,
-      isActive: true,
-      order: 2,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ],
-  materials: [],
-  occasions: [],
-  pagination: {
-    currentPage: 1,
-    totalPages: 1,
-    totalItems: 0,
-    itemsPerPage: 8,
-    hasNextPage: false,
-    hasPreviousPage: false,
-  },
-  meta: {
-    resultsCount: 0,
-    processingTime: "0ms",
-    cached: false,
-    timestamp: new Date().toISOString(),
-  },
 };
 
 // Centralized homepage data hook - uses React Query for caching
@@ -194,7 +143,7 @@ export const useHomepageData = () => {
   });
 
   // Use cached data or fallback to mock data (shows content immediately)
-  const data = query.data ?? mockHomepageData;
+  const data = query.data;
 
   const refetch = useCallback(() => {
     query.refetch();
@@ -202,19 +151,19 @@ export const useHomepageData = () => {
 
   return {
     data,
-    products: data.products,
-    featuredProducts: data.featuredProducts,
-    categories: data.categories,
-    materials: data.materials,
-    occasions: data.occasions,
-    pagination: data.pagination,
-    meta: data.meta,
+    products: data?.products,
+    featuredProducts: data?.featuredProducts,
+    categories: data?.categories,
+    materials: data?.materials,
+    occasions: data?.occasions,
+    pagination: data?.pagination,
+    meta: data?.meta,
     // isLoading: true only when pending (no data yet and fetching)
     isLoading: query.isPending && !query.data,
     // isFetching: true when any fetch is happening (including background)
     isFetching: query.isFetching,
     // Only show error if we have no data to display (mock data counts as data)
-    error: data.categories.length > 0 ? null : query.error?.message ?? null,
+    error: query.error?.message ?? null,
     refetch,
   };
 };

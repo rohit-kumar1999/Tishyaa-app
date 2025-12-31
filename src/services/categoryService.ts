@@ -79,30 +79,8 @@ const mockCategories: ApiCategory[] = [
   },
 ];
 
-// Category image mapping for mobile
-const getCategoryImage = (categoryName: string): string => {
-  const name = categoryName.toLowerCase();
-
-  // Default category images
-  const categoryImages: { [key: string]: string } = {
-    rings:
-      "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=400&h=400&q=80",
-    necklaces:
-      "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=400&h=400&q=80",
-    earrings:
-      "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=400&h=400&q=80",
-    bracelets:
-      "https://images.unsplash.com/photo-1611955167811-4711904bb9f8?auto=format&fit=crop&w=400&h=400&q=80",
-    anklets:
-      "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=400&h=400&q=80",
-    chains:
-      "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=400&h=400&q=80",
-    pendants:
-      "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=400&h=400&q=80",
-  };
-
-  return categoryImages[name] || categoryImages.rings;
-};
+// Note: Category images are now handled locally in CategorySection.tsx
+// The imageUrl field is kept for API compatibility
 
 // Transform API response to our Category interface
 const transformApiCategories = (
@@ -116,7 +94,7 @@ const transformApiCategories = (
       id: cat.id || cat.name.toLowerCase().replace(/\s+/g, "-"),
       name: cat.name,
       description: cat.description || "",
-      imageUrl: cat.image || cat.imageUrl || getCategoryImage(cat.name),
+      imageUrl: cat.image || cat.imageUrl || "", // Local images used in CategorySection.tsx
       count: cat.productCount || cat.count || 0,
       isActive: cat.active ?? cat.isActive ?? true,
       order: cat.sortOrder ?? cat.order ?? index,

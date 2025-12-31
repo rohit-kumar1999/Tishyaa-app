@@ -91,7 +91,7 @@ export const FeaturedProducts = memo(() => {
 
           {/* Badges */}
           <View style={styles.badgeContainer}>
-            {!product.active && (
+            {!product.inStock && (
               <View style={styles.outOfStockBadge}>
                 <Text style={styles.badgeText}>Out of Stock</Text>
               </View>
@@ -186,7 +186,7 @@ export const FeaturedProducts = memo(() => {
   );
 
   // Only show loading state when there's no cached data
-  if (isLoading && featuredProducts.length === 0) {
+  if (isLoading && (!featuredProducts || featuredProducts.length === 0)) {
     return (
       <View style={styles.container}>
         <View style={styles.contentContainer}>
@@ -206,7 +206,7 @@ export const FeaturedProducts = memo(() => {
   }
 
   // Show error message if there's an error and no products
-  if (error && featuredProducts.length === 0) {
+  if (error && (!featuredProducts || featuredProducts.length === 0)) {
     return (
       <View style={styles.container}>
         <View style={styles.contentContainer}>
@@ -234,7 +234,7 @@ export const FeaturedProducts = memo(() => {
 
         {/* Products Grid - 2 per row */}
         <View style={styles.productsGrid}>
-          {featuredProducts
+          {(featuredProducts || [])
             .reduce((rows: any[], product: any, index: number) => {
               if (index % 2 === 0) {
                 rows.push([product]);

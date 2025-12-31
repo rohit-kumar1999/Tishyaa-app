@@ -1,4 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
+import { ResizeMode, Video } from "expo-av";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { memo, useCallback, useEffect, useRef, useState } from "react";
@@ -6,7 +8,7 @@ import {
   Animated,
   Dimensions,
   FlatList,
-  Image,
+  ImageSourcePropType,
   NativeScrollEvent,
   NativeSyntheticEvent,
   StyleSheet,
@@ -15,60 +17,93 @@ import {
   View,
 } from "react-native";
 
-const { width: screenWidth } = Dimensions.get("window");
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+const HERO_HEIGHT = Math.min(screenHeight * 0.7, 500);
 
-const slides = [
+// Import local assets
+const necklaceImage = require("../../../assets/images/necklace.jpeg");
+const earringsImage = require("../../../assets/images/earrings.jpg");
+const chainImage = require("../../../assets/images/chain.jpeg");
+const necklaceVideo = require("../../../assets/images/necklace_video.mp4");
+
+interface Slide {
+  id: string;
+  title: string;
+  highlight: string;
+  subtitle: string;
+  cta: string;
+  href: string;
+  media: ImageSourcePropType | number;
+  isVideo?: boolean;
+}
+
+const slides: Slide[] = [
   {
     id: "1",
     title: "Discover Your",
     highlight: "Perfect Sparkle",
     subtitle:
-      "Crafted with precision and designed for elegance. Our artificial jewelry collection brings you the luxury look without the premium price.",
+      "Crafted with precision and designed for elegance. Our jewelry collection brings you the luxury look.",
     cta: "Shop Collection",
     href: "/products",
-    bg: ["#fdf2f8", "#fce7f3", "#faf5ff"] as const,
-    image: "https://via.placeholder.com/400x400/f3f4f6/e11d48?text=Jewelry+1",
+    media: necklaceVideo,
+    isVideo: true,
   },
   {
     id: "2",
-    title: "Unveil the Magic of",
-    highlight: "Timeless Elegance",
+    title: "Elegant",
+    highlight: "Necklaces",
     subtitle:
       "Elevate your everyday style with designs that speak to your soul. Sparkle more, spend less.",
-    cta: "Explore Designs",
-    href: "/products",
-    bg: ["#fdf4ff", "#fce7f3", "#fdf2f8"] as const,
-    image: "https://via.placeholder.com/400x400/f3f4f6/e11d48?text=Jewelry+2",
+    cta: "Explore Necklaces",
+    href: "/products?category=necklaces",
+    media: necklaceImage,
   },
   {
     id: "3",
-    title: "Celebrate Every",
-    highlight: "Shining Moment",
+    title: "Stunning",
+    highlight: "Earrings",
     subtitle:
-      "Jewelry made to celebrate your story — from casual to festive, find the perfect match.",
-    cta: "Start Shopping",
-    href: "/products",
-    bg: ["#fce7f3", "#fdf2f8", "#f5f3ff"] as const,
-    image: "https://via.placeholder.com/400x400/f3f4f6/e11d48?text=Jewelry+3",
+      "From subtle studs to statement pieces — find earrings that match your every mood.",
+    cta: "Shop Earrings",
+    href: "/products?category=earrings",
+    media: earringsImage,
+  },
+  {
+    id: "4",
+    title: "Timeless",
+    highlight: "Chains",
+    subtitle:
+      "Classic chains crafted to perfection. Layer them or wear solo — the choice is yours.",
+    cta: "View Chains",
+    href: "/products?category=chains",
+    media: chainImage,
   },
 ];
 
 export const HeroSection = memo(() => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
+  const currentIndexRef = useRef(0);
   const sparkleAnim = useRef(new Animated.Value(0)).current;
+  const videoRef = useRef<Video>(null);
+
+  // Keep ref in sync
+  useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
 
   // Auto-slide effect
   useEffect(() => {
     const interval = setInterval(() => {
-      const nextIndex = (currentIndex + 1) % slides.length;
+      const nextIndex = (currentIndexRef.current + 1) % slides.length;
       flatListRef.current?.scrollToOffset({
         offset: nextIndex * screenWidth,
         animated: true,
       });
     }, 6000);
     return () => clearInterval(interval);
-  }, [currentIndex]);
+  }, []);
 
   // Sparkle bounce animation
   useEffect(() => {
@@ -116,77 +151,71 @@ export const HeroSection = memo(() => {
 
   // Render each slide
   const renderSlide = useCallback(
-    ({ item }: { item: (typeof slides)[0] }) => (
-      <LinearGradient
-        colors={item.bg}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.slideGradient}
-      >
+    ({ item, index }: { item: Slide; index: number }) => (
+      <View style={styles.slideContainer}>
+        {/* Background Media */}
+        {item.isVideo ? (
+          <Video
+            ref={index === 0 ? videoRef : undefined}
+            source={item.media as number}
+            style={styles.backgroundMedia}
+            resizeMode={ResizeMode.COVER}
+            shouldPlay={currentIndex === index}
+            isLooping
+            isMuted
+          />
+        ) : (
+          <Image
+            source={item.media}
+            style={styles.backgroundMedia}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+          />
+        )}
+
+        {/* Dark Overlay for better text visibility */}
+        <LinearGradient
+          colors={[
+            "rgba(0,0,0,0.3)",
+            "rgba(0,0,0,0.1)",
+            "rgba(0,0,0,0.4)",
+            "rgba(0,0,0,0.7)",
+          ]}
+          locations={[0, 0.3, 0.6, 1]}
+          style={styles.overlay}
+        />
+
+        {/* Content */}
         <View style={styles.slideContent}>
-          {/* Text Content */}
-          <View style={styles.textSection}>
-            {/* Badge */}
-            <View style={styles.badge}>
-              <Animated.View
-                style={[
-                  styles.sparkleIcon,
-                  {
-                    transform: [
-                      {
-                        translateY: sparkleAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0, -3],
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              >
-                <Ionicons name="sparkles" size={14} color="#e11d48" />
-              </Animated.View>
-              <Text style={styles.badgeText}>New Collection Launched</Text>
-            </View>
+          {/* Title */}
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>{item.title}</Text>
+            <Text style={styles.highlight}>{item.highlight}</Text>
+          </View>
 
-            {/* Title */}
-            <View style={styles.titleContainer}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.highlight}>{item.highlight}</Text>
-            </View>
+          {/* Subtitle */}
+          <Text style={styles.subtitle}>{item.subtitle}</Text>
 
-            {/* Subtitle */}
-            <Text style={styles.subtitle}>{item.subtitle}</Text>
-
-            {/* CTA Button */}
-            <TouchableOpacity
-              style={styles.ctaButton}
-              onPress={() => router.push(item.href)}
-              activeOpacity={0.8}
+          {/* CTA Button */}
+          <TouchableOpacity
+            style={styles.ctaButton}
+            onPress={() => router.push(item.href)}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={["#e11d48", "#be123c"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.ctaGradient}
             >
-              <LinearGradient
-                colors={["#e11d48", "#ec4899"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.ctaGradient}
-              >
-                <Text style={styles.ctaText}>{item.cta}</Text>
-                <Ionicons name="arrow-forward" size={16} color="white" />
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-
-          {/* Image Section */}
-          <View style={styles.imageSection}>
-            <Image
-              source={{ uri: item.image }}
-              style={styles.image}
-              resizeMode="contain"
-            />
-          </View>
+              <Text style={styles.ctaText}>{item.cta}</Text>
+              <Ionicons name="arrow-forward" size={16} color="white" />
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
-      </LinearGradient>
+      </View>
     ),
-    [sparkleAnim]
+    [currentIndex, sparkleAnim]
   );
 
   return (
@@ -221,8 +250,9 @@ export const HeroSection = memo(() => {
             style={[
               styles.dot,
               {
-                backgroundColor: i === currentIndex ? "#e11d48" : "#fda4af",
-                width: i === currentIndex ? 20 : 12,
+                backgroundColor:
+                  i === currentIndex ? "#ffffff" : "rgba(255,255,255,0.5)",
+                width: i === currentIndex ? 24 : 8,
               },
             ]}
           />
@@ -236,108 +266,95 @@ const styles = StyleSheet.create({
   container: {
     position: "relative",
     overflow: "hidden",
-    height: 450,
+    height: HERO_HEIGHT,
   },
-  slideGradient: {
+  slideContainer: {
     width: screenWidth,
-    height: 450,
+    height: HERO_HEIGHT,
+    position: "relative",
+  },
+  backgroundMedia: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   slideContent: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 40,
+    justifyContent: "flex-end",
+    paddingHorizontal: 20,
     paddingBottom: 60,
-    flexDirection: screenWidth >= 768 ? "row" : "column-reverse",
-    alignItems: "center",
-    gap: screenWidth >= 768 ? 48 : 24,
-  },
-  textSection: {
-    flex: 1,
-    alignItems: screenWidth >= 768 ? "flex-start" : "center",
-    paddingHorizontal: 8,
   },
   badge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.7)",
+    backgroundColor: "rgba(255,255,255,0.15)",
+    alignSelf: "flex-start",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   sparkleIcon: {
-    marginRight: 8,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: "#374151",
+    marginRight: 6,
   },
   titleContainer: {
-    alignItems: screenWidth >= 768 ? "flex-start" : "center",
-    marginBottom: 24,
+    marginBottom: 12,
   },
   title: {
-    fontSize: screenWidth >= 768 ? 48 : 28,
-    fontWeight: "bold",
-    color: "#111827",
-    textAlign: screenWidth >= 768 ? "left" : "center",
-    lineHeight: screenWidth >= 768 ? 56 : 34,
+    fontSize: screenWidth > 640 ? 36 : 28,
+    fontWeight: "300",
+    color: "#ffffff",
+    lineHeight: screenWidth > 640 ? 44 : 34,
   },
   highlight: {
-    fontSize: screenWidth >= 768 ? 48 : 28,
-    fontWeight: "bold",
-    color: "#e11d48",
-    textAlign: screenWidth >= 768 ? "left" : "center",
-    lineHeight: screenWidth >= 768 ? 56 : 34,
+    fontSize: screenWidth > 640 ? 42 : 34,
+    fontWeight: "700",
+    color: "#ffffff",
+    lineHeight: screenWidth > 640 ? 50 : 40,
   },
   subtitle: {
-    fontSize: screenWidth >= 768 ? 18 : 14,
-    color: "#4b5563",
-    textAlign: screenWidth >= 768 ? "left" : "center",
-    marginBottom: 32,
-    lineHeight: screenWidth >= 768 ? 28 : 20,
-    maxWidth: 500,
+    fontSize: 14,
+    color: "rgba(255,255,255,0.9)",
+    lineHeight: 22,
+    marginBottom: 20,
+    maxWidth: 320,
   },
   ctaButton: {
-    borderRadius: 8,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    alignSelf: "flex-start",
+    borderRadius: 25,
+    overflow: "hidden",
+    shadowColor: "#e11d48",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   ctaGradient: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    gap: 8,
   },
   ctaText: {
-    fontSize: 16,
+    color: "#ffffff",
+    fontSize: 15,
     fontWeight: "600",
-    color: "white",
-    marginRight: 8,
-  },
-  imageSection: {
-    flex: screenWidth >= 768 ? 1 : 0,
-    width: "100%",
-    height: screenWidth >= 768 ? 250 : 180,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  image: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 12,
   },
   dotsContainer: {
     position: "absolute",
-    bottom: 16,
+    bottom: 20,
     left: 0,
     right: 0,
     flexDirection: "row",
@@ -346,8 +363,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   dot: {
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: "#fda4af",
+    height: 8,
+    borderRadius: 4,
   },
 });
