@@ -31,17 +31,16 @@ export const FeaturedProducts = memo(() => {
         id: product.id,
         name: product.name || "",
         description: product.description || "",
-        price: product.price || 0,
-        originalPrice: product.originalPrice || product.price,
+        discountedPrice: product.discountedPrice || product.price || 0,
+        regularPrice:
+          product.regularPrice || product.discountedPrice || product.price || 0,
         images: product.images || [],
         category: product.category || "",
         subcategory: product.subcategory,
         tags: product.tags || [],
-        inStock: product.inStock ?? product.active ?? true,
         stockQuantity: product.stockQuantity || 0,
         weight: product.weight,
         dimensions: product.dimensions,
-        materials: product.materials || [],
         care: product.care || [],
         rating: product.rating || 0,
         reviewCount: product.reviewCount || 0,
@@ -69,7 +68,7 @@ export const FeaturedProducts = memo(() => {
     router.push("/products");
   }, []);
 
-  const renderProduct = (product: (typeof featuredProducts)[0]) => (
+  const renderProduct = (product: NonNullable<typeof featuredProducts>[0]) => (
     <View key={product.id} style={styles.productCard}>
       <TouchableOpacity
         onPress={() => handleProductPress(product.id)}
@@ -91,7 +90,7 @@ export const FeaturedProducts = memo(() => {
 
           {/* Badges */}
           <View style={styles.badgeContainer}>
-            {!product.inStock && (
+            {product.stockQuantity <= 0 && (
               <View style={styles.outOfStockBadge}>
                 <Text style={styles.badgeText}>Out of Stock</Text>
               </View>
@@ -165,20 +164,34 @@ export const FeaturedProducts = memo(() => {
           </View>
 
           <View style={styles.priceContainer}>
-            {product.discountPrice ? (
-              <>
-                <Text style={styles.discountPrice}>
-                  ₹{product.discountPrice.toLocaleString()}
+            {(() => {
+              // Derived values
+              const discountedPrice = Number(product.discountedPrice) || 0;
+              const regularPrice =
+                Number(product.regularPrice) || discountedPrice;
+              const discountPercent =
+                discountedPrice && regularPrice > discountedPrice
+                  ? Math.round(
+                      ((regularPrice - discountedPrice) / regularPrice) * 100
+                    )
+                  : 0;
+              const effectivePrice = discountedPrice || regularPrice;
+
+              return discountPercent > 0 ? (
+                <>
+                  <Text style={styles.discountPrice}>
+                    ₹{effectivePrice.toLocaleString()}
+                  </Text>
+                  <Text style={styles.originalPrice}>
+                    ₹{regularPrice.toLocaleString()}
+                  </Text>
+                </>
+              ) : (
+                <Text style={styles.price}>
+                  ₹{effectivePrice.toLocaleString()}
                 </Text>
-                <Text style={styles.originalPrice}>
-                  ₹{product.price.toLocaleString()}
-                </Text>
-              </>
-            ) : (
-              <Text style={styles.price}>
-                ₹{product.price.toLocaleString()}
-              </Text>
-            )}
+              );
+            })()}
           </View>
         </View>
       </TouchableOpacity>
@@ -268,7 +281,7 @@ export const FeaturedProducts = memo(() => {
 const styles = StyleSheet.create({
   container: {
     paddingVertical: 32,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#fff5f7",
   },
   contentContainer: {
     paddingHorizontal: 12,

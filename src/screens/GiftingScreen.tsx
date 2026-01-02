@@ -577,7 +577,7 @@ export default function GiftingScreen() {
                   name: item.name,
                   price: item.price,
                   images: [{ url: item.image }],
-                  inStock: true,
+                  stockQuantity: 1, // Mock data assumes in stock
                 });
               }}
             >

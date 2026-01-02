@@ -12,22 +12,16 @@ export interface Product {
   productType: string;
   category: string;
   subcategory?: string;
-  originalPrice: string;
-  price: number;
-  discountPrice?: number | null;
-  discount?: number | null;
+  regularPrice: string;
+  discountedPrice: number;
   images: string[];
   rating: number;
   ratingCount: number;
   active: boolean;
-  inStock: boolean;
   stockQuantity: number;
   specifications?: Record<string, any>;
   attributes?: Record<string, any>;
   hasPromotion: boolean;
-  promotionText?: string | null;
-  promotionType?: string | null;
-  promotionData?: Record<string, any> | null;
   tags: string[];
   keywords: string[];
   metadata?: Record<string, any>;
@@ -63,8 +57,8 @@ export interface ProductResponse {
     name: string;
     count: number;
   }>;
-  materials: string[];
-  occasions: string[];
+  materials?: string[];
+  occasions?: string[];
   meta: {
     resultsCount: number;
     processingTime: string;
@@ -90,22 +84,16 @@ const transformApiProducts = (apiProducts: any[]): Product[] => {
     productType: product.productType,
     category: product.category,
     subcategory: product.subcategory,
-    originalPrice: product.originalPrice,
-    price: product.price,
-    discountPrice: product.discountPrice,
-    discount: product.discount,
+    regularPrice: product.regularPrice,
+    discountedPrice: product.discountedPrice,
     images: product.images || [],
     rating: product.rating,
     ratingCount: product.ratingCount,
     active: product.active,
-    inStock: product.inStock,
     stockQuantity: product.stockQuantity,
     specifications: product.specifications,
     attributes: product.attributes,
     hasPromotion: product.hasPromotion,
-    promotionText: product.promotionText,
-    promotionType: product.promotionType,
-    promotionData: product.promotionData,
     tags: product.tags || [],
     keywords: product.keywords || [],
     metadata: product.metadata,
@@ -126,9 +114,6 @@ export const useFeaturedProducts = () => {
         sortOrder: "desc",
         includeCategories: false,
         includeTotalCount: false,
-        includeMaterials: false,
-        includeOccasions: false,
-        inStock: true,
       });
       return response;
     },
@@ -168,7 +153,7 @@ export const useGetProducts = () => {
   const legacyProducts = products.map((product) => ({
     id: product.id,
     name: product.name,
-    price: product.price,
+    price: product.discountedPrice,
     category: product.category,
     stock: product.stockQuantity,
     image: product.images[0] || "https://via.placeholder.com/150",
@@ -191,15 +176,13 @@ export const useProducts = (params?: {
   sortOrder?: "asc" | "desc";
   category?: string;
   categories?: string[];
-  materials?: string[];
-  occasions?: string[];
-  discounts?: string[];
+  material?: string;
+  occasion?: string;
   ratings?: number[];
   search?: string;
   minPrice?: number;
   maxPrice?: number;
   priceRange?: [number, number];
-  inStock?: boolean;
 }) => {
   // Create stable serialized strings for query key
   const queryKeyParams = useMemo(
@@ -210,13 +193,11 @@ export const useProducts = (params?: {
       sortOrder: params?.sortOrder || "desc",
       category: params?.category,
       categories: params?.categories?.sort().join(",") || "",
-      materials: params?.materials?.sort().join(",") || "",
-      occasions: params?.occasions?.sort().join(",") || "",
-      discounts: params?.discounts?.sort().join(",") || "",
+      material: params?.material || "",
+      occasion: params?.occasion || "",
       ratings: params?.ratings?.sort().join(",") || "",
       search: params?.search || "",
       priceRange: params?.priceRange?.join(",") || "",
-      inStock: params?.inStock,
     }),
     [
       params?.page,
@@ -225,13 +206,11 @@ export const useProducts = (params?: {
       params?.sortOrder,
       params?.category,
       params?.categories,
-      params?.materials,
-      params?.occasions,
-      params?.discounts,
+      params?.material,
+      params?.occasion,
       params?.ratings,
       params?.search,
       params?.priceRange,
-      params?.inStock,
     ]
   );
 
@@ -246,12 +225,10 @@ export const useProducts = (params?: {
       includeTotalCount: true,
       includeMaterials: true,
       includeOccasions: true,
-      inStock: params?.inStock !== undefined ? params.inStock : undefined,
       ...(params?.category && { category: params.category }),
       ...(params?.categories?.length && { categories: params.categories }),
-      ...(params?.materials?.length && { materials: params.materials }),
-      ...(params?.occasions?.length && { occasions: params.occasions }),
-      ...(params?.discounts?.length && { discounts: params.discounts }),
+      ...(params?.material && { material: params.material }),
+      ...(params?.occasion && { occasion: params.occasion }),
       ...(params?.ratings?.length && {
         minRating: Math.max(...params.ratings),
       }),

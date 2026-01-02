@@ -231,6 +231,7 @@ export const TestimonialSection = memo(() => {
 const styles = StyleSheet.create({
   container: {
     paddingVertical: screenWidth > 1024 ? 80 : screenWidth > 640 ? 64 : 48,
+    backgroundColor: "#fef7f8",
   },
   contentContainer: {
     position: "relative",

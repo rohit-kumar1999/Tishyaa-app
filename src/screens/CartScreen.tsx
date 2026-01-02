@@ -75,7 +75,7 @@ const CartItem = memo(function CartItem({
           ).toLocaleString()}
         </Text>
         <Text style={styles.stockStatus}>
-          {(item as any).productInStock ? "In stock" : "Out of stock"}
+          {(item as any).productStockQuantity > 0 ? "In stock" : "Out of stock"}
         </Text>
         <View style={styles.quantityRow}>
           <View style={styles.quantityControls}>

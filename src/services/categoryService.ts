@@ -156,9 +156,6 @@ export const useHomepageCategories = () => {
         sortOrder: "desc",
         includeCategories: true,
         includeTotalCount: true,
-        includeMaterials: true,
-        includeOccasions: true,
-        inStock: true,
       });
 
       // Transform the categories from the API response

@@ -37,8 +37,8 @@ const ProductCard: React.FC<ProductCardProps> = memo(function ProductCard({
   const { toast } = useToast();
 
   const isOutOfStock = useMemo(
-    () => !product.active || !product.inStock || product.stockQuantity <= 0,
-    [product.active, product.inStock, product.stockQuantity]
+    () => !product.active || product.stockQuantity <= 0,
+    [product.active, product.stockQuantity]
   );
 
   const addProductToCart = useCallback(
@@ -141,7 +141,35 @@ const ProductCard: React.FC<ProductCardProps> = memo(function ProductCard({
           </Text>
         </View>
         <View style={styles.priceContainer}>
-          <Text style={styles.price}>₹{product.price.toLocaleString()}</Text>
+          {(() => {
+            // Derived values
+            const discountedPrice = Number(product.discountedPrice) || 0;
+            const regularPrice =
+              Number(product.regularPrice) || discountedPrice;
+            const discountPercent =
+              discountedPrice && regularPrice > discountedPrice
+                ? Math.round(
+                    ((regularPrice - discountedPrice) / regularPrice) * 100
+                  )
+                : 0;
+            const effectivePrice = discountedPrice || regularPrice;
+
+            return discountPercent > 0 ? (
+              <View style={styles.priceRow}>
+                <Text style={styles.price}>
+                  ₹{effectivePrice.toLocaleString()}
+                </Text>
+                <Text style={styles.originalPrice}>
+                  ₹{regularPrice.toLocaleString()}
+                </Text>
+                <Text style={styles.discountBadge}>{discountPercent}% OFF</Text>
+              </View>
+            ) : (
+              <Text style={styles.price}>
+                ₹{effectivePrice.toLocaleString()}
+              </Text>
+            );
+          })()}
         </View>
         <TouchableOpacity
           style={[
@@ -291,10 +319,30 @@ const styles = StyleSheet.create({
   priceContainer: {
     marginBottom: 0,
   },
+  priceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 4,
+  },
   price: {
     fontSize: 14,
     fontWeight: "bold",
     color: "#000",
+  },
+  originalPrice: {
+    fontSize: 12,
+    color: "#9ca3af",
+    textDecorationLine: "line-through",
+  },
+  discountBadge: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#16a34a",
+    backgroundColor: "#dcfce7",
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
   actions: {
     flexDirection: "row",

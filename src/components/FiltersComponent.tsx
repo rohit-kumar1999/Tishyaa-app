@@ -19,11 +19,9 @@ interface Category {
 interface FilterState {
   categories: string[];
   priceRange: [number, number];
-  materials: string[];
-  occasions: string[];
-  discounts: string[];
+  material: string;
+  occasion: string;
   ratings: number[];
-  inStock: boolean;
   sortBy: string;
   sortOrder: string;
   search?: string;
@@ -35,8 +33,8 @@ interface FiltersComponentProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
   categories: Category[];
-  materials: string[];
-  occasions: string[];
+  materialOptions: string[];
+  occasionOptions: string[];
 }
 
 export const FiltersComponent: React.FC<FiltersComponentProps> = ({
@@ -45,8 +43,8 @@ export const FiltersComponent: React.FC<FiltersComponentProps> = ({
   filters,
   onFiltersChange,
   categories,
-  materials,
-  occasions,
+  materialOptions,
+  occasionOptions,
 }) => {
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [showAllMaterials, setShowAllMaterials] = useState(false);
@@ -98,26 +96,18 @@ export const FiltersComponent: React.FC<FiltersComponentProps> = ({
     const nonPriceFiltersChanged =
       JSON.stringify(localFilters.categories) !==
         JSON.stringify(filters.categories) ||
-      JSON.stringify(localFilters.materials) !==
-        JSON.stringify(filters.materials) ||
-      JSON.stringify(localFilters.occasions) !==
-        JSON.stringify(filters.occasions) ||
-      JSON.stringify(localFilters.discounts) !==
-        JSON.stringify(filters.discounts) ||
-      JSON.stringify(localFilters.ratings) !==
-        JSON.stringify(filters.ratings) ||
-      localFilters.inStock !== filters.inStock;
+      localFilters.material !== filters.material ||
+      localFilters.occasion !== filters.occasion ||
+      JSON.stringify(localFilters.ratings) !== JSON.stringify(filters.ratings);
 
     if (nonPriceFiltersChanged) {
       onFiltersChange(localFilters);
     }
   }, [
     localFilters.categories,
-    localFilters.materials,
-    localFilters.occasions,
-    localFilters.discounts,
+    localFilters.material,
+    localFilters.occasion,
     localFilters.ratings,
-    localFilters.inStock,
   ]);
 
   // Show first 5 categories by default
@@ -178,39 +168,24 @@ export const FiltersComponent: React.FC<FiltersComponentProps> = ({
     });
   };
 
-  const handleMaterialToggle = (material: string) => {
-    const updatedMaterials = localFilters.materials.includes(material)
-      ? localFilters.materials.filter((m) => m !== material)
-      : [...localFilters.materials, material];
+  const handleMaterialSelect = (material: string) => {
+    // Toggle: if same material is selected, clear it; otherwise set it
+    const newMaterial = localFilters.material === material ? "" : material;
 
     setLocalFilters({
       ...localFilters,
-      materials: updatedMaterials,
+      material: newMaterial,
     });
   };
 
-  const handleOccasionToggle = (occasion: string) => {
-    const updatedOccasions = localFilters.occasions.includes(occasion)
-      ? localFilters.occasions.filter((o) => o !== occasion)
-      : [...localFilters.occasions, occasion];
+  const handleOccasionSelect = (occasion: string) => {
+    // Toggle: if same occasion is selected, clear it; otherwise set it
+    const newOccasion = localFilters.occasion === occasion ? "" : occasion;
 
     setLocalFilters({
       ...localFilters,
-      occasions: updatedOccasions,
+      occasion: newOccasion,
     });
-  };
-
-  const handleDiscountToggle = (discount: string) => {
-    const updatedDiscounts = localFilters.discounts.includes(discount)
-      ? localFilters.discounts.filter((d) => d !== discount)
-      : [...localFilters.discounts, discount];
-
-    const newFilters = {
-      ...localFilters,
-      discounts: updatedDiscounts,
-    };
-
-    setLocalFilters(newFilters);
   };
 
   const handleRatingToggle = (rating: number) => {
@@ -224,28 +199,16 @@ export const FiltersComponent: React.FC<FiltersComponentProps> = ({
     });
   };
 
-  const handleInStockToggle = () => {
-    setLocalFilters({
-      ...localFilters,
-      inStock: !localFilters.inStock,
-    });
-  };
-
   // Clear filters functions
   const getActiveFilterCount = () => {
     let count = 0;
     if (localFilters.categories.length > 0)
       count += localFilters.categories.length;
-    if (localFilters.materials.length > 0)
-      count += localFilters.materials.length;
-    if (localFilters.occasions.length > 0)
-      count += localFilters.occasions.length;
-    if (localFilters.discounts.length > 0)
-      count += localFilters.discounts.length;
+    if (localFilters.material) count++;
+    if (localFilters.occasion) count++;
     if (localFilters.ratings.length > 0) count += localFilters.ratings.length;
     if (localFilters.priceRange[0] > 0 || localFilters.priceRange[1] < 100000)
       count++;
-    if (localFilters.inStock) count++;
     return count;
   };
 
@@ -253,11 +216,9 @@ export const FiltersComponent: React.FC<FiltersComponentProps> = ({
     const clearedFilters: FilterState = {
       categories: [],
       priceRange: [0, 100000],
-      materials: [],
-      occasions: [],
-      discounts: [],
+      material: "",
+      occasion: "",
       ratings: [],
-      inStock: false,
       sortBy: localFilters.sortBy, // Keep current sort
       sortOrder: localFilters.sortOrder,
       search: localFilters.search, // Keep search
@@ -273,13 +234,10 @@ export const FiltersComponent: React.FC<FiltersComponentProps> = ({
         handleCategoryToggle(value as string);
         break;
       case "material":
-        handleMaterialToggle(value as string);
+        setLocalFilters({ ...localFilters, material: "" });
         break;
       case "occasion":
-        handleOccasionToggle(value as string);
-        break;
-      case "discount":
-        handleDiscountToggle(value as string);
+        setLocalFilters({ ...localFilters, occasion: "" });
         break;
       case "rating":
         handleRatingToggle(value as number);
@@ -291,9 +249,6 @@ export const FiltersComponent: React.FC<FiltersComponentProps> = ({
         });
         setMinPriceText("0");
         setMaxPriceText("100000");
-        break;
-      case "inStock":
-        handleInStockToggle();
         break;
     }
   };
@@ -310,18 +265,21 @@ export const FiltersComponent: React.FC<FiltersComponentProps> = ({
       active.push({ type: "category", value: cat, label: categoryName });
     });
 
-    localFilters.materials.forEach((mat) => {
-      active.push({ type: "material", value: mat, label: mat });
-    });
+    if (localFilters.material) {
+      active.push({
+        type: "material",
+        value: localFilters.material,
+        label: localFilters.material,
+      });
+    }
 
-    localFilters.occasions.forEach((occ) => {
-      active.push({ type: "occasion", value: occ, label: occ });
-    });
-
-    localFilters.discounts.forEach((disc) => {
-      const discountLabel = `${disc}% and above`;
-      active.push({ type: "discount", value: disc, label: discountLabel });
-    });
+    if (localFilters.occasion) {
+      active.push({
+        type: "occasion",
+        value: localFilters.occasion,
+        label: localFilters.occasion,
+      });
+    }
 
     localFilters.ratings.forEach((rating) => {
       active.push({ type: "rating", value: rating, label: `${rating}+ Stars` });
@@ -332,14 +290,6 @@ export const FiltersComponent: React.FC<FiltersComponentProps> = ({
         type: "priceRange",
         value: "priceRange",
         label: `₹${localFilters.priceRange[0]} - ₹${localFilters.priceRange[1]}`,
-      });
-    }
-
-    if (localFilters.inStock) {
-      active.push({
-        type: "inStock",
-        value: "inStock",
-        label: "In Stock Only",
       });
     }
 
@@ -550,34 +500,35 @@ export const FiltersComponent: React.FC<FiltersComponentProps> = ({
 
         {/* Materials Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Materials</Text>
+          <Text style={styles.sectionTitle}>Material</Text>
 
-          {(showAllMaterials ? materials : materials.slice(0, 5)).map(
-            (material) => (
-              <TouchableOpacity
-                key={material}
-                style={styles.categoryRow}
-                onPress={() => handleMaterialToggle(material)}
-              >
-                <View style={styles.checkboxContainer}>
-                  <View
-                    style={[
-                      styles.checkbox,
-                      filters.materials.includes(material) &&
-                        styles.checkboxChecked,
-                    ]}
-                  >
-                    {filters.materials.includes(material) && (
-                      <Ionicons name="checkmark" size={14} color="white" />
-                    )}
-                  </View>
-                  <Text style={styles.categoryName}>{material}</Text>
+          {(showAllMaterials
+            ? materialOptions
+            : materialOptions.slice(0, 5)
+          ).map((material) => (
+            <TouchableOpacity
+              key={material}
+              style={styles.categoryRow}
+              onPress={() => handleMaterialSelect(material)}
+            >
+              <View style={styles.checkboxContainer}>
+                <View
+                  style={[
+                    styles.checkbox,
+                    localFilters.material === material &&
+                      styles.checkboxChecked,
+                  ]}
+                >
+                  {localFilters.material === material && (
+                    <Ionicons name="checkmark" size={14} color="white" />
+                  )}
                 </View>
-              </TouchableOpacity>
-            )
-          )}
+                <Text style={styles.categoryName}>{material}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
 
-          {materials.length > 5 && (
+          {materialOptions.length > 5 && (
             <TouchableOpacity
               style={styles.showMoreButton}
               onPress={() => setShowAllMaterials(!showAllMaterials)}
@@ -585,7 +536,7 @@ export const FiltersComponent: React.FC<FiltersComponentProps> = ({
               <Text style={styles.showMoreText}>
                 {showAllMaterials
                   ? "Show Less"
-                  : `Show More (${materials.length - 5} more)`}
+                  : `Show More (${materialOptions.length - 5} more)`}
               </Text>
               <Ionicons
                 name={showAllMaterials ? "chevron-up" : "chevron-down"}
@@ -598,34 +549,35 @@ export const FiltersComponent: React.FC<FiltersComponentProps> = ({
 
         {/* Occasions Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Occasions</Text>
+          <Text style={styles.sectionTitle}>Occasion</Text>
 
-          {(showAllOccasions ? occasions : occasions.slice(0, 5)).map(
-            (occasion) => (
-              <TouchableOpacity
-                key={occasion}
-                style={styles.categoryRow}
-                onPress={() => handleOccasionToggle(occasion)}
-              >
-                <View style={styles.checkboxContainer}>
-                  <View
-                    style={[
-                      styles.checkbox,
-                      filters.occasions.includes(occasion) &&
-                        styles.checkboxChecked,
-                    ]}
-                  >
-                    {filters.occasions.includes(occasion) && (
-                      <Ionicons name="checkmark" size={14} color="white" />
-                    )}
-                  </View>
-                  <Text style={styles.categoryName}>{occasion}</Text>
+          {(showAllOccasions
+            ? occasionOptions
+            : occasionOptions.slice(0, 5)
+          ).map((occasion) => (
+            <TouchableOpacity
+              key={occasion}
+              style={styles.categoryRow}
+              onPress={() => handleOccasionSelect(occasion)}
+            >
+              <View style={styles.checkboxContainer}>
+                <View
+                  style={[
+                    styles.checkbox,
+                    localFilters.occasion === occasion &&
+                      styles.checkboxChecked,
+                  ]}
+                >
+                  {localFilters.occasion === occasion && (
+                    <Ionicons name="checkmark" size={14} color="white" />
+                  )}
                 </View>
-              </TouchableOpacity>
-            )
-          )}
+                <Text style={styles.categoryName}>{occasion}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
 
-          {occasions.length > 5 && (
+          {occasionOptions.length > 5 && (
             <TouchableOpacity
               style={styles.showMoreButton}
               onPress={() => setShowAllOccasions(!showAllOccasions)}
@@ -633,7 +585,7 @@ export const FiltersComponent: React.FC<FiltersComponentProps> = ({
               <Text style={styles.showMoreText}>
                 {showAllOccasions
                   ? "Show Less"
-                  : `Show More (${occasions.length - 5} more)`}
+                  : `Show More (${occasionOptions.length - 5} more)`}
               </Text>
               <Ionicons
                 name={showAllOccasions ? "chevron-up" : "chevron-down"}
@@ -642,39 +594,6 @@ export const FiltersComponent: React.FC<FiltersComponentProps> = ({
               />
             </TouchableOpacity>
           )}
-        </View>
-
-        {/* Discounts Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Discounts</Text>
-
-          {[
-            { id: "10", name: "10% and above" },
-            { id: "20", name: "20% and above" },
-            { id: "30", name: "30% and above" },
-            { id: "40", name: "40% and above" },
-          ].map((discount) => (
-            <TouchableOpacity
-              key={discount.id}
-              style={styles.categoryRow}
-              onPress={() => handleDiscountToggle(discount.id)}
-            >
-              <View style={styles.checkboxContainer}>
-                <View
-                  style={[
-                    styles.checkbox,
-                    localFilters.discounts.includes(discount.id) &&
-                      styles.checkboxChecked,
-                  ]}
-                >
-                  {localFilters.discounts.includes(discount.id) && (
-                    <Ionicons name="checkmark" size={14} color="white" />
-                  )}
-                </View>
-                <Text style={styles.categoryName}>{discount.name}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
         </View>
 
         {/* Customer Rating Section */}
@@ -714,30 +633,6 @@ export const FiltersComponent: React.FC<FiltersComponentProps> = ({
               </View>
             </TouchableOpacity>
           ))}
-        </View>
-
-        {/* Availability Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Availability</Text>
-
-          <TouchableOpacity
-            style={styles.categoryRow}
-            onPress={handleInStockToggle}
-          >
-            <View style={styles.checkboxContainer}>
-              <View
-                style={[
-                  styles.checkbox,
-                  localFilters.inStock && styles.checkboxChecked,
-                ]}
-              >
-                {localFilters.inStock && (
-                  <Ionicons name="checkmark" size={14} color="white" />
-                )}
-              </View>
-              <Text style={styles.categoryName}>In Stock Only</Text>
-            </View>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>

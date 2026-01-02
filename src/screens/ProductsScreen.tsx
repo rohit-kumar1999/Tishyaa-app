@@ -28,11 +28,9 @@ import { Product, useProducts } from "../services/productService";
 interface FilterState {
   categories: string[];
   priceRange: [number, number];
-  materials: string[];
-  occasions: string[];
-  discounts: string[];
+  material: string;
+  occasion: string;
   ratings: number[];
-  inStock: boolean;
   sortBy: string;
   sortOrder: string;
   search?: string;
@@ -41,11 +39,9 @@ interface FilterState {
 const initialFilters: FilterState = {
   categories: [],
   priceRange: [0, 100000],
-  materials: [],
-  occasions: [],
-  discounts: [],
+  material: "",
+  occasion: "",
   ratings: [],
-  inStock: false,
   sortBy: "createdAt",
   sortOrder: "desc",
   search: undefined,
@@ -88,17 +84,13 @@ export default function ProductsScreen() {
     () => (filtersRaw.categories || []).sort().join(","),
     [filtersRaw.categories]
   );
-  const materialsKey = useMemo(
-    () => (filtersRaw.materials || []).sort().join(","),
-    [filtersRaw.materials]
+  const materialKey = useMemo(
+    () => filtersRaw.material || "",
+    [filtersRaw.material]
   );
-  const occasionsKey = useMemo(
-    () => (filtersRaw.occasions || []).sort().join(","),
-    [filtersRaw.occasions]
-  );
-  const discountsKey = useMemo(
-    () => (filtersRaw.discounts || []).sort().join(","),
-    [filtersRaw.discounts]
+  const occasionKey = useMemo(
+    () => filtersRaw.occasion || "",
+    [filtersRaw.occasion]
   );
   const ratingsKey = useMemo(
     () => (filtersRaw.ratings || []).sort().join(","),
@@ -114,23 +106,19 @@ export default function ProductsScreen() {
     () => ({
       categories: filtersRaw.categories || [],
       priceRange: filtersRaw.priceRange || ([0, 100000] as [number, number]),
-      materials: filtersRaw.materials || [],
-      occasions: filtersRaw.occasions || [],
-      discounts: filtersRaw.discounts || [],
+      material: filtersRaw.material || "",
+      occasion: filtersRaw.occasion || "",
       ratings: filtersRaw.ratings || [],
-      inStock: filtersRaw.inStock || false,
       sortBy: filtersRaw.sortBy || "createdAt",
       sortOrder: filtersRaw.sortOrder || "desc",
       search: filtersRaw.search,
     }),
     [
       categoriesKey,
-      materialsKey,
-      occasionsKey,
-      discountsKey,
+      materialKey,
+      occasionKey,
       ratingsKey,
       priceRangeKey,
-      filtersRaw.inStock,
       filtersRaw.sortBy,
       filtersRaw.sortOrder,
       filtersRaw.search,
@@ -199,7 +187,7 @@ export default function ProductsScreen() {
 
   // Simple filter change detection without dependencies that cause loops
   const prevFiltersHashRef = useRef<string>("");
-  const currentFiltersHash = `${categoriesKey}-${materialsKey}-${occasionsKey}-${discountsKey}-${ratingsKey}-${priceRangeKey}-${filters.inStock}-${filters.sortBy}-${filters.sortOrder}`;
+  const currentFiltersHash = `${categoriesKey}-${materialKey}-${occasionKey}-${ratingsKey}-${priceRangeKey}-${filters.sortBy}-${filters.sortOrder}`;
 
   useEffect(() => {
     if (
@@ -235,16 +223,14 @@ export default function ProductsScreen() {
       sortOrder: filters.sortOrder as "asc" | "desc",
       categories:
         filters.categories.length > 0 ? filters.categories : undefined,
-      materials: filters.materials.length > 0 ? filters.materials : undefined,
-      occasions: filters.occasions.length > 0 ? filters.occasions : undefined,
-      discounts: filters.discounts.length > 0 ? filters.discounts : undefined,
+      material: filters.material || undefined,
+      occasion: filters.occasion || undefined,
       ratings: filters.ratings.length > 0 ? filters.ratings : undefined,
       search: filters.search,
       priceRange:
         filters.priceRange[0] > 0 || filters.priceRange[1] < 100000
           ? filters.priceRange
           : undefined,
-      inStock: filters.inStock || undefined,
     };
 
     return params;
@@ -254,13 +240,11 @@ export default function ProductsScreen() {
     filters.sortBy,
     filters.sortOrder,
     categoriesKey,
-    materialsKey,
-    occasionsKey,
-    discountsKey,
+    materialKey,
+    occasionKey,
     ratingsKey,
     filters.search,
     priceRangeKey,
-    filters.inStock,
   ]);
 
   // Track when queryParams actually change (not on every render)
@@ -274,8 +258,8 @@ export default function ProductsScreen() {
     data: productsResponse,
     products,
     categories,
-    materials,
-    occasions,
+    materials: availableMaterials,
+    occasions: availableOccasions,
     pagination,
     isLoading,
     isFetching,
@@ -433,16 +417,12 @@ export default function ProductsScreen() {
 
     // Count array filters
     if (filters.categories.length > 0) count++;
-    if (filters.materials.length > 0) count++;
-    if (filters.occasions.length > 0) count++;
-    if (filters.discounts.length > 0) count++;
+    if (filters.material) count++;
+    if (filters.occasion) count++;
     if (filters.ratings.length > 0) count++;
 
     // Count price range filter
     if (filters.priceRange[0] > 0 || filters.priceRange[1] < 100000) count++;
-
-    // Count stock filter
-    if (filters.inStock) count++;
 
     // Count search filter
     if (filters.search && filters.search.trim()) count++;
@@ -608,8 +588,8 @@ export default function ProductsScreen() {
                 name: cat.name,
                 count: cat.count,
               }))}
-              materials={materials || []}
-              occasions={occasions || []}
+              materialOptions={availableMaterials || []}
+              occasionOptions={availableOccasions || []}
             />
           </View>
         }

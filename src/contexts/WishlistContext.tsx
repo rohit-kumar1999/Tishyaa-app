@@ -17,7 +17,7 @@ interface WishlistItem {
   name: string;
   price: number;
   images: any;
-  inStock: boolean;
+  stockQuantity: number;
 }
 
 interface WishlistContextType {

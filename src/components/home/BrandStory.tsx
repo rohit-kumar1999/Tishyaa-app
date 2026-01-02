@@ -174,7 +174,7 @@ export const BrandStory = memo(() => {
 const styles = StyleSheet.create({
   container: {
     paddingVertical: screenWidth > 1024 ? 80 : screenWidth > 640 ? 64 : 48,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#fffaf9",
   },
   contentContainer: {
     paddingHorizontal: 16,

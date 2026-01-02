@@ -500,7 +500,7 @@ export const InstagramFeed = memo(() => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#FFF7ED",
+    backgroundColor: "#fff5f8",
     paddingVertical: 40,
   },
   contentContainer: {

@@ -18,15 +18,26 @@ export const PromoBanner = memo(() => {
   const sparklesAnim = useRef(new Animated.Value(0)).current;
   const crownAnim = useRef(new Animated.Value(0)).current;
   const giftAnim = useRef(new Animated.Value(0)).current;
+  const starAnim = useRef(new Animated.Value(0)).current;
   const mainContentAnim = useRef(new Animated.Value(0)).current;
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Animate main content
     Animated.timing(mainContentAnim, {
       toValue: 1,
-      duration: 600,
+      duration: 800,
       useNativeDriver: true,
     }).start();
+
+    // Shimmer animation
+    Animated.loop(
+      Animated.timing(shimmerAnim, {
+        toValue: 1,
+        duration: 2500,
+        useNativeDriver: true,
+      })
+    ).start();
 
     // Create floating animation for icons
     const createFloatingAnimation = (
@@ -52,8 +63,9 @@ export const PromoBanner = memo(() => {
 
     // Start floating animations with different delays
     createFloatingAnimation(sparklesAnim, 0).start();
-    createFloatingAnimation(crownAnim, 1000).start();
-    createFloatingAnimation(giftAnim, 2000).start();
+    createFloatingAnimation(crownAnim, 800).start();
+    createFloatingAnimation(giftAnim, 1600).start();
+    createFloatingAnimation(starAnim, 2400).start();
   }, []);
 
   const handleShopNow = () => {
@@ -63,17 +75,22 @@ export const PromoBanner = memo(() => {
   // Transform values for floating animation
   const sparklesTransform = sparklesAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, -10],
+    outputRange: [0, -12],
   });
 
   const crownTransform = crownAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, -8],
+    outputRange: [0, -10],
   });
 
   const giftTransform = giftAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, -12],
+    outputRange: [0, -14],
+  });
+
+  const starTransform = starAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -8],
   });
 
   const mainContentTransform = {
@@ -82,7 +99,7 @@ export const PromoBanner = memo(() => {
       {
         translateY: mainContentAnim.interpolate({
           inputRange: [0, 1],
-          outputRange: [20, 0],
+          outputRange: [30, 0],
         }),
       },
     ],
@@ -90,9 +107,19 @@ export const PromoBanner = memo(() => {
 
   return (
     <LinearGradient
-      colors={["#f8fafc", "#f1f5f9", "#e2e8f0"]}
+      colors={["#fffbeb", "#fef3c7", "#fde68a"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
       style={styles.container}
     >
+      {/* Decorative top border */}
+      <LinearGradient
+        colors={["#b45309", "#d97706", "#f59e0b"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.topBorder}
+      />
+
       {/* Background Floating Icons */}
       <View style={styles.backgroundElements}>
         <Animated.View
@@ -102,7 +129,7 @@ export const PromoBanner = memo(() => {
             { transform: [{ translateY: sparklesTransform }] },
           ]}
         >
-          <Ionicons name="sparkles" size={32} color="rgba(226, 29, 72, 0.1)" />
+          <Ionicons name="sparkles" size={36} color="rgba(217, 119, 6, 0.25)" />
         </Animated.View>
 
         <Animated.View
@@ -112,7 +139,7 @@ export const PromoBanner = memo(() => {
             { transform: [{ translateY: crownTransform }] },
           ]}
         >
-          <Ionicons name="diamond" size={24} color="rgba(226, 29, 72, 0.1)" />
+          <Ionicons name="diamond" size={28} color="rgba(180, 83, 9, 0.2)" />
         </Animated.View>
 
         <Animated.View
@@ -122,38 +149,88 @@ export const PromoBanner = memo(() => {
             { transform: [{ translateY: giftTransform }] },
           ]}
         >
-          <Ionicons name="gift" size={28} color="rgba(226, 29, 72, 0.1)" />
+          <Ionicons name="gift" size={32} color="rgba(217, 119, 6, 0.25)" />
+        </Animated.View>
+
+        <Animated.View
+          style={[
+            styles.floatingIcon,
+            styles.starIcon,
+            { transform: [{ translateY: starTransform }] },
+          ]}
+        >
+          <Ionicons name="star" size={24} color="rgba(180, 83, 9, 0.2)" />
         </Animated.View>
       </View>
 
       <View style={styles.contentContainer}>
         <Animated.View style={[styles.mainContent, mainContentTransform]}>
+          {/* Badge */}
+          <View style={styles.badgeContainer}>
+            <LinearGradient
+              colors={["#b45309", "#d97706"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.badge}
+            >
+              <Ionicons name="flash" size={14} color="#ffffff" />
+              <Text style={styles.badgeText}>EXCLUSIVE OFFER</Text>
+            </LinearGradient>
+          </View>
+
           {/* Title */}
           <Text style={styles.title}>Limited Time Offer!</Text>
 
+          {/* Discount Highlight */}
+          <View style={styles.discountContainer}>
+            <Text style={styles.discountText}>UP TO</Text>
+            <Text style={styles.discountValue}>20% OFF</Text>
+          </View>
+
           {/* Subtitle */}
           <Text style={styles.subtitle}>
-            Get up to 20% off on premium jewelry collections. Free shipping on
-            orders above ₹1999
+            On premium jewelry collections{"\n"}Free shipping on orders above
+            ₹1999
           </Text>
 
           {/* CTA Section */}
           <View style={styles.ctaSection}>
             <TouchableOpacity
-              style={styles.shopButton}
+              style={styles.shopButtonWrapper}
               onPress={handleShopNow}
               activeOpacity={0.9}
             >
-              <Text style={styles.shopButtonText}>Shop Now</Text>
+              <LinearGradient
+                colors={["#b45309", "#92400e"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.shopButton}
+              >
+                <Text style={styles.shopButtonText}>Shop Now</Text>
+                <Ionicons name="arrow-forward" size={18} color="#ffffff" />
+              </LinearGradient>
             </TouchableOpacity>
+          </View>
 
-            <View style={styles.urgencyContainer}>
-              <Ionicons name="time" size={16} color="#6b7280" />
-              <Text style={styles.urgencyText}>Offer ends in 2 days</Text>
+          {/* Urgency Timer */}
+          <View style={styles.urgencyContainer}>
+            <View style={styles.timerIcon}>
+              <Ionicons name="time-outline" size={18} color="#b45309" />
             </View>
+            <Text style={styles.urgencyText}>
+              Offer ends in <Text style={styles.urgencyHighlight}>2 days</Text>
+            </Text>
           </View>
         </Animated.View>
       </View>
+
+      {/* Decorative bottom border */}
+      <LinearGradient
+        colors={["#f59e0b", "#d97706", "#b45309"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.bottomBorder}
+      />
     </LinearGradient>
   );
 });
@@ -161,8 +238,22 @@ export const PromoBanner = memo(() => {
 const styles = StyleSheet.create({
   container: {
     position: "relative",
-    paddingVertical: screenWidth > 1024 ? 64 : screenWidth > 640 ? 48 : 32,
+    paddingVertical: screenWidth > 1024 ? 80 : screenWidth > 640 ? 64 : 48,
     overflow: "hidden",
+  },
+  topBorder: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+  },
+  bottomBorder: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 4,
   },
   backgroundElements: {
     position: "absolute",
@@ -170,75 +261,135 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    opacity: 0.2,
   },
   floatingIcon: {
     position: "absolute",
   },
   sparklesIcon: {
-    top: 40,
-    left: 40,
+    top: 30,
+    left: 30,
   },
   crownIcon: {
-    top: 80,
-    right: 80,
+    top: 60,
+    right: 50,
   },
   giftIcon: {
-    bottom: 40,
-    left: "25%",
+    bottom: 50,
+    left: "20%",
+  },
+  starIcon: {
+    bottom: 70,
+    right: 30,
   },
   contentContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     alignItems: "center",
     position: "relative",
     zIndex: 10,
   },
   mainContent: {
     alignItems: "center",
-    maxWidth: 600,
+    maxWidth: 500,
   },
-  title: {
-    fontSize: screenWidth > 1024 ? 36 : screenWidth > 640 ? 30 : 24,
-    fontWeight: "700",
-    color: "#111827",
-    textAlign: "center",
+  badgeContainer: {
     marginBottom: 16,
   },
-  subtitle: {
-    color: "#6b7280",
-    fontSize: screenWidth > 1024 ? 18 : screenWidth > 640 ? 16 : 14,
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  badgeText: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1,
+  },
+  title: {
+    fontSize: screenWidth > 1024 ? 42 : screenWidth > 640 ? 36 : 28,
+    fontWeight: "800",
+    color: "#111827",
     textAlign: "center",
-    lineHeight: screenWidth > 1024 ? 26 : screenWidth > 640 ? 24 : 20,
-    marginBottom: 24,
+    marginBottom: 20,
+  },
+  discountContainer: {
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  discountText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#6b7280",
+    letterSpacing: 2,
+    marginBottom: 4,
+  },
+  discountValue: {
+    fontSize: screenWidth > 1024 ? 56 : screenWidth > 640 ? 48 : 40,
+    fontWeight: "900",
+    color: "#b45309",
+    letterSpacing: -1,
+  },
+  subtitle: {
+    color: "#4b5563",
+    fontSize: screenWidth > 1024 ? 18 : screenWidth > 640 ? 16 : 15,
+    textAlign: "center",
+    lineHeight: screenWidth > 1024 ? 28 : screenWidth > 640 ? 26 : 24,
+    marginBottom: 28,
   },
   ctaSection: {
     alignItems: "center",
-    gap: 16,
-    flexDirection: screenWidth > 640 ? "row" : "column",
+    marginBottom: 20,
+  },
+  shopButtonWrapper: {
+    shadowColor: "#b45309",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 12,
   },
   shopButton: {
-    backgroundColor: "#e11d48",
-    paddingHorizontal: screenWidth > 640 ? 32 : 24,
-    paddingVertical: screenWidth > 640 ? 16 : 12,
-    borderRadius: 8,
-    shadowColor: "#e11d48",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: screenWidth > 640 ? 40 : 32,
+    paddingVertical: screenWidth > 640 ? 18 : 16,
+    borderRadius: 30,
+    gap: 10,
   },
   shopButtonText: {
     color: "#ffffff",
-    fontWeight: "600",
-    fontSize: screenWidth > 640 ? 16 : 14,
+    fontWeight: "700",
+    fontSize: screenWidth > 640 ? 18 : 16,
+    letterSpacing: 0.5,
   },
   urgencyContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(180, 83, 9, 0.2)",
+  },
+  timerIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(180, 83, 9, 0.1)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   urgencyText: {
-    color: "#6b7280",
+    color: "#4b5563",
     fontSize: 14,
+    fontWeight: "500",
+  },
+  urgencyHighlight: {
+    color: "#b45309",
+    fontWeight: "700",
   },
 });

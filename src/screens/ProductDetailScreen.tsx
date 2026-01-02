@@ -81,8 +81,8 @@ interface DeliveryInfo {
 interface RelatedProduct {
   id: string;
   name: string;
-  price: number;
-  originalPrice?: number;
+  discountedPrice: number;
+  regularPrice?: number;
   images: string[];
   category: string;
   rating?: number;
@@ -397,7 +397,7 @@ export default function ProductDetailScreen() {
       const result = await Share.share({
         message: `Check out this beautiful ${product?.category} - ${
           product?.name
-        } for ₹${product?.price.toLocaleString("en-IN")}`,
+        } for ₹${product?.discountedPrice.toLocaleString("en-IN")}`,
         url: `https://www.tishyaajewels.com/product/${id}`,
         title: product?.name,
       });
@@ -419,9 +419,9 @@ export default function ProductDetailScreen() {
       toggleWishlist({
         id: product.id,
         name: product.name,
-        price: product.price,
+        price: product.discountedPrice,
         images: product.images.map((url) => ({ url })),
-        inStock: product.inStock,
+        stockQuantity: product.stockQuantity,
       });
     }
   };
@@ -517,13 +517,6 @@ export default function ProductDetailScreen() {
                 </View>
               )}
             />
-
-            {/* Discount Badge */}
-            {product.discount && (
-              <View style={styles.discountBadge}>
-                <Text style={styles.discountText}>{product.discount}% OFF</Text>
-              </View>
-            )}
           </View>
 
           {/* Image Indicators */}
@@ -577,13 +570,6 @@ export default function ProductDetailScreen() {
           <Text style={styles.productName}>{product.name}</Text>
           <Text style={styles.sku}>SKU: TJ-{product.id}</Text>
 
-          {/* Promotional Banner */}
-          {product.hasPromotion && product.promotionText && (
-            <View style={styles.promotionBanner}>
-              <Text style={styles.promotionText}>{product.promotionText}</Text>
-            </View>
-          )}
-
           {/* Product Attributes */}
           {(product.sizes || product.metal || product.clarity) && (
             <View style={styles.attributesContainer}>
@@ -626,19 +612,24 @@ export default function ProductDetailScreen() {
           {/* Price Section */}
           <View style={styles.priceSection}>
             <Text style={styles.price}>
-              ₹{product.price.toLocaleString("en-IN")}
+              ₹{product.discountedPrice.toLocaleString("en-IN")}
             </Text>
-            {product.originalPrice &&
-              Number(product.originalPrice) > product.price && (
+            {product.regularPrice &&
+              Number(product.regularPrice) > product.discountedPrice && (
                 <>
                   <Text style={styles.originalPrice}>
-                    ₹{Number(product.originalPrice).toLocaleString("en-IN")}
+                    ₹{Number(product.regularPrice).toLocaleString("en-IN")}
                   </Text>
-                  {product.discount && (
-                    <Text style={styles.discountPercent}>
-                      ({product.discount}% off)
-                    </Text>
-                  )}
+                  <Text style={styles.discountPercent}>
+                    (
+                    {Math.round(
+                      (1 -
+                        product.discountedPrice /
+                          Number(product.regularPrice)) *
+                        100
+                    )}
+                    % off)
+                  </Text>
                 </>
               )}
           </View>
@@ -1064,18 +1055,19 @@ export default function ProductDetailScreen() {
                       />
 
                       {/* Discount Badge */}
-                      {rp.originalPrice && rp.originalPrice > rp.price && (
-                        <View style={styles.relatedDiscountBadge}>
-                          <Text style={styles.relatedDiscountText}>
-                            {Math.round(
-                              ((rp.originalPrice - rp.price) /
-                                rp.originalPrice) *
-                                100
-                            )}
-                            % OFF
-                          </Text>
-                        </View>
-                      )}
+                      {rp.regularPrice &&
+                        rp.regularPrice > rp.discountedPrice && (
+                          <View style={styles.relatedDiscountBadge}>
+                            <Text style={styles.relatedDiscountText}>
+                              {Math.round(
+                                ((rp.regularPrice - rp.discountedPrice) /
+                                  rp.regularPrice) *
+                                  100
+                              )}
+                              % OFF
+                            </Text>
+                          </View>
+                        )}
 
                       {/* Image Indicators */}
                       {rpImages.length > 1 && (
@@ -1105,9 +1097,9 @@ export default function ProductDetailScreen() {
                           toggleWishlist({
                             id: rp.id,
                             name: rp.name,
-                            price: rp.price,
+                            price: rp.discountedPrice,
                             images: rp.images.map((url) => ({ url })),
-                            inStock: true,
+                            stockQuantity: 1,
                           });
                         }}
                       >
@@ -1148,21 +1140,22 @@ export default function ProductDetailScreen() {
                       <View style={styles.relatedPriceRow}>
                         <View>
                           <Text style={styles.relatedPrice}>
-                            ₹{rp.price.toLocaleString("en-IN")}
+                            ₹{rp.discountedPrice.toLocaleString("en-IN")}
                           </Text>
-                          {rp.originalPrice && rp.originalPrice > rp.price && (
-                            <View style={styles.relatedPriceSave}>
-                              <Text style={styles.relatedOriginalPrice}>
-                                ₹{rp.originalPrice.toLocaleString("en-IN")}
-                              </Text>
-                              <Text style={styles.relatedSaveText}>
-                                Save ₹
-                                {(rp.originalPrice - rp.price).toLocaleString(
-                                  "en-IN"
-                                )}
-                              </Text>
-                            </View>
-                          )}
+                          {rp.regularPrice &&
+                            rp.regularPrice > rp.discountedPrice && (
+                              <View style={styles.relatedPriceSave}>
+                                <Text style={styles.relatedOriginalPrice}>
+                                  ₹{rp.regularPrice.toLocaleString("en-IN")}
+                                </Text>
+                                <Text style={styles.relatedSaveText}>
+                                  Save ₹
+                                  {(
+                                    rp.regularPrice - rp.discountedPrice
+                                  ).toLocaleString("en-IN")}
+                                </Text>
+                              </View>
+                            )}
                         </View>
                       </View>
                       <View style={styles.relatedFooter}>

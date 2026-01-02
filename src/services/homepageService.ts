@@ -12,8 +12,8 @@ export interface HomepageData {
   products: Product[];
   featuredProducts: Product[];
   categories: Category[];
-  materials: string[];
-  occasions: string[];
+  materials?: string[];
+  occasions?: string[];
   pagination: ProductResponse["pagination"];
   meta: ProductResponse["meta"];
 }
@@ -71,22 +71,16 @@ const transformApiProducts = (apiProducts: any[]): Product[] => {
     productType: product.productType,
     category: product.category,
     subcategory: product.subcategory,
-    originalPrice: product.originalPrice,
-    price: product.price,
-    discountPrice: product.discountPrice,
-    discount: product.discount,
+    regularPrice: product.regularPrice,
+    discountedPrice: product.discountedPrice,
     images: product.images || [],
     rating: product.rating,
     ratingCount: product.ratingCount,
     active: product.active,
-    inStock: product.inStock,
     stockQuantity: product.stockQuantity,
     specifications: product.specifications,
     attributes: product.attributes,
     hasPromotion: product.hasPromotion,
-    promotionText: product.promotionText,
-    promotionType: product.promotionType,
-    promotionData: product.promotionData,
     tags: product.tags || [],
     keywords: product.keywords || [],
     metadata: product.metadata,
@@ -112,9 +106,6 @@ export const useHomepageData = () => {
         sortOrder: "desc",
         includeCategories: true,
         includeTotalCount: true,
-        includeMaterials: true,
-        includeOccasions: true,
-        inStock: true,
       });
 
       const transformedProducts = transformApiProducts(response.products);

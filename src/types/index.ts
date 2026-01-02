@@ -82,7 +82,6 @@ export interface SearchFilters {
   category?: string;
   minPrice?: number;
   maxPrice?: number;
-  inStock?: boolean;
   rating?: number;
   sortBy?: "price" | "rating" | "name" | "createdAt";
   sortOrder?: "asc" | "desc";
@@ -151,13 +150,12 @@ export interface Product {
   id: string;
   name: string;
   description: string;
-  price: number;
-  originalPrice?: number;
+  discountedPrice: number;
+  regularPrice?: number;
   images: string[];
   category: string;
   subcategory?: string;
   tags: string[];
-  inStock: boolean;
   stockQuantity: number;
   weight?: number;
   dimensions?: {
@@ -165,7 +163,6 @@ export interface Product {
     width: number;
     height: number;
   };
-  materials: string[];
   care: string[];
   rating: number;
   reviewCount: number;
