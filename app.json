@@ -11,6 +11,12 @@
       "resizeMode": "contain",
       "backgroundColor": "#C9A961"
     },
+    "runtimeVersion": { "policy": "appVersion" },
+    "updates": {
+      "enabled": true,
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/df5fa61e-30a9-4745-80a8-8d1ad6fbb819"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tishyaajewels.app",
