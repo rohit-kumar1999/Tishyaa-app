@@ -87,6 +87,8 @@ interface RelatedProduct {
   category: string;
   rating?: number;
   description?: string;
+  stockQuantity?: number;
+  active?: boolean;
 }
 
 interface Review {
@@ -419,8 +421,9 @@ export default function ProductDetailScreen() {
       toggleWishlist({
         id: product.id,
         name: product.name,
-        price: product.discountedPrice,
-        images: product.images.map((url) => ({ url })),
+        discountedPrice: product.discountedPrice,
+        regularPrice: product.regularPrice,
+        images: product.images,
         stockQuantity: product.stockQuantity,
       });
     }
@@ -441,8 +444,10 @@ export default function ProductDetailScreen() {
     }));
   };
 
-  // Check if out of stock
-  const isOutOfStock = product?.active !== undefined && !product?.active;
+  // Check if out of stock - check both active flag and stock quantity
+  const isOutOfStock =
+    !product?.active ||
+    (product?.stockQuantity !== undefined && product.stockQuantity <= 0);
 
   // Loading state - only show when no cached data
   if (isLoading && !product) {
@@ -637,7 +642,12 @@ export default function ProductDetailScreen() {
           <Text style={styles.taxInfo}>Inclusive of all taxes</Text>
 
           {/* Stock Status */}
-          {!isOutOfStock && (
+          {isOutOfStock ? (
+            <View style={styles.stockStatus}>
+              <Ionicons name="close-circle" size={16} color="#EF4444" />
+              <Text style={styles.outOfStockText}>Out of Stock</Text>
+            </View>
+          ) : (
             <View style={styles.stockStatus}>
               <Ionicons name="checkmark-circle" size={16} color="#10B981" />
               <Text style={styles.inStockText}>In Stock</Text>
@@ -676,9 +686,10 @@ export default function ProductDetailScreen() {
               style={[
                 styles.wishlistButton,
                 isInWishlist(product.id) && styles.wishlistButtonActive,
+                isOutOfStock && styles.disabledButton,
               ]}
               onPress={handleToggleWishlist}
-              disabled={isWishlistProcessing[product.id]}
+              disabled={isWishlistProcessing[product.id] || isOutOfStock}
             >
               {isWishlistProcessing[product.id] ? (
                 <ActivityIndicator size="small" color="#F43F5E" />
@@ -686,7 +697,13 @@ export default function ProductDetailScreen() {
                 <Ionicons
                   name={isInWishlist(product.id) ? "heart" : "heart-outline"}
                   size={24}
-                  color={isInWishlist(product.id) ? "#F43F5E" : "#6B7280"}
+                  color={
+                    isOutOfStock
+                      ? "#9CA3AF"
+                      : isInWishlist(product.id)
+                      ? "#F43F5E"
+                      : "#6B7280"
+                  }
                 />
               )}
             </TouchableOpacity>
@@ -1069,6 +1086,17 @@ export default function ProductDetailScreen() {
                           </View>
                         )}
 
+                      {/* Out of Stock Badge */}
+                      {(rp.active === false ||
+                        (rp.stockQuantity !== undefined &&
+                          rp.stockQuantity <= 0)) && (
+                        <View style={styles.relatedOutOfStockBadge}>
+                          <Text style={styles.relatedOutOfStockText}>
+                            Out of Stock
+                          </Text>
+                        </View>
+                      )}
+
                       {/* Image Indicators */}
                       {rpImages.length > 1 && (
                         <View style={styles.relatedIndicators}>
@@ -1091,22 +1119,43 @@ export default function ProductDetailScreen() {
 
                       {/* Wishlist Button */}
                       <TouchableOpacity
-                        style={styles.relatedWishlistButton}
+                        style={[
+                          styles.relatedWishlistButton,
+                          (rp.active === false ||
+                            (rp.stockQuantity !== undefined &&
+                              rp.stockQuantity <= 0)) && { opacity: 0.5 },
+                        ]}
+                        disabled={
+                          rp.active === false ||
+                          (rp.stockQuantity !== undefined &&
+                            rp.stockQuantity <= 0)
+                        }
                         onPress={(e) => {
                           e.stopPropagation();
                           toggleWishlist({
                             id: rp.id,
                             name: rp.name,
-                            price: rp.discountedPrice,
-                            images: rp.images.map((url) => ({ url })),
-                            stockQuantity: 1,
+                            discountedPrice: rp.discountedPrice,
+                            regularPrice:
+                              rp.regularPrice?.toString() ||
+                              rp.discountedPrice.toString(),
+                            images: rp.images,
+                            stockQuantity: rp.stockQuantity ?? 1,
                           });
                         }}
                       >
                         <Ionicons
                           name={isInWishlist(rp.id) ? "heart" : "heart-outline"}
                           size={16}
-                          color={isInWishlist(rp.id) ? "#F43F5E" : "#6B7280"}
+                          color={
+                            rp.active === false ||
+                            (rp.stockQuantity !== undefined &&
+                              rp.stockQuantity <= 0)
+                              ? "#9CA3AF"
+                              : isInWishlist(rp.id)
+                              ? "#F43F5E"
+                              : "#6B7280"
+                          }
                         />
                       </TouchableOpacity>
                     </View>
@@ -1168,17 +1217,31 @@ export default function ProductDetailScreen() {
                       <TouchableOpacity
                         style={[
                           styles.relatedAddToCartButton,
-                          cartProcessing[rp.id] && { opacity: 0.7 },
+                          (cartProcessing[rp.id] ||
+                            rp.active === false ||
+                            (rp.stockQuantity !== undefined &&
+                              rp.stockQuantity <= 0)) && { opacity: 0.7 },
                         ]}
                         activeOpacity={0.8}
-                        disabled={cartProcessing[rp.id]}
+                        disabled={
+                          cartProcessing[rp.id] ||
+                          rp.active === false ||
+                          (rp.stockQuantity !== undefined &&
+                            rp.stockQuantity <= 0)
+                        }
                         onPress={(e) => {
                           e.stopPropagation();
                           addItemToCart(rp.id, 1, false);
                         }}
                       >
                         <LinearGradient
-                          colors={["#F43F5E", "#EC4899"]}
+                          colors={
+                            rp.active === false ||
+                            (rp.stockQuantity !== undefined &&
+                              rp.stockQuantity <= 0)
+                              ? ["#9CA3AF", "#9CA3AF"]
+                              : ["#F43F5E", "#EC4899"]
+                          }
                           style={styles.relatedAddToCartGradient}
                         >
                           {cartProcessing[rp.id] ? (
@@ -1191,7 +1254,11 @@ export default function ProductDetailScreen() {
                                 color="white"
                               />
                               <Text style={styles.relatedAddToCartText}>
-                                Add to Cart
+                                {rp.active === false ||
+                                (rp.stockQuantity !== undefined &&
+                                  rp.stockQuantity <= 0)
+                                  ? "Out of Stock"
+                                  : "Add to Cart"}
                               </Text>
                             </>
                           )}
@@ -1480,6 +1547,11 @@ const styles = StyleSheet.create({
   inStockText: {
     fontSize: 14,
     color: "#10B981",
+    fontWeight: "500",
+  },
+  outOfStockText: {
+    fontSize: 14,
+    color: "#EF4444",
     fontWeight: "500",
   },
 
@@ -1843,6 +1915,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   relatedDiscountText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "bold",
+  },
+  relatedOutOfStockBadge: {
+    position: "absolute",
+    bottom: 8,
+    left: 8,
+    backgroundColor: "#DC2626",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  relatedOutOfStockText: {
     color: "white",
     fontSize: 10,
     fontWeight: "bold",

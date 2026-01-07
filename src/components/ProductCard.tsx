@@ -106,9 +106,10 @@ const ProductCard: React.FC<ProductCardProps> = memo(function ProductCard({
           style={[
             styles.wishlistButton,
             isProductInWishlist && styles.wishlistButtonActive,
+            isOutOfStock && styles.disabledButton,
           ]}
           onPress={handleWishlistPress}
-          disabled={isWishlistLoading}
+          disabled={isWishlistLoading || isOutOfStock}
         >
           {isWishlistLoading ? (
             <ActivityIndicator size="small" color="#dc2626" />
@@ -116,7 +117,13 @@ const ProductCard: React.FC<ProductCardProps> = memo(function ProductCard({
             <Ionicons
               name={isProductInWishlist ? "heart" : "heart-outline"}
               size={18}
-              color={isProductInWishlist ? "#dc2626" : "#666"}
+              color={
+                isOutOfStock
+                  ? "#9ca3af"
+                  : isProductInWishlist
+                  ? "#dc2626"
+                  : "#666"
+              }
             />
           )}
         </TouchableOpacity>

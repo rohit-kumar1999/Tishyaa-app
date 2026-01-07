@@ -103,9 +103,12 @@ export const FeaturedProducts = memo(() => {
               style={[
                 styles.wishlistButton,
                 isInWishlist(product.id) && styles.wishlistButtonActive,
+                product.stockQuantity <= 0 && styles.disabledButton,
               ]}
               onPress={() => handleToggleWishlist(product)}
-              disabled={isWishlistProcessing[product.id]}
+              disabled={
+                isWishlistProcessing[product.id] || product.stockQuantity <= 0
+              }
               activeOpacity={0.8}
             >
               {isWishlistProcessing[product.id] ? (
@@ -114,7 +117,13 @@ export const FeaturedProducts = memo(() => {
                 <Ionicons
                   name={isInWishlist(product.id) ? "heart" : "heart-outline"}
                   size={16}
-                  color={isInWishlist(product.id) ? "#dc2626" : "#374151"}
+                  color={
+                    product.stockQuantity <= 0
+                      ? "#9ca3af"
+                      : isInWishlist(product.id)
+                      ? "#dc2626"
+                      : "#374151"
+                  }
                 />
               )}
             </TouchableOpacity>
@@ -125,10 +134,15 @@ export const FeaturedProducts = memo(() => {
             <TouchableOpacity
               style={[
                 styles.addToCartButton,
-                !product.active && styles.disabledButton,
+                (!product.active || product.stockQuantity <= 0) &&
+                  styles.disabledButton,
               ]}
               onPress={() => handleAddToCart(product)}
-              disabled={!product.active || isCartProcessing[product.id]}
+              disabled={
+                !product.active ||
+                product.stockQuantity <= 0 ||
+                isCartProcessing[product.id]
+              }
               activeOpacity={0.8}
             >
               <LinearGradient

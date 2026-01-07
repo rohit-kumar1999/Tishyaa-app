@@ -55,6 +55,7 @@ interface FeaturedGift {
   occasion: string;
   discount?: number;
   image: string;
+  stockQuantity?: number;
 }
 
 const relationships: GiftCategory[] = [
@@ -557,6 +558,11 @@ export default function GiftingScreen() {
                   <Text style={styles.discountText}>{item.discount}% OFF</Text>
                 </View>
               )}
+              {item.stockQuantity !== undefined && item.stockQuantity <= 0 && (
+                <View style={styles.outOfStockBadge}>
+                  <Text style={styles.outOfStockText}>Out of Stock</Text>
+                </View>
+              )}
               <View style={styles.giftIdeaBadge}>
                 <Text style={styles.giftIdeaText}>Gift Idea</Text>
               </View>
@@ -567,17 +573,24 @@ export default function GiftingScreen() {
               style={[
                 styles.wishlistButton,
                 isWishlistProcessing[item.id.toString()] && { opacity: 0.7 },
+                item.stockQuantity !== undefined &&
+                  item.stockQuantity <= 0 && { opacity: 0.5 },
               ]}
               activeOpacity={0.8}
-              disabled={isWishlistProcessing[item.id.toString()]}
+              disabled={
+                isWishlistProcessing[item.id.toString()] ||
+                (item.stockQuantity !== undefined && item.stockQuantity <= 0)
+              }
               onPress={(e) => {
                 e.stopPropagation();
                 toggleWishlist({
                   id: item.id.toString(),
                   name: item.name,
-                  price: item.price,
-                  images: [{ url: item.image }],
-                  stockQuantity: 1, // Mock data assumes in stock
+                  discountedPrice: item.price,
+                  regularPrice:
+                    item.originalPrice?.toString() || item.price.toString(),
+                  images: [item.image],
+                  stockQuantity: item.stockQuantity ?? 1,
                 });
               }}
             >
@@ -593,7 +606,11 @@ export default function GiftingScreen() {
                   }
                   size={20}
                   color={
-                    isInWishlist(item.id.toString()) ? "#F43F5E" : "#6B7280"
+                    item.stockQuantity !== undefined && item.stockQuantity <= 0
+                      ? "#9CA3AF"
+                      : isInWishlist(item.id.toString())
+                      ? "#F43F5E"
+                      : "#6B7280"
                   }
                 />
               </View>
@@ -641,21 +658,34 @@ export default function GiftingScreen() {
           <TouchableOpacity
             style={[
               styles.addToCartButton,
-              isProcessing[item.id.toString()] && { opacity: 0.7 },
+              (isProcessing[item.id.toString()] ||
+                (item.stockQuantity !== undefined &&
+                  item.stockQuantity <= 0)) && { opacity: 0.7 },
             ]}
             activeOpacity={0.8}
-            disabled={isProcessing[item.id.toString()]}
+            disabled={
+              isProcessing[item.id.toString()] ||
+              (item.stockQuantity !== undefined && item.stockQuantity <= 0)
+            }
             onPress={() => {
               addItemToCart(item.id.toString(), 1, false);
             }}
           >
             <LinearGradient
-              colors={["#F43F5E", "#EC4899"]}
+              colors={
+                item.stockQuantity !== undefined && item.stockQuantity <= 0
+                  ? ["#9CA3AF", "#9CA3AF"]
+                  : ["#F43F5E", "#EC4899"]
+              }
               style={styles.addToCartGradient}
             >
               <Ionicons name="bag-add" size={16} color="white" />
               <Text style={styles.addToCartText}>
-                {isProcessing[item.id.toString()] ? "Adding..." : "Add to Cart"}
+                {item.stockQuantity !== undefined && item.stockQuantity <= 0
+                  ? "Out of Stock"
+                  : isProcessing[item.id.toString()]
+                  ? "Adding..."
+                  : "Add to Cart"}
               </Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -1185,6 +1215,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   discountText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "600",
+  },
+  outOfStockBadge: {
+    backgroundColor: "#DC2626",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  outOfStockText: {
     color: "white",
     fontSize: 10,
     fontWeight: "600",

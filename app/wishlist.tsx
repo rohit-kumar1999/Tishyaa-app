@@ -235,6 +235,10 @@ export default function WishlistScreen() {
         )}
         renderItem={({ item }) => {
           // Transform wishlist item to Product format for ProductCard
+          // API returns: id, name, discountedPrice, regularPrice, images, stockQuantity
+          const isOutOfStock =
+            item.stockQuantity !== undefined && item.stockQuantity <= 0;
+
           const product: Product = {
             id: item.id,
             name: item.name || "",
@@ -243,24 +247,17 @@ export default function WishlistScreen() {
             productType: "jewelry",
             category: "jewelry",
             subcategory: "",
-            originalPrice: item.price?.toString() || "0",
-            price: item.price || 0,
-            discountPrice: null,
-            discount: null,
-            images: Array.isArray(item.images)
-              ? item.images
-              : [item.images].filter(Boolean),
+            regularPrice:
+              item.regularPrice || item.discountedPrice?.toString() || "0",
+            discountedPrice: item.discountedPrice || 0,
+            images: Array.isArray(item.images) ? item.images : [],
             rating: 0,
             ratingCount: 0,
-            active: true,
-            inStock: item.inStock ?? true,
-            stockQuantity: 10,
+            active: !isOutOfStock,
+            stockQuantity: item.stockQuantity ?? 0,
             specifications: {},
             attributes: {},
             hasPromotion: false,
-            promotionText: null,
-            promotionType: null,
-            promotionData: null,
             tags: [],
             keywords: [],
             metadata: {},

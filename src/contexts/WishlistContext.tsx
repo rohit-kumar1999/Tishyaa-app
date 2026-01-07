@@ -14,9 +14,13 @@ import {
 
 interface WishlistItem {
   id: string;
+  wishlistId?: string;
+  addedAt?: string;
+  userId?: string;
   name: string;
-  price: number;
-  images: any;
+  discountedPrice: number;
+  regularPrice: string;
+  images: string[];
   stockQuantity: number;
 }
 
