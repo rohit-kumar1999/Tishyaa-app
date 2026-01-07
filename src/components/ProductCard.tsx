@@ -37,7 +37,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(function ProductCard({
   const { toast } = useToast();
 
   const isOutOfStock = useMemo(
-    () => !product.active || product.stockQuantity <= 0,
+    () => product.stockQuantity <= 0,
     [product.active, product.stockQuantity]
   );
 
