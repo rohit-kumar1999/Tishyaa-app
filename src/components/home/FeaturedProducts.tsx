@@ -134,12 +134,12 @@ export const FeaturedProducts = memo(() => {
             <TouchableOpacity
               style={[
                 styles.addToCartButton,
-                (!product.active || product.stockQuantity <= 0) &&
+                (product.active === false || product.stockQuantity <= 0) &&
                   styles.disabledButton,
               ]}
               onPress={() => handleAddToCart(product)}
               disabled={
-                !product.active ||
+                product.active === false ||
                 product.stockQuantity <= 0 ||
                 isCartProcessing[product.id]
               }
